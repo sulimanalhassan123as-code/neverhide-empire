@@ -113,6 +113,12 @@
         <activity android:name=".quran.QuranActivity"
             android:exported="false"
             android:label="Quran Audio" />
+        <activity android:name=".calls.CallRecordingsActivity"
+            android:exported="false"
+            android:label="Call Recorder" />
+        <service android:name=".calls.CallRecorderService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
         <activity android:name=".calls.VoiceStudioActivity"
             android:exported="false"
             android:label="Voice Studio" />

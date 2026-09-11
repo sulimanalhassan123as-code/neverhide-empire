@@ -89,6 +89,13 @@ class QuickDialActivity : ComponentActivity() {
                 startActivity(Intent(this@QuickDialActivity, VoiceStudioActivity::class.java))
             }
 
+            com.neverhide.empire.dashboard.FeatureCard(
+                "⏺", "Call Recorder", "Record calls — auto-save on hangup",
+                Palette.PINK, badge = "NEW"
+            ) {
+                startActivity(Intent(this@QuickDialActivity, CallRecordingsActivity::class.java))
+            }
+
             OutlinedTextField(
                 value = number, onValueChange = { number = it },
                 label = { Text("Phone number") },

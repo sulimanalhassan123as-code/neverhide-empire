@@ -4,6 +4,12 @@
     {
       "date": "2026-09-11",
       "tier": "minor",
+      "title": "Call Recorder shipped (v2.3.0)",
+      "note": "Record phone calls with auto-save on hangup. Open the Calls section and tap Call Recorder. The speaker turns on automatically so both sides of the call are captured \u2014 the same technique pro recorders use on modern Android."
+    },
+    {
+      "date": "2026-09-11",
+      "tier": "minor",
       "title": "v2.2.0 Vision Edition shipped",
       "note": "Security Patrol (3-hourly spyware/sideload/keylogger auditing with alerts), Voice Studio with real robot-voice DSP, and the AR Camera Compass with spirit level. Enable auto-patrol in App Scanner, and try Voice Studio from the Calls section."
     },
