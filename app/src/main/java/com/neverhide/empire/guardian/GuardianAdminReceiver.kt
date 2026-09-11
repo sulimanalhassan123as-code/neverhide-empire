@@ -114,7 +114,7 @@ class GuardianAdminReceiver : DeviceAdminReceiver() {
     private fun tone() {
         try {
             val tg = ToneGenerator(AudioManager.STREAM_ALARM, 100)
-            tg.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_LOOP, 1500)
+            tg.startTone(ToneGenerator.TONE_SUP_ERROR, 1500)
         } catch (_: Exception) {
         }
     }

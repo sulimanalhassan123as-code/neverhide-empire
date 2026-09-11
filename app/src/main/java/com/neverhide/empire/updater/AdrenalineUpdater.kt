@@ -60,7 +60,7 @@ class AdrenalineUpdater(private val context: Context) {
 
     private suspend fun compareAndPrompt(manifest: JSONObject, onResult: (String) -> Unit) {
         val current = context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
-        val remote = manifest.optInt("versionCode", current).toLong()
+        val remote = manifest.optLong("versionCode", current)
 
         if (remote > current) {
             promptInstall(manifest)

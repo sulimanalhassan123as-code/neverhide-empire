@@ -117,7 +117,7 @@ class GLPoints(private val count: Int) {
         }
         buffer = ByteBuffer.allocateDirect(data.size * 4)
             .order(ByteOrder.nativeOrder()).asFloatBuffer().apply {
-                put(data); position = 0
+                put(data); position(0)
             }
     }
 
