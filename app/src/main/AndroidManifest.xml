@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- ===== Core ===== -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -111,6 +113,12 @@
         <activity android:name=".quran.QuranActivity"
             android:exported="false"
             android:label="Quran Audio" />
+        <service android:name=".quran.QuranDownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+        <service android:name=".quran.QuranPlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- ===== Tools Hub Activity ===== -->
         <activity

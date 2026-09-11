@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.neverhide.empire.dashboard.*
 import com.neverhide.empire.calls.QuickDialActivity
 import com.neverhide.empire.quran.QuranActivity
+import com.neverhide.empire.updater.WhatsNew
 import com.neverhide.empire.core.EmpireBackgroundService
 import com.neverhide.empire.core.PermissionManager
 import com.neverhide.empire.guardian.GuardianAdminReceiver
@@ -337,6 +338,12 @@ class MainActivity : ComponentActivity() {
                             GlowButton("🔑 Grant Permissions", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
                                 permissionLauncher.launch(PermissionManager.missing(this@MainActivity).toTypedArray())
                             }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Text("MAJOR upgrades = APK • MINOR upgrades = news feed, no reinstall", color = Palette.TEXT_MUTE, fontSize = 10.sp)
+                        Spacer(Modifier.height(8.dp))
+                        GlowButton("🌙 What's New (minor — no reinstall)", listOf(Palette.AMBER, Color(0xFFFF8F00)), Modifier.fillMaxWidth()) {
+                            WhatsNew.check(this@MainActivity)
                         }
                     }
 

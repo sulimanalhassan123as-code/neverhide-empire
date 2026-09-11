@@ -1,6 +1,7 @@
 {
-  "versionCode": 5,
-  "versionName": "2.0.1",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.0.1/neverhide-empire-v2.0.1.apk",
-  "changelog": "v2.0.1 \u2014 Beautiful Dashboard Edition:\n\n\u2022 Brand new dashboard: hero Guardian card, grouped category cards, neon glow design\n\u2022 New Calls section (Quick Dial + recent calls log) in its own folder\n\u2022 Quran Audio room added \u2014 coming soon (full recitation player in development)\n\u2022 SECURITY HARDENING:\n  - Update APKs now signature-verified before install (forged updates blocked)\n  - Code fully obfuscated + shrunk (6MB \u2192 1.35MB, much harder to reverse-engineer)\n  - HTTPS-only network policy, backups disabled, debug logging stripped\n\u2022 Installing this over v2.0.0 works \u2014 no uninstall needed"
+  "versionCode": 6,
+  "versionName": "2.1.0",
+  "tier": "major",
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.1.0/neverhide-empire-v2.1.0.apk",
+  "changelog": "v2.1.0 \u2014 QURAN AUDIO EDITION:\n\n\ud83d\udcd6 FULL QURAN OFFLINE \u2014 Download all 114 surahs once with data, then listen offline forever, even in deep sleep\n\ud83d\udd4c Two reciters: Mishary Rashid Alafasy + Muhammad Ayyoob\n\u25b6\ufe0f Continuous recitation \u2014 auto-advances surah to surah\n\ud83d\udd16 Auto-resume \u2014 remembers exactly where you stopped\n\ud83c\udf19 Two-tier updates: MAJOR = APK (Check Updates), MINOR = What's New feed (no reinstall)\n\nUpdates in place over v2.0.x \u2014 no uninstall needed."
 }
