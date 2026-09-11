@@ -145,6 +145,21 @@ class CallRecordingsActivity : ComponentActivity() {
                 }
             }
 
+            // Shizuku TRUE-capture status + permission button
+            if (com.neverhide.empire.calls.ShizukuCallCapture.available()) {
+                val granted = com.neverhide.empire.calls.ShizukuCallCapture.permissionGranted()
+                if (!granted) {
+                    GlowButton("📡 Enable TRUE call capture (Shizuku)", listOf(Palette.PURPLE, Color(0xFF4A148C)), Modifier.fillMaxWidth()) {
+                        com.neverhide.empire.calls.ShizukuCallCapture.requestPermission()
+                    }
+                    Text("Crystal-clear both-sides recording via Shizuku — one-time permission", color = Palette.TEXT_MUTE, fontSize = 10.sp)
+                } else {
+                    StatusChip("📡 TRUE CAPTURE ACTIVE — direct call-stream recording", Palette.PURPLE)
+                }
+            } else {
+                Text("📡 Shizuku not running — using speaker method (still works)", color = Palette.TEXT_MUTE, fontSize = 10.sp)
+            }
+
             Spacer(Modifier.height(14.dp))
             SectionHeader("📁", "Recordings (${recs.size})", Palette.CYAN)
             Spacer(Modifier.height(6.dp))

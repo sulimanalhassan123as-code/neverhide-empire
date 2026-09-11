@@ -32,6 +32,34 @@ class GuardianAdminReceiver : DeviceAdminReceiver() {
         const val KEY_THEME = "guardian_theme"          // 0 Water 1 Fire 2 Thunder 3 Void
         const val KEY_TRUSTED_NUMBER = "trusted_number"  // SMS alerts on SIM change
         const val KEY_SENSITIVITY = "guardian_sensitivity" // fails before trigger (default 1)
+        const val KEY_ALERT_NUMBER = "guardian_alert_number" // SMS alert destination
+        const val KEY_FX_MODE = "guardian_fx_mode"           // 1 gunshot+cracks (default), 0 siren
+
+        /** Human-readable event log entry for the evidence vault. */
+        fun logEvent(context: Context, kind: String) {
+            val f = java.io.File(context.filesDir, "intruders")
+            f.mkdirs()
+            val stamp = java.text.SimpleDateFormat(
+                "yyyy-MM-dd HH:mm:ss", java.util.Locale.US
+            ).format(java.util.Date())
+            java.io.File(f, "events.log").appendText("$stamp|$kind\n")
+        }
+
+        /** Send an SMS alert to the configured number (best-effort). */
+        fun sendSmsAlert(context: Context, photoPath: String?) {
+            val number = context.getSharedPreferences(GUARDIAN_PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_ALERT_NUMBER, "") ?: ""
+            if (number.isBlank()) return
+            runCatching {
+                val sms = android.telephony.SmsManager.getDefault()
+                sms.sendTextMessage(
+                    number, null,
+                    "🚨 NEVERHIDE GUARDIAN ALERT: Wrong password detected on your phone!" +
+                            (if (photoPath != null) " Intruder selfie captured — open Empire to see it." else ""),
+                    null, null
+                )
+            }
+        }
 
         fun adminComponent(context: Context) =
             ComponentName(context, GuardianAdminReceiver::class.java)
@@ -82,6 +110,10 @@ class GuardianAdminReceiver : DeviceAdminReceiver() {
         // 3. Vibration + tone for immediate shock even if the activity is delayed
         vibrate(context)
         tone()
+
+        // 4. GUARDIAN 2.0 — evidence log + SMS alert to the configured number
+        logEvent(context, "WRONG_PASSWORD")
+        Thread { sendSmsAlert(context, null) }.start()
     }
 
     override fun onPasswordSucceeded(context: Context, intent: Intent) {

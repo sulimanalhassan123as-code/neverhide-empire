@@ -1,7 +1,7 @@
 {
-  "versionCode": 8,
-  "versionName": "2.3.0",
+  "versionCode": 9,
+  "versionName": "2.4.0",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.3.0/neverhide-empire-v2.3.0.apk",
-  "changelog": "v2.3.0 \u2014 CALL RECORDER:\n\n\u23fa Record any phone call \u2014 no root, works on Android 10+\nSpeaker-on mic capture (the pro-recorder method), call-state detection, auto-save on hangup\n\ud83d\udcc1 Recordings library: play, share, delete \u2014 number + date + size saved with each file\n\u2696\ufe0f Legal reminder built in: consent laws vary by country\n\nUpdates in place over v2.2.0 \u2014 no uninstall needed."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.4.0/neverhide-empire-v2.4.0.apk",
+  "changelog": "v2.4.0 \u2014 GUARDIAN 2.0 + TRUE CALL CAPTURE:\n\n\ud83d\udca5 GUNSHOT + CRACKED SCREEN \u2014 wrong password now fires a procedurally-synthesized gunshot (pure math, no sound files) while the screen SHATTERS with a realistic glass-crack overlay. Toggleable back to classic siren.\n\ud83d\udcf1 SMS GUARDIAN ALERTS \u2014 set a number in the Guardian card; wrong-password attempts send you an instant alert SMS + the intruder selfie is saved to the evidence vault.\n\ud83d\udce1 SHIZUKU TRUE CALL CAPTURE \u2014 if Shizuku is running, the Call Recorder now captures BOTH SIDES directly from the call stream (shell privileges) \u2014 no more speakerphone trick. Falls back automatically if Shizuku is off.\n\nUpdates in place over v2.3.0 \u2014 no uninstall needed."
 }

@@ -119,6 +119,20 @@ class CallRecorderService : Service() {
     }
 
     private fun startRecording() {
+        // ===== SHIZUKU TRUE-CAPTURE PATH =====
+        // If Shizuku is running + permission granted, record BOTH sides
+        // directly from the call stream — no speakerphone needed.
+        if (ShizukuCallCapture.available() && ShizukuCallCapture.permissionGranted()) {
+            val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+            val safeNumber = recordedNumber.replace(Regex("[^0-9+]"), "").ifBlank { "unknown" }
+            val wav = File(dir(this), "${safeNumber}_$stamp.wav")
+            if (ShizukuCallCapture.start(this, wav.absolutePath)) {
+                isRecording = true
+                startForeground(NOTIFICATION_ID, buildNotification("📡 TRUE CAPTURE — both sides, direct from call stream"))
+                return
+            }
+        }
+        // ===== SPEAKER-MIC FALLBACK PATH =====
         val minBuf = AudioRecord.getMinBufferSize(
             RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
         )
@@ -194,7 +208,10 @@ class CallRecorderService : Service() {
         fos.close()
     }
 
-    private fun buildNotification(): Notification {
+    private var captureText = "Speaker is ON so both sides are captured. Tap to stop."
+
+    private fun buildNotification(text: String = "Speaker is ON so both sides are captured. Tap to stop."): Notification {
+        captureText = text
         val stopPi = PendingIntent.getService(
             this, 0,
             Intent(this, CallRecorderService::class.java).setAction(ACTION_STOP),
@@ -208,7 +225,7 @@ class CallRecorderService : Service() {
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentTitle("⏺ Recording call")
-            .setContentText("Speaker is ON so both sides are captured. Tap to stop.")
+            .setContentText(captureText)
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setContentIntent(openPi)
@@ -218,6 +235,7 @@ class CallRecorderService : Service() {
 
     override fun onDestroy() {
         isRecording = false
+        runCatching { ShizukuCallCapture.stop() }
         recordingThread?.join(1500)
         // Give the writer a moment, then release everything
         runCatching { audioRecord?.release() }

@@ -4,6 +4,12 @@
     {
       "date": "2026-09-11",
       "tier": "minor",
+      "title": "Guardian 2.0 shipped (v2.4.0)",
+      "note": "Gunshot + shattered-screen jumpscare, SMS intruder alerts, and TRUE both-sides call recording via Shizuku. Research verdict: live in-call voice morphing needs root \u2014 Empire Calls (in-app voice-FX calls with friends) is the honest path, coming next."
+    },
+    {
+      "date": "2026-09-11",
+      "tier": "minor",
       "title": "Call Recorder shipped (v2.3.0)",
       "note": "Record phone calls with auto-save on hangup. Open the Calls section and tap Call Recorder. The speaker turns on automatically so both sides of the call are captured \u2014 the same technique pro recorders use on modern Android."
     },

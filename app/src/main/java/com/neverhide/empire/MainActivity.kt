@@ -239,6 +239,38 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
+                        Spacer(Modifier.height(12.dp))
+                        // GUARDIAN 2.0 — FX mode + SMS alert config
+                        var fxGunshot by remember {
+                            mutableStateOf(getSharedPreferences("guardian_prefs", MODE_PRIVATE).getInt("guardian_fx_mode", 1) == 1)
+                        }
+                        var alertNum by remember {
+                            mutableStateOf(getSharedPreferences("guardian_prefs", MODE_PRIVATE).getString("guardian_alert_number", "") ?: "")
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("💥 Gunshot + cracked screen", color = Palette.WHITE, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                            androidx.compose.material3.Switch(
+                                checked = fxGunshot,
+                                onCheckedChange = { on ->
+                                    fxGunshot = on
+                                    getSharedPreferences("guardian_prefs", MODE_PRIVATE).edit()
+                                        .putInt("guardian_fx_mode", if (on) 1 else 0).apply()
+                                },
+                                colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = Palette.ORANGE)
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            androidx.compose.material3.OutlinedTextField(
+                                value = alertNum, onValueChange = { alertNum = it },
+                                label = { androidx.compose.material3.Text("SMS alert number (optional)", color = Palette.TEXT_DIM) },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f)
+                            )
+                            GlowButton("💾", listOf(Palette.ORANGE, Color(0xFFDD2C00)), Modifier.height(52.dp)) {
+                                getSharedPreferences("guardian_prefs", MODE_PRIVATE).edit()
+                                    .putString("guardian_alert_number", alertNum.trim()).apply()
+                            }
+                        }
                         Spacer(Modifier.height(14.dp))
                         if (!guardianArmed) {
                             GlowButton("🛡️ Enable Lock Guardian", listOf(Palette.ORANGE, Color(0xFFDD2C00)), Modifier.fillMaxWidth()) {

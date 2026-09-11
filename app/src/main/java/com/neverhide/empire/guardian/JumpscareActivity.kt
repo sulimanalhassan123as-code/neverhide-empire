@@ -129,10 +129,20 @@ class JumpscareActivity : ComponentActivity() {
             }
         }
 
+        // GUARDIAN 2.0 — FX mode: 1 = gunshot + cracked screen (default), 0 = classic siren
+        val fxMode = getSharedPreferences("guardian_prefs", MODE_PRIVATE)
+            .getInt("guardian_fx_mode", 1)
+        if (fxMode == 1) {
+            // Shattered-glass overlay on top of everything
+            root.addView(CrackOverlayView(this), FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT
+            ))
+        }
+
         setContentView(root)
 
         startVibration()
-        startSiren()
+        if (fxMode == 1) startGunshot() else startSiren()
 
         android.os.Handler(mainLooper).postDelayed({ finish() }, 10_000)
         root.setOnClickListener { finish() } // owner taps to dismiss
@@ -156,6 +166,18 @@ class JumpscareActivity : ComponentActivity() {
             @Suppress("DEPRECATION")
             vibrator?.vibrate(pattern, -1)
         }
+    }
+
+    private fun startGunshot() {
+        // Procedurally-synthesized gunshot at max alarm volume
+        soundPool = SoundPool.Builder().setMaxStreams(1)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            ).build()
+        GunshotSynth.play(this, soundPool)
     }
 
     private fun startSiren() {
