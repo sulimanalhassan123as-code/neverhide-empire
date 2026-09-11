@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neverhide Empire — Updates</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(160deg, #0a0a1a 0%, #0d1b2a 100%);
+    color:#fff; min-height:100vh;
+  }
+  .container { max-width:680px; margin:0 auto; padding:32px 20px 60px; }
+  h1 { color:#00e5ff; font-size:2em; margin-bottom:4px; }
+  .tagline { color:#8899aa; margin-bottom:28px; font-size:.95em; }
+  .card {
+    background:#111827; border:1px solid #1e2a3a; border-radius:16px;
+    padding:22px; margin-bottom:18px;
+  }
+  .card h2 { color:#fff; font-size:1.05em; margin-bottom:12px; }
+  #version { color:#69f0ae; font-size:1.6em; font-weight:700; }
+  #changelog { white-space:pre-wrap; color:#cfd8dc; font-size:.9em; line-height:1.55; margin-top:10px; }
+  .dl-btn {
+    display:block; text-align:center; background:linear-gradient(90deg,#00e5ff,#7c4dff);
+    color:#00111a; font-weight:700; text-decoration:none; padding:16px;
+    border-radius:12px; margin-top:16px; font-size:1.05em;
+  }
+  .dl-btn:hover { filter:brightness(1.15); }
+  .badge { display:inline-block; background:#002233; color:#00e5ff; border:1px solid #00e5ff44;
+    padding:2px 10px; border-radius:99px; font-size:.75em; margin-right:6px; }
+  .steps li { margin:10px 0 10px 22px; color:#cfd8dc; font-size:.92em; }
+  .privacy p { color:#9fb0c0; font-size:.88em; margin:8px 0; line-height:1.5; }
+  .note { color:#ffd600; font-size:.85em; margin-top:10px; }
+  footer { text-align:center; color:#5a6a7a; font-size:.8em; margin-top:36px; }
+  a { color:#00e5ff; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>👑 Neverhide Empire</h1>
+  <div class="tagline">Native Android power suite — screenshot, 3D launcher, 20 live wallpapers, lock guardian, 16 power tools.</div>
+
+  <div class="card">
+    <h2>🚀 Latest Version</h2>
+    <span class="badge">APK</span><span class="badge">Android 8.0+</span><span class="badge">Personal use</span>
+    <div style="margin-top:12px">Current release: <span id="version">loading…</span></div>
+    <div id="changelog">Checking for the latest release notes…</div>
+    <a class="dl-btn" id="dl" href="#">⬇️ Download Latest APK</a>
+    <div class="note">⚠️ Upgrading from v1.2.0 or older? Uninstall the old version first (new signing key), then install this one.</div>
+  </div>
+
+  <div class="card">
+    <h2>📖 How to Install & Use</h2>
+    <ol class="steps">
+      <li>Download the APK above, tap it, and allow <b>Install unknown apps</b> for your browser when asked.</li>
+      <li>Open the app and tap <b>Grant Missing Permissions</b> — allow everything (location, calls, SMS, camera, mic, calendar, sensors). The suite needs them for its tools.</li>
+      <li>Tap <b>Enable Lock Guardian</b> and activate device admin — this powers the wrong-password jumpscare.</li>
+      <li>Pick a live wallpaper (20 effects), set it, and enjoy. Explore the <b>16 Power Tools</b> in the toolkit.</li>
+      <li>Updates: the app checks automatically at every open — or tap <b>Check for Updates</b> any time.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>🔒 Privacy</h2>
+    <div class="privacy">
+      <p>• No accounts, no servers, no analytics. Everything runs on your phone.</p>
+      <p>• Intruder selfies are stored only in the app's private folder on your device — never uploaded anywhere.</p>
+      <p>• The SIM Guard SMS goes only to the trusted number you set, from your own phone.</p>
+      <p>• The only network calls the app ever makes: weather lookup (Open-Meteo) and its own update check (GitHub).</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🆘 Help & Contact</h2>
+    <div class="privacy">
+      <p>• Wrong password triggered a scare you didn't want? Tap the jumpscare to close it; disable Guardian in the app.</p>
+      <p>• Siren won't stop? Open the app → Find My Phone → Stop, or reboot.</p>
+      <p>• Contact the developer through the Neverhide Empire Telegram assistant (link shared with the app).</p>
+    </div>
+  </div>
+
+  <footer>Neverhide Empire — built with ❤️ in Ghana. This page always shows the newest release automatically.</footer>
+</div>
+
+<script>
+fetch('https://raw.githubusercontent.com/sulimanalhassan123as-code/neverhide-empire/main/updater/latest.json', {cache:'no-store'})
+  .then(r => r.json())
+  .then(m => {
+    document.getElementById('version').textContent = 'v' + m.versionName;
+    document.getElementById('changelog').textContent = m.changelog || '—';
+    document.getElementById('dl').href = m.apkUrl;
+  })
+  .catch(() => {
+    document.getElementById('version').textContent = 'offline';
+    document.getElementById('changelog').textContent = 'Could not reach the update manifest — refresh the page.';
+  });
+</script>
+</body>
+</html>

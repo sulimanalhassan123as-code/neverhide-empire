@@ -3,25 +3,16 @@ package com.neverhide.empire.wallpaper
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import com.neverhide.empire.wallpaper.effects.Effect
-import com.neverhide.empire.wallpaper.effects.FireParticles
-import com.neverhide.empire.wallpaper.effects.GalaxyStars
-import com.neverhide.empire.wallpaper.effects.HologramGrid
-import com.neverhide.empire.wallpaper.effects.WaterWaves
+import com.neverhide.empire.wallpaper.effects.EffectCatalog
+import com.neverhide.empire.wallpaper.effects.ParticleEffect
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 /**
- * Drives whichever [Effect] is currently selected. Uses a monotonic clock so
- * animations are frame-rate independent.
+ * Drives whichever of the 20 catalog effects is currently selected.
+ * Uses a monotonic clock so animations are frame-rate independent.
  */
 class WallpaperRenderer(private val effectId: Int) : GLSurfaceView.Renderer {
-
-    companion object {
-        const val FIRE = 0
-        const val WATER = 1
-        const val GALAXY = 2
-        const val HOLOGRAM = 3
-    }
 
     private lateinit var effect: Effect
     private var startNanos = 0L
@@ -29,12 +20,16 @@ class WallpaperRenderer(private val effectId: Int) : GLSurfaceView.Renderer {
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE)
-        effect = when (effectId) {
-            WATER -> WaterWaves()
-            GALAXY -> GalaxyStars()
-            HOLOGRAM -> HologramGrid()
-            else -> FireParticles()
-        }
+
+        val entry = EffectCatalog.byId(effectId)
+        effect = ParticleEffect(
+            mode = entry.mode,
+            colorA = entry.colorA,
+            colorB = entry.colorB,
+            count = entry.count,
+            pointSize = entry.pointSize,
+            bg = entry.bg
+        )
         effect.init()
         startNanos = System.nanoTime()
     }

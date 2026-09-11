@@ -2,29 +2,72 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ===== Feature permissions ===== -->
+    <!-- ===== Foreground service types ===== -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+
+    <!-- ===== Core ===== -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    
-    <!-- Keep service alive during sleep -->
+
+    <!-- ===== Deep-sleep survival ===== -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:ignore="ExactAlarm" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- ===== Camera / flashlight ===== -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
+
+    <!-- ===== Biometrics ===== -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
-    <!-- Storage: scoped for API 33+, legacy for older -->
+    <!-- ===== Location / weather / tracker ===== -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- ===== Phone / dialer ===== -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+
+    <!-- ===== Audio ===== -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- ===== Health / body sensors ===== -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <uses-permission android:name="android.permission.BODY_SENSORS_BACKGROUND" />
+
+    <!-- ===== Calendar / clock ===== -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.SET_ALARM" />
+
+    <!-- ===== System stats (best-effort, harmless if not granted) ===== -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.BATTERY_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- ===== Storage: scoped for API 33+, legacy for older ===== -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
@@ -32,7 +75,13 @@
         android:maxSdkVersion="28" />
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
-    <uses-feature android:name="android.hardware touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
+    <uses-feature android:name="android.hardware.compass" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
     <application
         android:name=".EmpireApp"
@@ -56,6 +105,12 @@
             </intent-filter>
         </activity>
 
+        <!-- ===== Tools Hub Activity ===== -->
+        <activity
+            android:name=".tools.ToolsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
         <!-- ===== 3D Launcher Activity ===== -->
         <activity
             android:name=".launcher.Launcher3DActivity"
@@ -70,6 +125,17 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- ===== Guardian Jumpscare (shows over lock screen) ===== -->
+        <activity
+            android:name=".guardian.JumpscareActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:noHistory="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.NeverhideEmpire.Fullscreen" />
 
         <!-- ===== Screenshot Services ===== -->
         <service
@@ -105,15 +171,47 @@
                 android:resource="@xml/live_wallpaper" />
         </service>
 
-        <!-- ===== Persistent Background Service ===== -->
+        <!-- ===== Persistent Background Service (deep-sleep resistant) ===== -->
         <service
             android:name=".core.EmpireBackgroundService"
             android:exported="false"
             android:foregroundServiceType="specialUse"
             android:stopWithTask="false"
+            tools:ignore="ForegroundServicePermission">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Persistent watchdog keeping Empire tools alive" />
+        </service>
+
+        <!-- ===== Eye Care overlay service ===== -->
+        <service
+            android:name=".tools.eyecare.EyeCareService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
             tools:ignore="ForegroundServicePermission" />
 
-        <!-- ===== Boot Receiver ===== -->
+        <!-- ===== Find-my-phone siren service ===== -->
+        <service
+            android:name=".tools.siren.SirenService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission" />
+
+        <!-- ===== Guardian Admin Receiver (wrong password detection) ===== -->
+        <receiver
+            android:name=".guardian.GuardianAdminReceiver"
+            android:exported="true"
+            android:label="@string/guardian_name"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ===== Boot Receiver (restart everything) ===== -->
         <receiver
             android:name=".core.BootReceiver"
             android:exported="true">
@@ -121,6 +219,31 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+
+        <!-- ===== Watchdog restart alarm receiver ===== -->
+        <receiver
+            android:name=".core.RestartReceiver"
+            android:exported="false" />
+        <!-- ===== Battery guard (low battery alarm) ===== -->
+        <receiver
+            android:name=".core.BatteryGuardReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BATTERY_LOW" />
+                <action android:name="android.intent.action.BATTERY_OKAY" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ===== SIM change guard (anti-theft) ===== -->
+        <receiver
+            android:name=".tools.tracker.SimGuardReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.SIM_STATE_CHANGED" />
             </intent-filter>
         </receiver>
 

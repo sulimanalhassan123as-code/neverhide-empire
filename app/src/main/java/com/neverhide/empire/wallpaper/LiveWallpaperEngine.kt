@@ -10,8 +10,7 @@ import android.view.SurfaceHolder
  * GLSurfaceView-like renderer. Rendering pauses when the wallpaper is hidden,
  * which is the key battery optimisation.
  *
- * The chosen effect is read from SharedPreferences ("wallpaper_effect"), so the
- * app UI can switch between Fire / Water / Galaxy / Hologram.
+ * The chosen effect is read from SharedPreferences ("wallpaper_effect"), so the app UI can switch between all 20 catalog effects.
  */
 class LiveWallpaperEngine : WallpaperService() {
 
@@ -32,7 +31,7 @@ class LiveWallpaperEngine : WallpaperService() {
             super.onCreate(holder)
             val prefs: SharedPreferences =
                 getSharedPreferences("empire_prefs", MODE_PRIVATE)
-            val effectId = prefs.getInt("wallpaper_effect", WallpaperRenderer.FIRE)
+            val effectId = prefs.getInt("wallpaper_effect", 0)
 
             glSurface = WallpaperGLSurfaceView().apply {
                 setEGLContextClientVersion(2)
