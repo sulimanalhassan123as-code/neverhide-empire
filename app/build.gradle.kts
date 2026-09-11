@@ -11,8 +11,8 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 9
-        versionName = "2.4.0"
+        versionCode = 10
+        versionName = "2.5.0"
         vectorDrawables { useSupportLibrary = true }
     }
 

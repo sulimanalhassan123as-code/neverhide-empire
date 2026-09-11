@@ -66,31 +66,48 @@ object GunshotSynth {
         return f
     }
 
-    /** Play the gunshot at MAX alarm volume. Returns the SoundPool stream id. */
-    fun play(context: Context, pool: SoundPool?): Int {
-        return runCatching {
-            val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            audio.setStreamVolume(
-                AudioManager.STREAM_ALARM, audio.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0
-            )
-            val p = pool ?: SoundPool.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                ).build()
-            val id = p.load(get(context).absolutePath, 1)
-            // SoundPool.load is async; poll briefly then play
-            Thread {
-                for (i in 0 until 50) {
-                    Thread.sleep(60)
-                    val s = p.play(id, 1f, 1f, 1, 0, 1f)
-                    if (s != 0) return@Thread
+    /**
+     * Play the gunshot at MAX alarm volume. Uses AudioTrack in STATIC mode —
+     * deterministic, no async sample loading (the SoundPool path could fail
+     * silently while the sample was still decoding — that was the bug).
+     */
+    fun play(context: Context) {
+        val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audio.setStreamVolume(
+            AudioManager.STREAM_ALARM, audio.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0
+        )
+        Thread {
+            runCatching {
+                val bytes = get(context).readBytes()
+                // WAV: 44-byte header, then 16-bit mono PCM
+                val pcm = ShortArray((bytes.size - 44) / 2)
+                for (i in pcm.indices) {
+                    pcm[i] = ((bytes[44 + i * 2].toInt() and 0xFF) or
+                            ((bytes[45 + i * 2].toInt() and 0xFF) shl 8)).toShort()
                 }
-            }.start()
-            1
-        }.getOrDefault(0)
+                val at = android.media.AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        android.media.AudioFormat.Builder()
+                            .setEncoding(android.media.AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(RATE)
+                            .setChannelMask(android.media.AudioFormat.CHANNEL_OUT_MONO)
+                            .build()
+                    )
+                    .setTransferMode(android.media.AudioTrack.MODE_STATIC)
+                    .setBufferSizeInBytes(pcm.size * 2)
+                    .build()
+                at.write(pcm, 0, pcm.size)
+                at.play()
+                Thread.sleep(pcm.size * 1000L / RATE + 400)
+                at.release()
+            }
+        }.start()
     }
 
     private fun writeWav(out: File, pcm: ShortArray) {

@@ -4,6 +4,12 @@
     {
       "date": "2026-09-11",
       "tier": "minor",
+      "title": "Guardian Alert Network live (v2.5.0)",
+      "note": "Wrong password now captures the phone location and alerts your chosen number by SMS with a live Google Maps link \u2014 and when online, DMs the intruder selfie to you on WhatsApp automatically. Gunshot playback rebuilt on AudioTrack so it fires every time."
+    },
+    {
+      "date": "2026-09-11",
+      "tier": "minor",
       "title": "Guardian 2.0 shipped (v2.4.0)",
       "note": "Gunshot + shattered-screen jumpscare, SMS intruder alerts, and TRUE both-sides call recording via Shizuku. Research verdict: live in-call voice morphing needs root \u2014 Empire Calls (in-app voice-FX calls with friends) is the honest path, coming next."
     },

@@ -169,15 +169,8 @@ class JumpscareActivity : ComponentActivity() {
     }
 
     private fun startGunshot() {
-        // Procedurally-synthesized gunshot at max alarm volume
-        soundPool = SoundPool.Builder().setMaxStreams(1)
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            ).build()
-        GunshotSynth.play(this, soundPool)
+        // Procedurally-synthesized gunshot at max alarm volume (AudioTrack)
+        GunshotSynth.play(this)
     }
 
     private fun startSiren() {

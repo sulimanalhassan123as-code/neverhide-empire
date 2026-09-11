@@ -1,7 +1,7 @@
 {
-  "versionCode": 9,
-  "versionName": "2.4.0",
+  "versionCode": 10,
+  "versionName": "2.5.0",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.4.0/neverhide-empire-v2.4.0.apk",
-  "changelog": "v2.4.0 \u2014 GUARDIAN 2.0 + TRUE CALL CAPTURE:\n\n\ud83d\udca5 GUNSHOT + CRACKED SCREEN \u2014 wrong password now fires a procedurally-synthesized gunshot (pure math, no sound files) while the screen SHATTERS with a realistic glass-crack overlay. Toggleable back to classic siren.\n\ud83d\udcf1 SMS GUARDIAN ALERTS \u2014 set a number in the Guardian card; wrong-password attempts send you an instant alert SMS + the intruder selfie is saved to the evidence vault.\n\ud83d\udce1 SHIZUKU TRUE CALL CAPTURE \u2014 if Shizuku is running, the Call Recorder now captures BOTH SIDES directly from the call stream (shell privileges) \u2014 no more speakerphone trick. Falls back automatically if Shizuku is off.\n\nUpdates in place over v2.3.0 \u2014 no uninstall needed."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.5.0/neverhide-empire-v2.5.0.apk",
+  "changelog": "v2.5.0 \u2014 GUARDIAN ALERT NETWORK:\n\n\ud83d\udccd WRONG PASSWORD = LIVE LOCATION ALERT: set your alert number in the Guardian card. Every failed unlock now grabs the phone's location and SMSes you a Google Maps link (works offline via carrier).\n\ud83d\udcac WHATSAPP EVIDENCE: when the phone is online, the intruder selfie + caption + location is DM'd to you on WhatsApp automatically \u2014 via the Empire relay bridge.\n\ud83d\udd2b GUNSHOT FIX: rebuilt playback on AudioTrack (static mode) \u2014 the gunshot now fires reliably every single time.\n\nUpdates in place over v2.4.0 \u2014 no uninstall needed."
 }

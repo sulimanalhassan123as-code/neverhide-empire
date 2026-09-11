@@ -105,6 +105,8 @@ class GuardianAdminReceiver : DeviceAdminReceiver() {
         IntruderCamera.capture(context) { photoPath ->
             // 2. Fire the jumpscare — full-screen intent notification
             JumpscareActivity.launch(context, theme, photoPath)
+            // 3. GUARDIAN ALERT: location + SMS + WhatsApp (selfie attached)
+            GuardianAlert.fire(context, photoPath)
         }
 
         // 3. Vibration + tone for immediate shock even if the activity is delayed
