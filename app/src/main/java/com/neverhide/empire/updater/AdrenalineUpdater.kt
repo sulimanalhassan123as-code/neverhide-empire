@@ -110,6 +110,16 @@ class AdrenalineUpdater(private val context: Context) {
                     }
                     out
                 }
+                // SECURITY: verify the update is genuinely ours before install
+                val authentic = ApkVerifier.signatureMatchesInstalled(context, file) &&
+                        ApkVerifier.packageMatchesInstalled(context, file)
+                if (!authentic) {
+                    file.delete()
+                    Toast.makeText(context,
+                        "🚫 SECURITY: update signature failed verification — blocked.",
+                        Toast.LENGTH_LONG).show()
+                    return@launch
+                }
                 ApkInstaller.install(context, file)
             } catch (e: Exception) {
                 Toast.makeText(context, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()

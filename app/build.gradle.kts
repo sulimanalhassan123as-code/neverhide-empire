@@ -11,8 +11,8 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "2.0.0"
+        versionCode = 5
+        versionName = "2.0.1"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -27,7 +27,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false  // keep false until ProGuard rules are tuned
+            isMinifyEnabled = true
+            isShrinkResources = true
             isShrinkResources = false
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(

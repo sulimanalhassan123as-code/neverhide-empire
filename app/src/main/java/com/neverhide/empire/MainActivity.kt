@@ -31,6 +31,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neverhide.empire.dashboard.*
+import com.neverhide.empire.calls.QuickDialActivity
+import com.neverhide.empire.quran.QuranActivity
 import com.neverhide.empire.core.EmpireBackgroundService
 import com.neverhide.empire.core.PermissionManager
 import com.neverhide.empire.guardian.GuardianAdminReceiver
@@ -149,13 +152,6 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun EmpireHub() {
-        val darkBg = Color(0xFF0A0A1A)
-        val cyan = Color(0xFF00E5FF)
-        val purple = Color(0xFF7C4DFF)
-        val pink = Color(0xFFFF4081)
-        val orange = Color(0xFFFF6D00)
-        val green = Color(0xFF69F0AE)
-
         val scroll = rememberScrollState()
         var guardianTheme by remember {
             mutableStateOf(getSharedPreferences("guardian_prefs", MODE_PRIVATE).getInt(GuardianAdminReceiver.KEY_THEME, 0))
@@ -164,125 +160,184 @@ class MainActivity : ComponentActivity() {
             mutableStateOf(getSharedPreferences("empire_prefs", MODE_PRIVATE).getInt("wallpaper_effect", 0))
         }
         val permProgress = PermissionManager.progress(this)
+        val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+        val version = packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
 
         MaterialTheme {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Brush.verticalGradient(listOf(darkBg, Color(0xFF0D1B2A))))
+                    .background(Palette.pageBg)
             ) {
                 Column(
                     Modifier
                         .fillMaxSize()
                         .verticalScroll(scroll)
                         .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     // ===== Header =====
-                    Text("👑 Neverhide Empire", color = cyan, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                    val version = packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
-                    Text("v$version • Power Suite • ${permProgress.first}/${permProgress.second} permissions",
-                        color = Color.Gray, fontSize = 12.sp)
-
-                    Spacer(Modifier.height(4.dp))
-
-                    // ===== Capture =====
-                    SectionTitle("📸 Capture")
-                    EmpireButton("Take Screenshot", cyan) { launchScreenshot() }
-                    EmpireButton("Toggle Floating Bubble", purple) {
-                        if (Settings.canDrawOverlays(this@MainActivity)) {
-                            startBubbleService()
-                        } else {
-                            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                Uri.parse("package:$packageName")))
-                        }
+                    Text("👑 Neverhide Empire", color = Palette.CYAN, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        StatusChip("v$version", Palette.CYAN)
+                        Spacer(Modifier.width(6.dp))
+                        StatusChip("${permProgress.first}/${permProgress.second} permissions", Palette.TEXT_DIM)
+                        Spacer(Modifier.width(6.dp))
+                        StatusChip("SECURE BUILD", Palette.GREEN)
                     }
 
-                    // ===== Guardian =====
-                    SectionTitle("🛡️ Adrenaline Lock Guardian")
-                    val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-                    val adminStatus = if (GuardianAdminReceiver.isAdminActive(this@MainActivity))
-                        "ACTIVE — wrong passwords will trigger the jumpscare" else "NOT ARMED — tap Enable"
-                    Text(adminStatus, color = if (guardianArmed) green else Color.Gray, fontSize = 12.sp)
-                    if (!guardianArmed) {
-                        EmpireButton("🛡️ Enable Lock Guardian", orange) {
-                            val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
-                                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
-                                    GuardianAdminReceiver.adminComponent(this@MainActivity))
-                                putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                                    "Neverhide Empire uses this ONLY to detect wrong password attempts " +
-                                            "and trigger the Adrenaline jumpscare. No data leaves your phone.")
-                            }
-                            adminLauncher.launch(intent)
-                        }
-                    } else {
-                        EmpireButton("⚔️ Test Jumpscare NOW", orange) {
-                            JumpscareActivity.launch(this@MainActivity, guardianTheme, null)
-                        }
-                        EmpireButton("🔕 Disable Guardian", Color(0xFF37474F)) {
-                            dpm.removeActiveAdmin(GuardianAdminReceiver.adminComponent(this@MainActivity))
-                            guardianArmed = false
-                        }
-                    }
-                    // Guardian theme picker
-                    val themes = listOf("🌊 Water", "🔥 Fire", "⚡ Thunder", "🌑 Void")
-                    Row(
-                        Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        themes.forEachIndexed { i, label ->
-                            val selected = guardianTheme == i
+                    // ===== HERO: Lock Guardian =====
+                    GlassCard(glow = Palette.PURPLE) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 Modifier
-                                    .border(
-                                        if (selected) 2.dp else 1.dp,
-                                        if (selected) orange else Color(0xFF2A3A4A),
-                                        RoundedCornerShape(10.dp)
-                                    )
-                                    .background(
-                                        if (selected) Color(0xFF332000) else Color(0xFF111827),
-                                        RoundedCornerShape(10.dp)
-                                    )
-                                    .clickable {
-                                        guardianTheme = i
-                                        getSharedPreferences("guardian_prefs", MODE_PRIVATE)
-                                            .edit().putInt(GuardianAdminReceiver.KEY_THEME, i).apply()
-                                    }
-                                    .padding(horizontal = 14.dp, vertical = 8.dp)
-                            ) {
-                                Text(label, color = if (selected) orange else Color.Gray, fontSize = 12.sp)
+                                    .size(54.dp)
+                                    .background(Palette.heroGradient, RoundedCornerShape(16.dp))
+                                    .border(1.dp, Palette.PURPLE.copy(alpha = 0.6f), RoundedCornerShape(16.dp)),
+                                contentAlignment = Alignment.Center
+                            ) { Text("🛡️", fontSize = 26.sp) }
+                            Spacer(Modifier.width(14.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("Adrenaline Lock Guardian", color = Palette.WHITE, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                                Text(
+                                    if (guardianArmed) "ARMED — wrong passwords trigger the jumpscare"
+                                    else "NOT ARMED — tap Enable to protect",
+                                    color = if (guardianArmed) Palette.GREEN else Palette.TEXT_DIM, fontSize = 12.sp
+                                )
+                            }
+                            if (guardianArmed) StatusChip("ACTIVE", Palette.GREEN)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        // Theme picker
+                        val themes = listOf("🌊 Water", "🔥 Fire", "⚡ Thunder", "🌑 Void")
+                        Row(
+                            Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            themes.forEachIndexed { i, label ->
+                                val selected = guardianTheme == i
+                                Box(
+                                    Modifier
+                                        .border(
+                                            if (selected) 2.dp else 1.dp,
+                                            if (selected) Palette.ORANGE else Color(0xFF2A3A4A),
+                                            RoundedCornerShape(10.dp)
+                                        )
+                                        .background(
+                                            if (selected) Color(0xFF332000) else Palette.CARD,
+                                            RoundedCornerShape(10.dp)
+                                        )
+                                        .clickable {
+                                            guardianTheme = i
+                                            getSharedPreferences("guardian_prefs", MODE_PRIVATE)
+                                                .edit().putInt(GuardianAdminReceiver.KEY_THEME, i).apply()
+                                        }
+                                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                                ) {
+                                    Text(label, color = if (selected) Palette.ORANGE else Color.Gray, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(14.dp))
+                        if (!guardianArmed) {
+                            GlowButton("🛡️ Enable Lock Guardian", listOf(Palette.ORANGE, Color(0xFFDD2C00)), Modifier.fillMaxWidth()) {
+                                val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                                    putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
+                                        GuardianAdminReceiver.adminComponent(this@MainActivity))
+                                    putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                                        "Neverhide Empire uses this ONLY to detect wrong password attempts " +
+                                                "and trigger the Adrenaline jumpscare. No data leaves your phone.")
+                                }
+                                adminLauncher.launch(intent)
+                            }
+                        } else {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                GlowButton("⚔️ Test Jumpscare", listOf(Palette.ORANGE, Color(0xFFDD2C00)), Modifier.weight(1f)) {
+                                    JumpscareActivity.launch(this@MainActivity, guardianTheme, null)
+                                }
+                                GlowButton("🔕 Disable", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
+                                    dpm.removeActiveAdmin(GuardianAdminReceiver.adminComponent(this@MainActivity))
+                                    guardianArmed = false
+                                }
                             }
                         }
                     }
 
-                    // ===== Wallpaper =====
-                    SectionTitle("🖼️ 3D Live Wallpapers — 20 effects")
-                    LazyRowOfEffects(selectedEffect) { i ->
-                        selectedEffect = i
-                        getSharedPreferences("empire_prefs", MODE_PRIVATE)
-                            .edit().putInt("wallpaper_effect", i).apply()
+                    // ===== CAPTURE =====
+                    SectionHeader("📸", "Capture")
+                    GlassCard {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            GlowButton("📸 Screenshot", listOf(Palette.CYAN, Color(0xFF00838F)), Modifier.weight(1f)) { launchScreenshot() }
+                            GlowButton("🫧 Bubble", listOf(Palette.PURPLE, Color(0xFF4A148C)), Modifier.weight(1f)) {
+                                if (Settings.canDrawOverlays(this@MainActivity)) {
+                                    startBubbleService()
+                                } else {
+                                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                        Uri.parse("package:$packageName")))
+                                }
+                            }
+                        }
                     }
-                    EmpireButton("Set Selected as Wallpaper", pink) { setWallpaper(selectedEffect) }
 
-                    // ===== Toolkit =====
-                    SectionTitle("🧰 Power Toolkit")
-                    EmpireButton("Open 16 Power Tools", green) {
-                        startActivity(Intent(this@MainActivity, ToolsActivity::class.java))
+                    // ===== WALLPAPERS =====
+                    SectionHeader("🖼️", "Live Wallpapers", Palette.PINK)
+                    GlassCard(glow = Palette.PINK) {
+                        Text("20 GPU effects — Water • Fire • Galaxy • Cyber", color = Palette.TEXT_DIM, fontSize = 12.sp)
+                        Spacer(Modifier.height(10.dp))
+                        LazyRowOfEffects(selectedEffect) { i ->
+                            selectedEffect = i
+                            getSharedPreferences("empire_prefs", MODE_PRIVATE)
+                                .edit().putInt("wallpaper_effect", i).apply()
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        GlowButton("✨ Set Selected as Wallpaper", listOf(Palette.PINK, Color(0xFFC2185B)), Modifier.fillMaxWidth()) {
+                            setWallpaper(selectedEffect)
+                        }
                     }
 
-                    // ===== Launcher =====
-                    SectionTitle("🚀 3D Launcher")
-                    EmpireButton("Open 3D App Launcher", cyan) {
+                    // ===== POWER TOOLS =====
+                    SectionHeader("🧰", "Power Tools", Palette.GREEN)
+                    GlassCard {
+                        Text("16 utilities for everyday power use", color = Palette.TEXT_DIM, fontSize = 12.sp)
+                        Spacer(Modifier.height(12.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ToolTile("🔦", "Light", Palette.CYAN) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
+                            ToolTile("🧭", "Compass", Palette.GREEN) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
+                            ToolTile("🔋", "Battery", Palette.ORANGE) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
+                            ToolTile("🧹", "RAM", Palette.PURPLE) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        GlowButton("Open all 16 Power Tools", listOf(Palette.GREEN, Color(0xFF00E676)), Modifier.fillMaxWidth()) {
+                            startActivity(Intent(this@MainActivity, ToolsActivity::class.java))
+                        }
+                    }
+
+                    // ===== COMMUNICATION =====
+                    SectionHeader("📞", "Communication", Palette.CYAN)
+                    FeatureCard("📞", "Calls — Quick Dial", "Instant dialer with call-log access", Palette.CYAN,
+                        badge = "NEW") { startActivity(Intent(this@MainActivity, QuickDialActivity::class.java)) }
+
+                    // ===== MORE =====
+                    SectionHeader("🚀", "More", Palette.PURPLE)
+                    FeatureCard("🚀", "3D App Launcher", "Sphere • Cube • Circle layouts in OpenGL", Palette.PURPLE) {
                         startActivity(Intent(this@MainActivity, Launcher3DActivity::class.java))
                     }
-
-                    // ===== System =====
-                    SectionTitle("⚙️ System")
-                    EmpireButton("🔄 Check for Updates", Color(0xFF37474F)) {
-                        AdrenalineUpdater(this@MainActivity).checkForUpdate()
+                    FeatureCard("📖", "Quran Audio", "Full Quran recitation — in development", Palette.GREEN,
+                        badge = "SOON", badgeColor = Palette.AMBER) {
+                        startActivity(Intent(this@MainActivity, QuranActivity::class.java))
                     }
-                    EmpireButton("🔑 Grant Missing Permissions (${permProgress.second - permProgress.first} left)", Color(0xFF37474F)) {
-                        permissionLauncher.launch(PermissionManager.missing(this@MainActivity).toTypedArray())
+
+                    // ===== SYSTEM =====
+                    SectionHeader("⚙️", "System", Palette.TEXT_DIM)
+                    GlassCard {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            GlowButton("🔄 Check Updates", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
+                                AdrenalineUpdater(this@MainActivity).checkForUpdate()
+                            }
+                            GlowButton("🔑 Grant Permissions", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
+                                permissionLauncher.launch(PermissionManager.missing(this@MainActivity).toTypedArray())
+                            }
+                        }
                     }
 
                     Spacer(Modifier.height(20.dp))

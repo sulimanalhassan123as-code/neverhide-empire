@@ -1,6 +1,6 @@
 {
-  "versionCode": 4,
-  "versionName": "2.0.0",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.0.0/neverhide-empire-v2.0.0.apk",
-  "changelog": "v2.0.0 — THE BIG ONE:\n\n• Adrenaline Lock Guardian (wrong password → fullscreen jumpscare + intruder selfie, 4 themes: Water, Fire, Thunder, Void)\n• 20 GPU live wallpapers (5 per family: Water, Fire, Galaxy, Cyber)\n• 16 Power Tools: Flashlight+strobe, Compass, Battery Guard, RAM Cleaner, App Scanner, Weather, Step Counter, Eye Care, Find-My-Phone Siren, Voice FX, Sound Meter, Quick Dial, Alarms, Calendar, Location, Animation Scale\n• Bulletproof deep-sleep engine: 1-min wake-lock heartbeat, exact Doze-piercing alarms, auto-restart on swipe/kill/reboot\n• SIM Guard anti-theft: SIM change → siren + SMS alert to trusted number\n• OTA self-updater with live manifest\n• All permissions requested up-front\n\nInstall: allow 'Install unknown apps' for this app, tap the downloaded file, allow all permissions. If upgrading from v1.2.0, uninstall the old one first (new signing key)."
+  "versionCode": 5,
+  "versionName": "2.0.1",
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.0.1/neverhide-empire-v2.0.1.apk",
+  "changelog": "v2.0.1 \u2014 Beautiful Dashboard Edition:\n\n\u2022 Brand new dashboard: hero Guardian card, grouped category cards, neon glow design\n\u2022 New Calls section (Quick Dial + recent calls log) in its own folder\n\u2022 Quran Audio room added \u2014 coming soon (full recitation player in development)\n\u2022 SECURITY HARDENING:\n  - Update APKs now signature-verified before install (forged updates blocked)\n  - Code fully obfuscated + shrunk (6MB \u2192 1.35MB, much harder to reverse-engineer)\n  - HTTPS-only network policy, backups disabled, debug logging stripped\n\u2022 Installing this over v2.0.0 works \u2014 no uninstall needed"
 }
