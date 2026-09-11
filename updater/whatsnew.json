@@ -4,14 +4,20 @@
     {
       "date": "2026-09-11",
       "tier": "minor",
+      "title": "v2.2.0 Vision Edition shipped",
+      "note": "Security Patrol (3-hourly spyware/sideload/keylogger auditing with alerts), Voice Studio with real robot-voice DSP, and the AR Camera Compass with spirit level. Enable auto-patrol in App Scanner, and try Voice Studio from the Calls section."
+    },
+    {
+      "date": "2026-09-11",
+      "tier": "minor",
       "title": "Quran Audio has arrived",
-      "note": "The full Quran is now inside the Empire. Open the Quran section, tap 'Download complete Quran' once while you have data — then listen offline forever, even in deep sleep. Recitations by Mishary Rashid Alafasy and Muhammad Ayyoob."
+      "note": "The full Quran is now inside the Empire. Open the Quran section, tap 'Download complete Quran' once while you have data \u2014 then listen offline forever, even in deep sleep. Recitations by Mishary Rashid Alafasy and Muhammad Ayyoob."
     },
     {
       "date": "2026-09-11",
       "tier": "minor",
       "title": "Two-tier updates are live",
-      "note": "From now on: MAJOR upgrades (new APK) arrive through Check Updates. MINOR upgrades (news, tips, small fixes) arrive right here — no reinstall, just refresh. The website shows both."
+      "note": "From now on: MAJOR upgrades (new APK) arrive through Check Updates. MINOR upgrades (news, tips, small fixes) arrive right here \u2014 no reinstall, just refresh. The website shows both."
     }
   ]
 }

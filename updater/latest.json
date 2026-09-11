@@ -1,7 +1,7 @@
 {
-  "versionCode": 6,
-  "versionName": "2.1.0",
+  "versionCode": 7,
+  "versionName": "2.2.0",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.1.0/neverhide-empire-v2.1.0.apk",
-  "changelog": "v2.1.0 \u2014 QURAN AUDIO EDITION:\n\n\ud83d\udcd6 FULL QURAN OFFLINE \u2014 Download all 114 surahs once with data, then listen offline forever, even in deep sleep\n\ud83d\udd4c Two reciters: Mishary Rashid Alafasy + Muhammad Ayyoob\n\u25b6\ufe0f Continuous recitation \u2014 auto-advances surah to surah\n\ud83d\udd16 Auto-resume \u2014 remembers exactly where you stopped\n\ud83c\udf19 Two-tier updates: MAJOR = APK (Check Updates), MINOR = What's New feed (no reinstall)\n\nUpdates in place over v2.0.x \u2014 no uninstall needed."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.2.0/neverhide-empire-v2.2.0.apk",
+  "changelog": "v2.2.0 \u2014 VISION EDITION:\n\n\ud83d\udee1\ufe0f SECURITY PATROL \u2014 Deep security audit built into the App Scanner. Detects spyware-pattern apps, sideloaded APKs, accessibility keyloggers, hidden device admins and overlay attackers. Optional auto-patrol every 3 hours with instant threat alerts.\n\n\ud83c\udf99\ufe0f VOICE STUDIO (in Calls section) \u2014 real DSP voice morphing: Robot, Chipmunk, Deep, Echo, Alien. Record, morph, play, export WAV and send as voice note.\n\n\ud83e\udded AR CAMERA COMPASS + SPIRIT LEVEL (in Compass) \u2014 live camera overlay with heading, bubble level and STRAIGHT/TILTED verdict.\n\nUpdates in place over v2.1.0 \u2014 no uninstall needed."
 }

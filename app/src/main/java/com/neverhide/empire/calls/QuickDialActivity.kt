@@ -82,6 +82,13 @@ class QuickDialActivity : ComponentActivity() {
             Text("📞 Quick Dial", color = Palette.CYAN, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Text("Calls section — dial, redial, call log", color = Palette.TEXT_DIM, fontSize = 12.sp)
 
+            com.neverhide.empire.dashboard.FeatureCard(
+                "🎙️", "Voice Studio", "Robot & alien voices with real DSP",
+                Palette.PURPLE, badge = "NEW"
+            ) {
+                startActivity(Intent(this@QuickDialActivity, VoiceStudioActivity::class.java))
+            }
+
             OutlinedTextField(
                 value = number, onValueChange = { number = it },
                 label = { Text("Phone number") },

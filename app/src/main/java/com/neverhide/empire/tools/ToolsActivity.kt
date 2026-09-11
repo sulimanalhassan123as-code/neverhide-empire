@@ -285,6 +285,9 @@ class ToolsActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             InfoCard("Live heading from the rotation-vector sensor.")
+            BigButton("📷 Open AR Camera Compass + Level 🎚️", Color(0xFF00E5FF)) {
+                context.startActivity(Intent(context, com.neverhide.empire.tools.compass.ArCompassActivity::class.java))
+            }
             Text(
                 "$angle°",
                 color = Color(0xFF00E5FF), fontSize = 72.sp, fontWeight = FontWeight.Bold
@@ -413,8 +416,53 @@ class ToolsActivity : ComponentActivity() {
             Manifest.permission.SYSTEM_ALERT_WINDOW
         )
 
+        var auditResults by remember { mutableStateOf(listOf<com.neverhide.empire.tools.scanner.SecurityScanner.Finding>()) }
+        var audited by remember { mutableStateOf(false) }
+        var patrolOn by remember { mutableStateOf(com.neverhide.empire.tools.scanner.SecurityPatrolJob.isScheduled(context)) }
+
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             InfoCard("Audits every installed app by its dangerous permissions and ranks the riskiest. Honest risk scoring — not fake 'antivirus'.")
+            // ===== DEEP SECURITY AUDIT =====
+            Text("🛡️ Deep Security Audit", color = Color(0xFFFF4081), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            InfoCard("Finds spyware-pattern apps (mic/SMS + location), sideloaded APKs, active accessibility keyloggers, hidden device admins, and overlay attackers.")
+            BigButton("🔍 Run Full Security Audit", Color(0xFFFF1744)) {
+                auditResults = com.neverhide.empire.tools.scanner.SecurityScanner.audit(context)
+                audited = true
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("🤖 Auto-patrol every 3 hours", color = Color.White, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                Switch(
+                    checked = patrolOn,
+                    onCheckedChange = { on ->
+                        patrolOn = on
+                        if (on) com.neverhide.empire.tools.scanner.SecurityPatrolJob.schedule(context)
+                        else com.neverhide.empire.tools.scanner.SecurityPatrolJob.cancel(context)
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFF69F0AE))
+                )
+            }
+            Text(
+                if (patrolOn) "ON — Empire scans every 3h and alerts you if threats appear. Survives reboot."
+                else "OFF — manual scans only.",
+                color = if (patrolOn) Color(0xFF69F0AE) else Color.Gray, fontSize = 11.sp
+            )
+            if (audited) {
+                if (auditResults.isEmpty()) {
+                    Text("✅ No critical threats found. Your phone is clean.", color = Color(0xFF69F0AE), fontSize = 13.sp)
+                } else {
+                    Text("${auditResults.size} finding(s)", color = Color(0xFFFF1744), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    LazyColumn(Modifier.height(300.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(auditResults.take(40)) { f ->
+                            val c = if (f.severity >= 3) Color(0xFFFF1744) else if (f.severity == 2) Color(0xFFFFD600) else Color(0xFF8899AA)
+                            Column(Modifier.fillMaxWidth().background(Color(0xFF111827), RoundedCornerShape(10.dp)).padding(10.dp)) {
+                                Text("${f.icon} ${f.app}", color = c, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(f.reason, color = Color.Gray, fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+            }
+            Text("── Quick permission scan ──", color = Color.Gray, fontSize = 11.sp)
             if (!scanned) {
                 BigButton("🔍 Scan All Apps", Color(0xFFFF4081)) {
                     results = context.packageManager.getInstalledPackages(

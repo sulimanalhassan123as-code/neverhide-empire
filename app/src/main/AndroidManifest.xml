@@ -113,6 +113,15 @@
         <activity android:name=".quran.QuranActivity"
             android:exported="false"
             android:label="Quran Audio" />
+        <activity android:name=".calls.VoiceStudioActivity"
+            android:exported="false"
+            android:label="Voice Studio" />
+        <activity android:name=".tools.compass.ArCompassActivity"
+            android:exported="false"
+            android:label="AR Compass &amp; Level" />
+        <service android:name=".tools.scanner.SecurityPatrolJob"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false" />
         <service android:name=".quran.QuranDownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
