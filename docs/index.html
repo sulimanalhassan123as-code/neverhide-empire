@@ -80,21 +80,48 @@
     </div>
   </div>
 
+
+  <div class="card">
+    <h2>Update Center</h2>
+    <p>Two tiers: <b>MAJOR</b> upgrades arrive as a new APK — <b>MINOR</b> upgrades (news, tips, small fixes) arrive instantly here and in the app's "What's New" — no reinstall needed.</p>
+    <div id="tiers" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;"></div>
+    <button onclick="loadUpdates()" style="margin-top:16px;padding:10px 22px;background:#00e5ff;color:#0a0a1a;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">🔄 Refresh updates</button>
+  </div>
+
   <footer>Neverhide Empire — built with ❤️ in Ghana. This page always shows the newest release automatically.</footer>
 </div>
 
 <script>
-fetch('https://raw.githubusercontent.com/sulimanalhassan123as-code/neverhide-empire/main/updater/latest.json', {cache:'no-store'})
-  .then(r => r.json())
-  .then(m => {
+async function loadUpdates() {
+  const tiers = document.getElementById('tiers');
+  tiers.innerHTML = '';
+  const RAW = 'https://raw.githubusercontent.com/sulimanalhassan123as-code/neverhide-empire/main/updater/';
+  try {
+    const m = await (await fetch(RAW + 'latest.json', {cache:'no-store'})).json();
     document.getElementById('version').textContent = 'v' + m.versionName;
     document.getElementById('changelog').textContent = m.changelog || '—';
     document.getElementById('dl').href = m.apkUrl;
-  })
-  .catch(() => {
+    const major = document.createElement('div');
+    major.style.cssText = 'flex:1;min-width:260px;background:#16213a;border:1px solid #7c4dff55;border-radius:12px;padding:14px';
+    major.innerHTML = '<span style="color:#7c4dff;font-weight:bold;font-size:12px">🔴 MAJOR — APK UPDATE</span><h3 style="margin:6px 0;color:#fff">v' + m.versionName + '</h3><p style="color:#8899aa;font-size:13px;white-space:pre-wrap">' + (m.changelog || '').split('
+')[0] + '</p><a href="' + m.apkUrl + '" style="color:#00e5ff">Download APK →</a>';
+    tiers.appendChild(major);
+  } catch (e) {
     document.getElementById('version').textContent = 'offline';
     document.getElementById('changelog').textContent = 'Could not reach the update manifest — refresh the page.';
-  });
+  }
+  try {
+    const w = await (await fetch(RAW + 'whatsnew.json', {cache:'no-store'})).json();
+    const minor = document.createElement('div');
+    minor.style.cssText = 'flex:1;min-width:260px;background:#16213a;border:1px solid #ffd60055;border-radius:12px;padding:14px';
+    const items = (w.items || []).map(i => '<div style="margin:10px 0"><b style="color:#ffd600;font-size:13px">• ' + i.title + '</b><div style="color:#8899aa;font-size:12px;margin-top:2px">' + i.note + '</div><div style="color:#5a6a7a;font-size:10px;margin-top:2px">' + i.date + '</div></div>').join('');
+    minor.innerHTML = '<span style="color:#ffd600;font-weight:bold;font-size:12px">🌙 MINOR — NO REINSTALL</span><div style="margin-top:8px">' + items + '</div><div style="color:#5a6a7a;font-size:10px">Feed updated: ' + (w.updatedAt || '') + '</div>';
+    tiers.appendChild(minor);
+  } catch (e) {
+    tiers.innerHTML += '<div style="flex:1;color:#8899aa">Minor feed unreachable.</div>';
+  }
+}
+loadUpdates();
 </script>
 </body>
 </html>
