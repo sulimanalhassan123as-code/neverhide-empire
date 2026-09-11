@@ -1,7 +1,7 @@
 {
-  "versionCode": 10,
-  "versionName": "2.5.0",
+  "versionCode": 11,
+  "versionName": "2.5.1",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.5.0/neverhide-empire-v2.5.0.apk",
-  "changelog": "v2.5.0 \u2014 GUARDIAN ALERT NETWORK:\n\n\ud83d\udccd WRONG PASSWORD = LIVE LOCATION ALERT: set your alert number in the Guardian card. Every failed unlock now grabs the phone's location and SMSes you a Google Maps link (works offline via carrier).\n\ud83d\udcac WHATSAPP EVIDENCE: when the phone is online, the intruder selfie + caption + location is DM'd to you on WhatsApp automatically \u2014 via the Empire relay bridge.\n\ud83d\udd2b GUNSHOT FIX: rebuilt playback on AudioTrack (static mode) \u2014 the gunshot now fires reliably every single time.\n\nUpdates in place over v2.4.0 \u2014 no uninstall needed."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.5.1/neverhide-empire-v2.5.1.apk",
+  "changelog": "v2.5.1 \u2014 CALL HARMONY PATCH:\n\n\ud83c\udfa7 FIXED: the Call Recorder used to force the speaker ON while recording. With earpods/headset connected, that fights the call's audio routing on Samsung phones \u2014 calls could fail to connect until you unplugged the headset. The recorder now NEVER touches your audio path when a headset is connected (records near side only) and always restores your original speaker setting when a recording ends.\n\n\ud83d\udcf5 The recorder can no longer auto-restart after being killed (no more mic held hostage in the background).\n\n\ud83d\udd10 Removed an unused device-admin capability (limit-password) so the app cannot interact with PIN/password systems on Knox-managed phones. The Guardian only watches failed unlock attempts \u2014 nothing else.\n\n\u26a0\ufe0f If call problems persist after this update + a phone restart, they are carrier-side (MTN) or the known Knox Error 206 issue on your phone \u2014 NOT the app. Updates in place over v2.5.0."
 }

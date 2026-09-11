@@ -80,6 +80,8 @@ class CallRecorderService : Service() {
     private var telephony: TelephonyManager? = null
     private var outFile: File? = null
     private var pcmAccumulator: File? = null
+    private var prevSpeakerOn = false
+    private var touchedAudio = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -115,7 +117,7 @@ class CallRecorderService : Service() {
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
             ACTION_START -> if (!isRecording) startRecording()
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun startRecording() {
@@ -147,9 +149,25 @@ class CallRecorderService : Service() {
             return
         }
 
-        // Force speakerphone so the mic hears both sides of the call
+        // HEADSET-AWARE ROUTING (v2.5.1): forcing speakerphone while a
+        // wired/Bluetooth headset is connected fights the call's audio
+        // routing on Samsung devices — calls fail to connect until the
+        // headset is removed. If a headset is connected we record the
+        // near side with the mic and DO NOT touch the audio path at all.
         val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        runCatching { am.isSpeakerphoneOn = true }
+        val headsetConnected = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any {
+            it.type == android.media.AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+            it.type == android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+            it.type == android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+            it.type == android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO
+        }
+        if (headsetConnected) {
+            captureText = "🎧 Headset connected — call audio untouched, near side recorded. Tap to stop."
+        } else {
+            prevSpeakerOn = am.isSpeakerphoneOn
+            touchedAudio = true
+            runCatching { am.isSpeakerphoneOn = true }
+        }
 
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Neverhide:CallRec").apply {
@@ -157,7 +175,7 @@ class CallRecorderService : Service() {
             }
 
         isRecording = true
-        startForeground(NOTIFICATION_ID, buildNotification())
+        startForeground(NOTIFICATION_ID, buildNotification(captureText))
 
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val safeNumber = recordedNumber.replace(Regex("[^0-9+]"), "").ifBlank { "unknown" }
@@ -236,6 +254,15 @@ class CallRecorderService : Service() {
     override fun onDestroy() {
         isRecording = false
         runCatching { ShizukuCallCapture.stop() }
+        // Restore the audio routing we changed (v2.5.1) — never leave
+        // the speaker forced on after a recording ends
+        if (touchedAudio) {
+            runCatching {
+                val am = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                am.isSpeakerphoneOn = prevSpeakerOn
+            }
+            touchedAudio = false
+        }
         recordingThread?.join(1500)
         // Give the writer a moment, then release everything
         runCatching { audioRecord?.release() }
