@@ -1,7 +1,7 @@
 {
-  "versionCode": 11,
-  "versionName": "2.5.1",
+  "versionCode": 12,
+  "versionName": "2.5.2",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.5.1/neverhide-empire-v2.5.1.apk",
-  "changelog": "v2.5.1 \u2014 CALL HARMONY PATCH:\n\n\ud83c\udfa7 FIXED: the Call Recorder used to force the speaker ON while recording. With earpods/headset connected, that fights the call's audio routing on Samsung phones \u2014 calls could fail to connect until you unplugged the headset. The recorder now NEVER touches your audio path when a headset is connected (records near side only) and always restores your original speaker setting when a recording ends.\n\n\ud83d\udcf5 The recorder can no longer auto-restart after being killed (no more mic held hostage in the background).\n\n\ud83d\udd10 Removed an unused device-admin capability (limit-password) so the app cannot interact with PIN/password systems on Knox-managed phones. The Guardian only watches failed unlock attempts \u2014 nothing else.\n\n\u26a0\ufe0f If call problems persist after this update + a phone restart, they are carrier-side (MTN) or the known Knox Error 206 issue on your phone \u2014 NOT the app. Updates in place over v2.5.0."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.5.2/neverhide-empire-v2.5.2.apk",
+  "changelog": "v2.5.2 — GUARDIAN ALERT REAL FIX:\n\n🎯 ROOT CAUSE FOUND: intruder selfies and location were being captured from a plain background thread. Since Android 9, that's exactly what makes the OS silently block camera access and throttle location — which is why every alert said \"camera was blocked\" and \"location: fixing… (check SMS)\".\n\n✅ FIXED: camera + location now run inside a genuine foreground service with proper camera+location privileges — the selfie and GPS fix now actually work.\n\n✅ FIXED: some phones (Samsung included) fired the wrong-password alert 2-3 times for ONE real attempt. Added a de-dup guard so you get exactly one alert per attempt.\n\n✅ FIXED: removed a duplicate, location-less SMS that was doubling every alert.\n\n✅ Location fetch now tries GPS + network together with a longer window for a better chance of a real fix.\n\nUpdates in place over v2.5.1, same signing cert."
 }
