@@ -241,6 +241,12 @@
             </intent-filter>
         </receiver>
 
+        <!-- ===== Guardian Capture Service (foreground camera+location for alerts) ===== -->
+        <service
+            android:name=".guardian.GuardianCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="camera|location" />
+
         <!-- ===== Boot Receiver (restart everything) ===== -->
         <receiver
             android:name=".core.BootReceiver"

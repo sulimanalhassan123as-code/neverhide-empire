@@ -35,6 +35,13 @@ class GuardianAdminReceiver : DeviceAdminReceiver() {
         const val KEY_ALERT_NUMBER = "guardian_alert_number" // SMS alert destination
         const val KEY_FX_MODE = "guardian_fx_mode"           // 1 gunshot+cracks (default), 0 siren
 
+        // De-dup guard: some OEMs (Samsung/Knox included) call BOTH
+        // onPasswordFailed overloads for a single failed attempt, which
+        // used to fire the whole alert pipeline 2-3x per real attempt.
+        @Volatile
+        private var lastTriggerMs = 0L
+        private const val TRIGGER_DEBOUNCE_MS = 4_000L
+
         /** Human-readable event log entry for the evidence vault. */
         fun logEvent(context: Context, kind: String) {
             val f = java.io.File(context.filesDir, "intruders")
@@ -86,6 +93,13 @@ class GuardianAdminReceiver : DeviceAdminReceiver() {
 
     private fun trigger(context: Context) {
 
+        // De-dup: some OEMs fire BOTH onPasswordFailed overloads for ONE
+        // real failed attempt. Without this guard that used to send 2-3
+        // duplicate alerts (SMS + WhatsApp) per attempt.
+        val now = System.currentTimeMillis()
+        if (now - lastTriggerMs < TRIGGER_DEBOUNCE_MS) return
+        lastTriggerMs = now
+
         val prefs = context.getSharedPreferences(GUARDIAN_PREFS, Context.MODE_PRIVATE)
         if (!prefs.getBoolean(KEY_ENABLED, true)) return
 
@@ -101,21 +115,24 @@ class GuardianAdminReceiver : DeviceAdminReceiver() {
 
         val theme = prefs.getInt(KEY_THEME, 0)
 
-        // 1. Best-effort intruder selfie (silently fails if camera blocked while locked)
-        IntruderCamera.capture(context) { photoPath ->
-            // 2. Fire the jumpscare — full-screen intent notification
-            JumpscareActivity.launch(context, theme, photoPath)
-            // 3. GUARDIAN ALERT: location + SMS + WhatsApp (selfie attached)
-            GuardianAlert.fire(context, photoPath)
-        }
+        // 1+2+3. Selfie + jumpscare + location/SMS/WhatsApp — all run inside
+        // a genuine foreground service now (GuardianCaptureService), which
+        // is what actually gives the camera and location calls permission
+        // to work. Running them from the raw receiver background thread
+        // (the old code) is exactly why selfies always said "camera was
+        // blocked" and location always said "fixing…".
+        GuardianCaptureService.start(context, theme)
 
-        // 3. Vibration + tone for immediate shock even if the activity is delayed
+        // Vibration + tone for immediate shock even if the capture is delayed
         vibrate(context)
         tone()
 
-        // 4. GUARDIAN 2.0 — evidence log + SMS alert to the configured number
+        // GUARDIAN 2.0 — evidence log only. The actual SMS now goes out
+        // exactly ONCE, from inside GuardianAlert.fire() (called by the
+        // capture service above) — the old immediate sendSmsAlert() call
+        // here was a second, location-less SMS firing on every attempt,
+        // doubling every alert. Removed.
         logEvent(context, "WRONG_PASSWORD")
-        Thread { sendSmsAlert(context, null) }.start()
     }
 
     override fun onPasswordSucceeded(context: Context, intent: Intent) {

@@ -58,7 +58,7 @@ object GuardianAlert {
                 append("🚨 NEVERHIDE GUARDIAN ALERT\n")
                 append("Someone entered a WRONG PASSWORD on your phone!\n\n")
                 append("🕒 Time: $time\n")
-                append("📍 Location: ${maps ?: "fixing… (check SMS)"}\n")
+                append("📍 Location: ${maps ?: "unavailable — no GPS/network fix (try again outdoors or with mobile data on)"}\n")
                 if (loc != null) {
                     append("   accuracy: ~${loc.accuracy.toInt()}m\n")
                 }
@@ -94,7 +94,12 @@ object GuardianAlert {
             if (last != null && System.currentTimeMillis() - last.time < 10 * 60_000) {
                 return last // fresh enough
             }
-            // Try a quick network fix (5s) — works when online
+            // Try BOTH GPS and network providers in parallel — whichever
+            // answers first wins. The old code only tried NETWORK_PROVIDER,
+            // which is useless indoors with weak cell signal; GPS_PROVIDER
+            // often resolves faster outdoors. This now runs inside a real
+            // foreground service (GuardianCaptureService), so the OS won't
+            // throttle it the way it throttled the old background-thread call.
             var fix: Location? = null
             val done = java.util.concurrent.CountDownLatch(1)
             val listener = object : LocationListener {
@@ -105,13 +110,15 @@ object GuardianAlert {
                 override fun onProviderDisabled(p: String) { done.countDown() }
                 override fun onProviderEnabled(p: String) {}
             }
-            if (lm.allProviders.contains(LocationManager.NETWORK_PROVIDER)) {
-                runCatching {
-                    lm.requestLocationUpdates(
-                        LocationManager.NETWORK_PROVIDER, 0L, 0f, listener, Looper.getMainLooper()
-                    )
+            val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+                .filter { lm.allProviders.contains(it) }
+            if (providers.isNotEmpty()) {
+                providers.forEach { p ->
+                    runCatching {
+                        lm.requestLocationUpdates(p, 0L, 0f, listener, Looper.getMainLooper())
+                    }
                 }
-                done.await(5, java.util.concurrent.TimeUnit.SECONDS)
+                done.await(8, java.util.concurrent.TimeUnit.SECONDS)
                 runCatching { lm.removeUpdates(listener) }
             }
             fix ?: last
