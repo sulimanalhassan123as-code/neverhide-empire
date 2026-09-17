@@ -41,6 +41,7 @@ import com.neverhide.empire.guardian.GuardianAdminReceiver
 import com.neverhide.empire.guardian.JumpscareActivity
 import com.neverhide.empire.launcher.Launcher3DActivity
 import com.neverhide.empire.screenshot.FloatingBubbleService
+import com.neverhide.empire.cleaner.CleanerActivity
 import com.neverhide.empire.screenshot.ScreenshotService
 import com.neverhide.empire.tools.ToolsActivity
 import com.neverhide.empire.updater.AdrenalineUpdater
@@ -344,6 +345,11 @@ class MainActivity : ComponentActivity() {
                             startActivity(Intent(this@MainActivity, ToolsActivity::class.java))
                         }
                     }
+
+                    // ===== CYBER CLEANER =====
+                    SectionHeader("🛡️", "Cyber Cleaner", Palette.CYAN)
+                    FeatureCard("🛡️", "Cyber Cleaner & Antivirus", "Junk • Boost • Virus scan • App Freezer", Palette.CYAN,
+                        badge = "NEW") { startActivity(Intent(this@MainActivity, CleanerActivity::class.java)) }
 
                     // ===== COMMUNICATION =====
                     SectionHeader("📞", "Communication", Palette.CYAN)

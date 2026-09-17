@@ -13,6 +13,15 @@ bundling four features:
 4. **Adrenaline Bundle Updater** - checks a JSON manifest on your server,
    downloads the new APK, and prompts to install (REQUEST_INSTALL_PACKAGES).
 
+## 5. Cyber Cleaner & Antivirus (NEW — v2.6)
+- **Junk Cleaner** — deep sweep of cache, thumbnails, stale temp/log files, empty folders (All-Files access supported).
+- **Memory Booster** — live RAM report + kills background processes, shows freed MB.
+- **Antivirus** — scans every installed app for risky permission combos (SMS spies, call-log thieves, hidden APK installers, overlay attacks) with HIGH/MEDIUM verdicts + uninstall shortcut.
+- **App Freezer** — Tecno/Infinix-style app suspension (frozen apps can't start or drain RAM/battery).
+  - Power it once via: `adb shell dpm set-device-owner com.neverhide.empire/.guardian.GuardianAdminReceiver`
+  - or via Shizuku (already integrated) — grant permission in-app.
+- CI builds the signed release APK automatically on every push (GitHub Actions, artifact `neverhide-empire-apk`).
+
 ## Build
 
 ### Option A - Android Studio (recommended)
