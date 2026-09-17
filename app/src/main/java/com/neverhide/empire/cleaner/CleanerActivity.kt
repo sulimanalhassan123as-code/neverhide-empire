@@ -269,40 +269,65 @@ class CleanerActivity : ComponentActivity() {
     /** Freeze/suspend a package. Returns null on success or an error message. */
     private fun setSuspended(context: Context, pkg: String, suspend: Boolean): String? {
         val dpm = context.getSystemService(DevicePolicyManager::class.java)
-        // Path 1 — Device Owner (activated once via ADB): official, instant, reliable
+        // Path 1 — Device Owner (activated once via ADB): official, instant, reliable.
+        // The setPackagesSuspended(String[], boolean) runtime method exists since API 28,
+        // but SDK 34 removed it from the compile stubs (only the API-33 admin overload
+        // survives there), and that new overload does not exist on Android 11/12 devices.
+        // Reflection is the honest cross-version call: compiles everywhere, runs 28+.
         if (isDeviceOwner(context) && Build.VERSION.SDK_INT >= 28) {
             return try {
-                dpm.setPackagesSuspended(arrayOf(pkg), suspend)
+                val m = DevicePolicyManager::class.java.getMethod(
+                    "setPackagesSuspended",
+                    Array<String>::class.java, Boolean::class.javaPrimitiveType
+                )
+                m.invoke(dpm, arrayOf(pkg), suspend)
                 null
             } catch (e: Exception) { e.message }
         }
-        // Path 2 — Shizuku (shell uid): pm suspend, works in ADB mode
+        // Path 2 — Shizuku (shell uid): pm suspend, works in ADB mode.
+        // Commands run inside our ShizukuShellService UserService (shell process).
         if (shizukuReady() && shizukuGranted()) {
-            return try {
-                val cmd = "pm suspend --user 0 " + pkg + if (!suspend) " --unsuspend" else ""
-                val proc = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
-                val code = proc.waitFor()
-                proc.destroy()
-                if (code == 0) null else "pm exit " + code
-            } catch (e: Exception) { e.message }
+            val cmd = if (suspend)
+                "pm suspend --user 0 $pkg"
+            else
+                "pm suspend --user 0 $pkg --unsuspend"
+            val code = ShizukuShell.exec(context, cmd)
+            return when {
+                code == null -> "shizuku unavailable"
+                code == 0 -> null
+                else -> "pm exit $code"
+            }
         }
         return "no_power"
     }
 
-    /** Real suspended-state list (via Shizuku shell; null if unavailable). */
-    private fun suspendedPackages(): Set<String>? {
-        if (!(shizukuReady() && shizukuGranted())) return null
-        return try {
-            val proc = Shizuku.newProcess(
-                arrayOf("sh", "-c", "pm list packages --user 0 --suspended"), null, null
-            )
-            val out = proc.inputStream.bufferedReader().readText()
-            proc.waitFor(); proc.destroy()
-            out.lines()
+    /**
+     * Real suspended-state list. Via Shizuku shell when armed, else via the
+     * reflective API-28 isPackageSuspended(String) when we are Device Owner.
+     * Returns null when neither power path is available.
+     */
+    private fun suspendedPackages(context: Context): Set<String>? {
+        if (shizukuReady() && shizukuGranted()) {
+            val out = ShizukuShell.query(context, "pm list packages --user 0 --suspended")
+                ?: return null
+            return out.lines()
                 .filter { it.startsWith("package:") }
                 .map { it.removePrefix("package:").trim() }
                 .toSet()
-        } catch (e: Exception) { null }
+        }
+        if (isDeviceOwner(context) && Build.VERSION.SDK_INT >= 28) {
+            return try {
+                val dpm = context.getSystemService(DevicePolicyManager::class.java)
+                val m = DevicePolicyManager::class.java.getMethod(
+                    "isPackageSuspended", String::class.java
+                )
+                listFreezableApps(context)
+                    .map { it.packageName }
+                    .filter { m.invoke(dpm, it) as Boolean }
+                    .toSet()
+            } catch (e: Exception) { null }
+        }
+        return null
     }
 
     private fun listFreezableApps(context: Context): List<ApplicationInfo> {
@@ -341,6 +366,7 @@ class CleanerActivity : ComponentActivity() {
 
         // Freezer state
         var frozen by remember { mutableStateOf<Set<String>>(emptySet()) }
+        var liveFrozen by remember { mutableStateOf<Set<String>?>(null) }
         var freezerMode by remember {
             mutableStateOf(
                 if (isDeviceOwner(context)) "DEVICE OWNER"
@@ -610,13 +636,18 @@ class CleanerActivity : ComponentActivity() {
                         }
                         if (shizukuReady() && !shizukuGranted()) {
                             GlowButton("🔑 Grant Shizuku", listOf(Palette.AMBER, Color(0xFFFF8F00)), Modifier.weight(1f)) {
-                                runCatching { Shizuku.requestPermission(21) }
+                                ShizukuShell.requestPermission()
                             }
                         }
                     }
                 } else {
                     val apps = remember { listFreezableApps(context) }
-                    val liveFrozen = remember(freezerMode) { suspendedPackages() }
+                    // Read the real suspended state off the UI thread —
+                    // the old code ran a blocking shell query during
+                    // composition (ANR risk on slow devices).
+                    LaunchedEffect(freezerMode) {
+                        liveFrozen = withContext(Dispatchers.IO) { suspendedPackages(context) }
+                    }
                     val frozenSet = liveFrozen ?: frozen
                     Text(
                         frozenSet.size.toString() + " frozen • " + apps.size + " apps manageable",
@@ -646,6 +677,10 @@ class CleanerActivity : ComponentActivity() {
                                             if (err == null) {
                                                 frozen = if (isFrozen) frozenSet - app.packageName
                                                 else frozenSet + app.packageName
+                                                // Re-read the REAL device state (source of truth)
+                                                liveFrozen = withContext(Dispatchers.IO) {
+                                                    suspendedPackages(context)
+                                                }
                                             }
                                         }
                                     }
