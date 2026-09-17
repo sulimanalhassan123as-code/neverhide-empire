@@ -1,7 +1,7 @@
 {
-  "versionCode": 12,
-  "versionName": "2.5.2",
+  "versionCode": 13,
+  "versionName": "2.6.0",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.5.2/neverhide-empire-v2.5.2.apk",
-  "changelog": "v2.5.2 — GUARDIAN ALERT REAL FIX:\n\n🎯 ROOT CAUSE FOUND: intruder selfies and location were being captured from a plain background thread. Since Android 9, that's exactly what makes the OS silently block camera access and throttle location — which is why every alert said \"camera was blocked\" and \"location: fixing… (check SMS)\".\n\n✅ FIXED: camera + location now run inside a genuine foreground service with proper camera+location privileges — the selfie and GPS fix now actually work.\n\n✅ FIXED: some phones (Samsung included) fired the wrong-password alert 2-3 times for ONE real attempt. Added a de-dup guard so you get exactly one alert per attempt.\n\n✅ FIXED: removed a duplicate, location-less SMS that was doubling every alert.\n\n✅ Location fetch now tries GPS + network together with a longer window for a better chance of a real fix.\n\nUpdates in place over v2.5.1, same signing cert."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.0/neverhide-empire-v2.6.0.apk",
+  "changelog": "v2.6.0 — CYBER CLEANER SUITE:\n\n🧹 Junk Cleaner — one deep scan sweeps camera thumbnails, app caches, stale temp/log files, messenger caches, Android/data caches and empty folders; shows reclaimable size and frees it with Clean All. Grant All-Files access once for a full sweep.\n\n⚡ Memory Booster — live RAM report with a gradient bar; Boost kills background processes and reports the freed MB.\n\n🦠 Antivirus — an honest permission-risk scanner: scores every installed app on dangerous permission combos (SMS spies, call-log thieves, hidden APK installers, overlay attacks), flags sideloaded apps, one-tap uninstall shortcut for real threats.\n\n❄️ App Freezer — Tecno/Infinix-style app suspension. Frozen apps can't start, run, or drain RAM/battery, and nothing is uninstalled. Two power paths: Device Owner (one-time ADB command, shown in-app) or Shizuku. Unfreeze All safety button included.\n\nSame signing cert — updates in place over v2.5.2."
 }
