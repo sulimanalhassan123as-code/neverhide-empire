@@ -1,8 +1,10 @@
 name: Build APK
 
+# NOTE: push trigger disabled — the GitHub account is currently billing-
+# locked and every auto-run dies at startup ("account is locked due to a
+# billing issue"). Re-enable push triggers after the lock is lifted.
+# Builds meanwhile happen in the Superagent sandbox (proven since v2.5.2).
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
