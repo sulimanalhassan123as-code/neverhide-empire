@@ -270,7 +270,7 @@ class CleanerActivity : ComponentActivity() {
     private fun setSuspended(context: Context, pkg: String, suspend: Boolean): String? {
         val dpm = context.getSystemService(DevicePolicyManager::class.java)
         // Path 1 — Device Owner (activated once via ADB): official, instant, reliable
-        if (isDeviceOwner(context)) {
+        if (isDeviceOwner(context) && Build.VERSION.SDK_INT >= 28) {
             return try {
                 dpm.setPackagesSuspended(arrayOf(pkg), suspend)
                 null

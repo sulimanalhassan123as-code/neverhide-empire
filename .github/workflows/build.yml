@@ -40,14 +40,26 @@ jobs:
             git config user.email "ci@neverhide.tech"
             git add empire-release.keystore
             git commit -m "ci: add signing keystore"
-            git push
+            git push || echo "PUSH_FAILED_CONTINUE"
             echo "KEYSTORE_CREATED_AND_PUSHED"
           else
             echo "KEYSTORE_ALREADY_PRESENT"
           fi
 
-      - name: Build release APK
-        run: ./gradlew --no-daemon assembleRelease
+      - name: Build release APK (log captured)
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew --no-daemon assembleRelease 2>&1 | tee build.log
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
