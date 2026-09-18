@@ -294,32 +294,50 @@ class CleanerActivity : ComponentActivity() {
         if (shizukuReady() && shizukuGranted()) {
             // pm exit codes LIE on some Samsung builds (prints "Error: ..." but
             // exits 0), so we never trust the code — we verify the package's
-            // REAL state in the disabled list after every command.
-            fun nowDisabled(): Boolean? {
-                val r = ShizukuShell.run(context, "pm list packages -d --user 0")
+            // REAL state after every command, against BOTH blocking states:
+            //   -d  = disabled  (what pm disable-user / pm enable manage)
+            //   --suspended = suspended (what pm suspend / pm unsuspend manage,
+            //                 also used by Knox Guard itself to freeze apps —
+            //                 a stuck app can be in this state, which plain
+            //                 pm enable can NEVER release)
+            fun nowBlocked(): Boolean? {
+                val disabled = ShizukuShell.run(context, "pm list packages -d --user 0")
                     ?: return null
-                if (r.first != 0) return null
-                return r.second.lines().any { it.trim() == "package:$pkg" }
+                val suspended = ShizukuShell.run(context, "pm list packages --suspended --user 0")
+                    ?: return null
+                val inDisabled = disabled.second.lines().any { it.trim() == "package:$pkg" }
+                val inSuspended = suspended.second.lines().any { it.trim() == "package:$pkg" }
+                return inDisabled || inSuspended
             }
             if (suspend) {
                 ShizukuShell.exec(context, "pm disable-user --user 0 $pkg")
-                val still = nowDisabled()
+                val still = nowBlocked()
                 return when {
                     still == null -> "could not verify freeze (state check failed)"
                     still -> null
                     else -> "device refused the freeze"
                 }
             } else {
-                // Unfreeze: try BOTH pm enable forms — some builds ignore --user.
-                // Retry via the no-flag form only if the state didn't change.
-                var attempts = listOf("pm enable --user 0 $pkg", "pm enable $pkg")
-                for (cmd in attempts) {
-                    ShizukuShell.exec(context, cmd)
-                    val still = nowDisabled()
+                // UNFREEZE ARTILLERY — fires every release command Android has,
+                // in order, stopping the moment the device confirms the app is
+                // really free. Covers stuck apps in ANY blocking state, including
+                // old freezes and Knox-enforced suspends.
+                val cmds = listOf(
+                    "pm enable --user 0 $pkg",   // reverse pm disable-user
+                    "pm enable $pkg",            // some builds ignore --user
+                    "pm unsuspend --user 0 $pkg", // reverse suspend (Knox Guard state)
+                    "pm unsuspend $pkg"
+                )
+                var lastOut = ""
+                for (cmd in cmds) {
+                    val r = ShizukuShell.run(context, cmd) ?: return "shizuku unavailable"
+                    lastOut = r.second.trim()
+                    val still = nowBlocked()
                     if (still == null) return "could not verify unfreeze (state check failed)"
                     if (!still) return null
                 }
-                return "device refused to unfreeze (pm enable failed)"
+                val tail = lastOut.lineSequence().lastOrNull { it.isNotBlank() } ?: "no pm output"
+                return "stuck: $tail"
             }
         }
         return "no_power"
@@ -332,12 +350,19 @@ class CleanerActivity : ComponentActivity() {
      */
     private fun suspendedPackages(context: Context): Set<String>? {
         if (shizukuReady() && shizukuGranted()) {
-            val out = ShizukuShell.query(context, "pm list packages -d --user 0")
+            val disabled = ShizukuShell.query(context, "pm list packages -d --user 0")
                 ?: return null
-            return out.lines()
+            val result = disabled.lines()
                 .filter { it.startsWith("package:") }
                 .map { it.removePrefix("package:").trim() }
-                .toSet()
+                .toMutableSet()
+            // Merge the suspend list too — apps frozen in the OLD scheme (or by
+            // Knox Guard) live there and must still show as FROZEN.
+            ShizukuShell.query(context, "pm list packages --suspended --user 0")
+                ?.lines()
+                ?.filter { it.startsWith("package:") }
+                ?.forEach { result.add(it.removePrefix("package:").trim()) }
+            return result.toSet()
         }
         if (isDeviceOwner(context) && Build.VERSION.SDK_INT >= 28) {
             return try {
