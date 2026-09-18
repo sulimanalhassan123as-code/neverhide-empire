@@ -60,6 +60,19 @@ object ShizukuShell {
     }
 
     /**
+     * Run a shell command and get BOTH exit code and output.
+     * Returns null if the shell is unavailable.
+     */
+    fun run(context: Context, cmd: String): Pair<Int, String>? {
+        val svc = binder(context) ?: return null
+        return runCatching {
+            val out = svc.exec(cmd)
+            val code = out.lineSequence().firstOrNull()?.removePrefix("exit:")?.trim()?.toIntOrNull() ?: -1
+            Pair(code, out.lineSequence().drop(1).joinToString("\n"))
+        }.getOrNull()
+    }
+
+    /**
      * Run a shell command in the Shizuku shell process.
      * Returns the exit code, or null if the shell is unavailable.
      */

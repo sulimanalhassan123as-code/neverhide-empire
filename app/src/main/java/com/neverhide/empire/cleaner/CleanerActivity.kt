@@ -292,15 +292,34 @@ class CleanerActivity : ComponentActivity() {
         // non-root freeze technique used by e.g. Shelter/Island/Hail) —
         // fully disables the app (removed from launcher, can't run at all).
         if (shizukuReady() && shizukuGranted()) {
-            val cmd = if (suspend)
-                "pm disable-user --user 0 $pkg"
-            else
-                "pm enable --user 0 $pkg"
-            val code = ShizukuShell.exec(context, cmd)
-            return when {
-                code == null -> "shizuku unavailable"
-                code == 0 -> null
-                else -> "pm exit $code"
+            // pm exit codes LIE on some Samsung builds (prints "Error: ..." but
+            // exits 0), so we never trust the code — we verify the package's
+            // REAL state in the disabled list after every command.
+            fun nowDisabled(): Boolean? {
+                val r = ShizukuShell.run(context, "pm list packages -d --user 0")
+                    ?: return null
+                if (r.first != 0) return null
+                return r.second.lines().any { it.trim() == "package:$pkg" }
+            }
+            if (suspend) {
+                ShizukuShell.exec(context, "pm disable-user --user 0 $pkg")
+                val still = nowDisabled()
+                return when {
+                    still == null -> "could not verify freeze (state check failed)"
+                    still -> null
+                    else -> "device refused the freeze"
+                }
+            } else {
+                // Unfreeze: try BOTH pm enable forms — some builds ignore --user.
+                // Retry via the no-flag form only if the state didn't change.
+                var attempts = listOf("pm enable --user 0 $pkg", "pm enable $pkg")
+                for (cmd in attempts) {
+                    ShizukuShell.exec(context, cmd)
+                    val still = nowDisabled()
+                    if (still == null) return "could not verify unfreeze (state check failed)"
+                    if (!still) return null
+                }
+                return "device refused to unfreeze (pm enable failed)"
             }
         }
         return "no_power"
