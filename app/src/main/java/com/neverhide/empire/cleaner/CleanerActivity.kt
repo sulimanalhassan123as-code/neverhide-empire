@@ -379,6 +379,57 @@ class CleanerActivity : ComponentActivity() {
         return null
     }
 
+    /**
+     * FREEZER DOCTOR — for stuck freezes. Fires the full release artillery at
+     * every frozen package while capturing each command's REAL output, then
+     * gathers device state. The report answers three questions:
+     *   1. is there shell power right now (Shizuku alive + granted)?
+     *   2. what EXACTLY does pm answer to each release command?
+     *   3. what does the OS say the package's real state is?
+     * Report is returned for display + clipboard so the owner can send it
+     * to Lyra for remote root-cause analysis.
+     */
+    private fun runDoctor(context: Context, pkgs: Set<String>): String {
+        val sb = StringBuilder()
+        sb.append("=== FREEZER DOCTOR v2.6.5 ===\n")
+        sb.append("deviceOwner=" + isDeviceOwner(context) + "\n")
+        val ready = shizukuReady(); val granted = shizukuGranted()
+        sb.append("shizukuReady=" + ready + " granted=" + granted + "\n")
+        if (!ready || !granted) {
+            sb.append("NO SHELL POWER: start Shizuku (wireless debugging), then grant.\n")
+            return sb.toString()
+        }
+        val dis = ShizukuShell.run(context, "pm list packages -d --user 0")
+        sb.append("disabledList exit=" + (dis?.first) + ": " + (dis?.second ?: "").trim().take(400) + "\n")
+        val sus = ShizukuShell.run(context, "pm list packages --suspended --user 0")
+        sb.append("suspendedList exit=" + (sus?.first) + ": " + (sus?.second ?: "").trim().take(400) + "\n")
+        val dp = ShizukuShell.run(context, "dumpsys device_policy")
+        val dpLines = dp?.second?.lines()
+            ?.filter { it.contains("Owner", ignoreCase = true) }
+            ?.take(3)?.joinToString(" | ") ?: "unavailable"
+        sb.append("device_policy: " + dpLines + "\n")
+        for (pkg in pkgs) {
+            sb.append("\n--- " + pkg + " ---\n")
+            for (cmd in listOf(
+                "pm enable --user 0 " + pkg,
+                "pm enable " + pkg,
+                "pm unsuspend --user 0 " + pkg,
+                "pm unsuspend " + pkg
+            )) {
+                val r = ShizukuShell.run(context, cmd)
+                if (r == null) { sb.append(cmd + " -> SHELL UNAVAILABLE\n"); break }
+                sb.append(cmd + " -> exit=" + r.first + " out=" + r.second.trim().take(150) + "\n")
+            }
+            val dmp = ShizukuShell.run(context, "dumpsys package " + pkg)
+            val state = dmp?.second?.lines()
+                ?.filter { it.contains("enabled") || it.contains("suspended") || it.contains("stopped") || it.contains("hidden") }
+                ?.map { it.trim() }?.take(6)?.joinToString(" | ") ?: "dumpsys unavailable"
+            sb.append("real state: " + state + "\n")
+        }
+        sb.append("\n=== END (copied to clipboard - send to Lyra) ===\n")
+        return sb.toString()
+    }
+
     private fun listFreezableApps(context: Context): List<ApplicationInfo> {
         val pm = context.packageManager
         return pm.getInstalledApplications(0)
@@ -417,6 +468,7 @@ class CleanerActivity : ComponentActivity() {
         var frozen by remember { mutableStateOf<Set<String>>(emptySet()) }
         var liveFrozen by remember { mutableStateOf<Set<String>?>(null) }
         var freezeError by remember { mutableStateOf<String?>(null) }
+        var doctorReport by remember { mutableStateOf<String?>(null) }
         var freezerMode by remember {
             mutableStateOf(
                 if (isDeviceOwner(context)) "DEVICE OWNER"
@@ -806,7 +858,36 @@ class CleanerActivity : ComponentActivity() {
                                 withContext(Dispatchers.IO) { setSuspended(context, pkg, false) }
                             }
                             frozen = emptySet()
+                            liveFrozen = withContext(Dispatchers.IO) { suspendedPackages(context) }
                         }
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    GlowButton("🩺 Freezer Doctor — fix stuck apps + report",
+                        listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.fillMaxWidth()) {
+                        scope.launch {
+                            doctorReport = "Running Doctor…"
+                            val rep = withContext(Dispatchers.IO) { runDoctor(context, frozenSet) }
+                            doctorReport = rep
+                            // Refresh the list after the Doctor's own unfreeze attempts
+                            liveFrozen = withContext(Dispatchers.IO) { suspendedPackages(context) }
+                            try {
+                                val cm = context.getSystemService(android.content.ClipboardManager::class.java)
+                                cm?.setPrimaryClip(android.content.ClipData.newPlainText("freezer-doctor", rep))
+                            } catch (e: Exception) { }
+                        }
+                    }
+                    if (doctorReport != null) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            doctorReport!!,
+                            color = Palette.TEXT_DIM, fontSize = 10.sp, fontFamily = FontFamily.Monospace,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF0A0E14), RoundedCornerShape(12.dp))
+                                .verticalScroll(rememberScrollState())
+                                .padding(8.dp)
+                                .height(180.dp)
+                        )
                     }
                 }
             }
