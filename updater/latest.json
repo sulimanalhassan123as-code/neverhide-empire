@@ -1,7 +1,7 @@
 {
-  "versionCode": 16,
-  "versionName": "2.6.3",
+  "versionCode": 17,
+  "versionName": "2.6.4",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.3/neverhide-empire-v2.6.3.apk",
-  "changelog": "v2.6.3 — FREEZER FROZEN/ACTIVE VIEW:\n\n❄ FROZEN apps now show in their own section at the top of the list, count included in the header.\n\n✅ ACTIVE apps show separately below — no more mixed list where every app looked the same.\n\nGood news: freeze IS working — the \"App isn't available... managed by Shell\" popup you see on a frozen app's icon is Android's own system message for apps disabled via pm disable-user. That's confirmation the freezer engine (fixed in v2.6.2) is doing its job — you just couldn't SEE which apps were frozen before. Now you can.\n\nSame cert, updates in place over v2.6.2."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.4/neverhide-empire-v2.6.4.apk",
+  "changelog": "v2.6.4 — STUCK FREEZE RELEASE:\n\n🎯 Fixes apps frozen with an older freezer version that refuse to unfreeze.\n\nRoot cause: Android has TWO separate blocking states — disabled and suspended (Samsung Knox Guard uses the suspended state too). An app stuck in the suspended state can NEVER be released by the normal unfreeze command, so older attempts bounced right off it.\n\n✅ Unfreeze now fires a full release artillery: pm enable (both forms) + pm unsuspend (both forms), stopping the moment the device confirms the app is truly free.\n\n✅ The frozen list now reads BOTH states, so stuck apps finally show as FROZEN — and tapping them (or Unfreeze All) will break the old freeze loose.\n\nSame cert, updates in place over v2.6.3."
 }
