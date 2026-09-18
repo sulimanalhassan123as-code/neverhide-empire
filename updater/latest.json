@@ -1,7 +1,7 @@
 {
-  "versionCode": 15,
-  "versionName": "2.6.2",
+  "versionCode": 16,
+  "versionName": "2.6.3",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.2/neverhide-empire-v2.6.2.apk",
-  "changelog": "v2.6.2 — UNFREEZE HOTFIX:\n\n🎯 Fixed: frozen apps refusing to unfreeze. Root cause — the app trusted pm's exit code, but on some Samsung builds pm prints an error and still exits 0, so unfreeze \"succeeded\" while the app stayed frozen.\n\n✅ Now every freeze/unfreeze is VERIFIED against the device's real disabled-package list before reporting success.\n\n✅ Unfreeze tries both pm enable forms (with and without --user flag) automatically.\n\n✅ If the device ever refuses, you'll see exactly which step failed instead of silent success.\n\nSame cert, updates in place over v2.6.1."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.3/neverhide-empire-v2.6.3.apk",
+  "changelog": "v2.6.3 — FREEZER FROZEN/ACTIVE VIEW:\n\n❄ FROZEN apps now show in their own section at the top of the list, count included in the header.\n\n✅ ACTIVE apps show separately below — no more mixed list where every app looked the same.\n\nGood news: freeze IS working — the \"App isn't available... managed by Shell\" popup you see on a frozen app's icon is Android's own system message for apps disabled via pm disable-user. That's confirmation the freezer engine (fixed in v2.6.2) is doing its job — you just couldn't SEE which apps were frozen before. Now you can.\n\nSame cert, updates in place over v2.6.2."
 }
