@@ -1,7 +1,7 @@
 {
-  "versionCode": 14,
-  "versionName": "2.6.1",
+  "versionCode": 15,
+  "versionName": "2.6.2",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.1/neverhide-empire-v2.6.1.apk",
-  "changelog": "v2.6.1 — APP FREEZER HOTFIX:\n\n🎯 Found it: the freezer wasn't freezing anything on Shizuku mode. Root cause — pm suspend needs a permission (SUSPEND_APPS) that the shell identity doesn't have, so every tap failed silently and apps stayed ACTIVE forever.\n\n✅ FIXED: switched to pm disable-user / pm enable — the real shell-permitted non-root freeze technique (same one Shelter/Island/Hail use). Tap an app now and it actually freezes.\n\n✅ Added error messages in the Freezer card — if anything fails now, you'll see exactly why instead of silence.\n\nSame cert, updates in place over v2.6.0."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.2/neverhide-empire-v2.6.2.apk",
+  "changelog": "v2.6.2 — UNFREEZE HOTFIX:\n\n🎯 Fixed: frozen apps refusing to unfreeze. Root cause — the app trusted pm's exit code, but on some Samsung builds pm prints an error and still exits 0, so unfreeze \"succeeded\" while the app stayed frozen.\n\n✅ Now every freeze/unfreeze is VERIFIED against the device's real disabled-package list before reporting success.\n\n✅ Unfreeze tries both pm enable forms (with and without --user flag) automatically.\n\n✅ If the device ever refuses, you'll see exactly which step failed instead of silent success.\n\nSame cert, updates in place over v2.6.1."
 }
