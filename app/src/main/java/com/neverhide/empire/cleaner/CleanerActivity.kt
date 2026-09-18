@@ -683,51 +683,93 @@ class CleanerActivity : ComponentActivity() {
                         Text("⚠ $freezeError", color = Palette.PINK, fontSize = 11.sp)
                     }
                     Spacer(Modifier.height(8.dp))
+                    // Split into two clear groups instead of one mixed list —
+                    // frozen apps up top so it's obvious at a glance which
+                    // apps are frozen vs still active.
+                    val labelOf = remember(apps) {
+                        apps.associateWith { it.loadLabel(context.packageManager).toString() }
+                    }
+                    val frozenApps = apps.filter { frozenSet.contains(it.packageName) }
+                        .sortedBy { labelOf[it] ?: "" }
+                    val activeApps = apps.filter { !frozenSet.contains(it.packageName) }
+                        .sortedBy { labelOf[it] ?: "" }
+
+                    fun toggle(app: android.content.pm.ApplicationInfo, isFrozen: Boolean) {
+                        scope.launch {
+                            val err = withContext(Dispatchers.IO) {
+                                setSuspended(context, app.packageName, !isFrozen)
+                            }
+                            if (err == null) {
+                                freezeError = null
+                                frozen = if (isFrozen) frozenSet - app.packageName
+                                else frozenSet + app.packageName
+                                // Re-read the REAL device state (source of truth)
+                                liveFrozen = withContext(Dispatchers.IO) {
+                                    suspendedPackages(context)
+                                }
+                            } else {
+                                freezeError = "${labelOf[app]}: $err"
+                            }
+                        }
+                    }
+
                     LazyColumn(
                         Modifier
                             .fillMaxWidth()
-                            .height(320.dp),
+                            .height(360.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        items(apps) { app ->
-                            val isFrozen = frozenSet.contains(app.packageName)
+                        if (frozenApps.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "❄ FROZEN — ${frozenApps.size}",
+                                    color = Palette.PINK, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 2.dp, bottom = 2.dp)
+                                )
+                            }
+                            items(frozenApps, key = { "frozen_" + it.packageName }) { app ->
+                                val isFrozen = true
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .background(Palette.PINK.copy(alpha = 0.10f), RoundedCornerShape(12.dp))
+                                        .clickable { toggle(app, isFrozen) }
+                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        labelOf[app] ?: app.packageName,
+                                        color = Palette.TEXT_MUTE, fontSize = 12.sp,
+                                        modifier = Modifier.weight(1f), maxLines = 1
+                                    )
+                                    StatusChip("❄ FROZEN", Palette.PINK, filled = true)
+                                }
+                            }
+                            item { Spacer(Modifier.height(6.dp)) }
+                        }
+                        item {
+                            Text(
+                                "✅ ACTIVE — ${activeApps.size}",
+                                color = Palette.GREEN, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 2.dp, bottom = 2.dp)
+                            )
+                        }
+                        items(activeApps, key = { "active_" + it.packageName }) { app ->
+                            val isFrozen = false
                             Row(
                                 Modifier
                                     .fillMaxWidth()
-                                    .background(
-                                        if (isFrozen) Palette.PINK.copy(alpha = 0.10f) else Color(0x0DFFFFFF),
-                                        RoundedCornerShape(12.dp)
-                                    )
-                                    .clickable {
-                                        scope.launch {
-                                            val err = withContext(Dispatchers.IO) {
-                                                setSuspended(context, app.packageName, !isFrozen)
-                                            }
-                                            if (err == null) {
-                                                freezeError = null
-                                                frozen = if (isFrozen) frozenSet - app.packageName
-                                                else frozenSet + app.packageName
-                                                // Re-read the REAL device state (source of truth)
-                                                liveFrozen = withContext(Dispatchers.IO) {
-                                                    suspendedPackages(context)
-                                                }
-                                            } else {
-                                                freezeError = "${app.loadLabel(context.packageManager)}: $err"
-                                            }
-                                        }
-                                    }
+                                    .background(Color(0x0DFFFFFF), RoundedCornerShape(12.dp))
+                                    .clickable { toggle(app, isFrozen) }
                                     .padding(horizontal = 10.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    app.loadLabel(context.packageManager).toString(),
-                                    color = if (isFrozen) Palette.TEXT_MUTE else Palette.WHITE,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.weight(1f),
-                                    maxLines = 1
+                                    labelOf[app] ?: app.packageName,
+                                    color = Palette.WHITE, fontSize = 12.sp,
+                                    modifier = Modifier.weight(1f), maxLines = 1
                                 )
-                                StatusChip(if (isFrozen) "❄ FROZEN" else "ACTIVE",
-                                    if (isFrozen) Palette.PINK else Palette.GREEN, filled = isFrozen)
+                                StatusChip("ACTIVE", Palette.GREEN, filled = false)
                             }
                         }
                     }
