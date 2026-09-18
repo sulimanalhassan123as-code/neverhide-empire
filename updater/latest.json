@@ -1,7 +1,7 @@
 {
-  "versionCode": 13,
-  "versionName": "2.6.0",
+  "versionCode": 14,
+  "versionName": "2.6.1",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.0/neverhide-empire-v2.6.0.apk",
-  "changelog": "v2.6.0 — CYBER CLEANER SUITE:\n\n🧹 Junk Cleaner — one deep scan sweeps camera thumbnails, app caches, stale temp/log files, messenger caches, Android/data caches and empty folders; shows reclaimable size and frees it with Clean All. Grant All-Files access once for a full sweep.\n\n⚡ Memory Booster — live RAM report with a gradient bar; Boost kills background processes and reports the freed MB.\n\n🦠 Antivirus — an honest permission-risk scanner: scores every installed app on dangerous permission combos (SMS spies, call-log thieves, hidden APK installers, overlay attacks), flags sideloaded apps, one-tap uninstall shortcut for real threats.\n\n❄️ App Freezer — Tecno/Infinix-style app suspension. Frozen apps can't start, run, or drain RAM/battery, and nothing is uninstalled. Two power paths: Device Owner (one-time ADB command, shown in-app) or Shizuku. Unfreeze All safety button included.\n\nSame signing cert — updates in place over v2.5.2."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.1/neverhide-empire-v2.6.1.apk",
+  "changelog": "v2.6.1 — APP FREEZER HOTFIX:\n\n🎯 Found it: the freezer wasn't freezing anything on Shizuku mode. Root cause — pm suspend needs a permission (SUSPEND_APPS) that the shell identity doesn't have, so every tap failed silently and apps stayed ACTIVE forever.\n\n✅ FIXED: switched to pm disable-user / pm enable — the real shell-permitted non-root freeze technique (same one Shelter/Island/Hail use). Tap an app now and it actually freezes.\n\n✅ Added error messages in the Freezer card — if anything fails now, you'll see exactly why instead of silence.\n\nSame cert, updates in place over v2.6.0."
 }
