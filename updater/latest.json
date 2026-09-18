@@ -1,7 +1,7 @@
 {
-  "versionCode": 17,
-  "versionName": "2.6.4",
+  "versionCode": 18,
+  "versionName": "2.6.5",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.4/neverhide-empire-v2.6.4.apk",
-  "changelog": "v2.6.4 — STUCK FREEZE RELEASE:\n\n🎯 Fixes apps frozen with an older freezer version that refuse to unfreeze.\n\nRoot cause: Android has TWO separate blocking states — disabled and suspended (Samsung Knox Guard uses the suspended state too). An app stuck in the suspended state can NEVER be released by the normal unfreeze command, so older attempts bounced right off it.\n\n✅ Unfreeze now fires a full release artillery: pm enable (both forms) + pm unsuspend (both forms), stopping the moment the device confirms the app is truly free.\n\n✅ The frozen list now reads BOTH states, so stuck apps finally show as FROZEN — and tapping them (or Unfreeze All) will break the old freeze loose.\n\nSame cert, updates in place over v2.6.3."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.5/neverhide-empire-v2.6.5.apk",
+  "changelog": "v2.6.5 — FREEZER DOCTOR:\n\n🩺 New button in the App Freezer for stuck freezes (\"managed by Shell\" apps that refuse to unfreeze).\n\nWhat it does: fires every release command at every stuck package while capturing EXACTLY what the device answers to each one, checks shell power (Shizuku alive + granted), checks device-owner status, and dumps the package's real OS state.\n\nThe report shows in the app AND is copied to your clipboard — paste it to Lyra in Telegram and he will pinpoint the root cause directly. The Doctor's own attempts may also unfreeze the app on the spot.\n\nSame cert, updates in place over v2.6.4."
 }
