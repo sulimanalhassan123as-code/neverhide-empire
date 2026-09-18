@@ -284,13 +284,18 @@ class CleanerActivity : ComponentActivity() {
                 null
             } catch (e: Exception) { e.message }
         }
-        // Path 2 — Shizuku (shell uid): pm suspend, works in ADB mode.
-        // Commands run inside our ShizukuShellService UserService (shell process).
+        // Path 2 — Shizuku (shell uid): pm disable-user, works in plain ADB mode.
+        // pm suspend needs the SUSPEND_APPS permission or device-owner status —
+        // the shell identity has NEITHER, so it fails silently with a permission
+        // error (this was the real bug: taps looked like they did nothing).
+        // pm disable-user / pm enable ARE shell-permitted (the standard
+        // non-root freeze technique used by e.g. Shelter/Island/Hail) —
+        // fully disables the app (removed from launcher, can't run at all).
         if (shizukuReady() && shizukuGranted()) {
             val cmd = if (suspend)
-                "pm suspend --user 0 $pkg"
+                "pm disable-user --user 0 $pkg"
             else
-                "pm suspend --user 0 $pkg --unsuspend"
+                "pm enable --user 0 $pkg"
             val code = ShizukuShell.exec(context, cmd)
             return when {
                 code == null -> "shizuku unavailable"
@@ -308,7 +313,7 @@ class CleanerActivity : ComponentActivity() {
      */
     private fun suspendedPackages(context: Context): Set<String>? {
         if (shizukuReady() && shizukuGranted()) {
-            val out = ShizukuShell.query(context, "pm list packages --user 0 --suspended")
+            val out = ShizukuShell.query(context, "pm list packages -d --user 0")
                 ?: return null
             return out.lines()
                 .filter { it.startsWith("package:") }
@@ -367,6 +372,7 @@ class CleanerActivity : ComponentActivity() {
         // Freezer state
         var frozen by remember { mutableStateOf<Set<String>>(emptySet()) }
         var liveFrozen by remember { mutableStateOf<Set<String>?>(null) }
+        var freezeError by remember { mutableStateOf<String?>(null) }
         var freezerMode by remember {
             mutableStateOf(
                 if (isDeviceOwner(context)) "DEVICE OWNER"
@@ -653,6 +659,10 @@ class CleanerActivity : ComponentActivity() {
                         frozenSet.size.toString() + " frozen • " + apps.size + " apps manageable",
                         color = Palette.TEXT_MUTE, fontSize = 11.sp
                     )
+                    if (freezeError != null) {
+                        Spacer(Modifier.height(4.dp))
+                        Text("⚠ $freezeError", color = Palette.PINK, fontSize = 11.sp)
+                    }
                     Spacer(Modifier.height(8.dp))
                     LazyColumn(
                         Modifier
@@ -675,12 +685,15 @@ class CleanerActivity : ComponentActivity() {
                                                 setSuspended(context, app.packageName, !isFrozen)
                                             }
                                             if (err == null) {
+                                                freezeError = null
                                                 frozen = if (isFrozen) frozenSet - app.packageName
                                                 else frozenSet + app.packageName
                                                 // Re-read the REAL device state (source of truth)
                                                 liveFrozen = withContext(Dispatchers.IO) {
                                                     suspendedPackages(context)
                                                 }
+                                            } else {
+                                                freezeError = "${app.loadLabel(context.packageManager)}: $err"
                                             }
                                         }
                                     }
