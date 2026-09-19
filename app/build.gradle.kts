@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -11,8 +12,8 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 23
-        versionName = "2.7.2"
+        versionCode = 24
+        versionName = "2.7.3"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -23,6 +24,12 @@ android {
             keyAlias = "empire-key"
             keyPassword = "neverhide2024"
         }
+    }
+
+    lint {
+        // False positive: we use ComponentActivity (no fragments anywhere in
+        // the Empire), so the fragment-version check for ActivityResult is moot.
+        disable += "InvalidFragmentVersionForActivityResult"
     }
 
     buildTypes {
@@ -69,4 +76,5 @@ dependencies {
     implementation(libs.compose.tooling.preview)
     debugImplementation(libs.compose.tooling)
     implementation(libs.coroutines.android)
+    implementation(libs.firebase.messaging)
 }

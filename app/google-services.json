@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1013655836375",
+    "project_id": "never-hide-recorder",
+    "storage_bucket": "never-hide-recorder.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013655836375:android:db566e3d10a0e007e58292",
+        "android_client_info": {
+          "package_name": "com.neverhide.empire"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_AdZr66BdUqjydyXg-DcZSP43MWQ-zqM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

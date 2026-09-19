@@ -123,6 +123,13 @@
         <activity android:name=".vault.AppVaultActivity"
             android:exported="false"
             android:label="App Vault" />
+        <service
+            android:name=".firebase.EmpireMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
         <activity android:name=".calls.QuickDialActivity"
             android:exported="false"
             android:label="Quick Dial" />
