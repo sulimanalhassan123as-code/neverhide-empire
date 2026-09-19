@@ -1,7 +1,7 @@
 {
-  "versionCode": 25,
-  "versionName": "2.7.4",
-  "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.7.4/neverhide-empire-v2.7.4.apk",
-  "changelog": "v2.7.4 — 📡 EMPIRE PUSH CHANNEL\n\nYour Empire now joins the empire push network at startup.\n\nOnce you update and open the app ONCE, Lyra can send live pushes straight to your phone — even with the Empire fully closed. First test coming right up: a live wake-up alert to prove the pipeline end to end.\n\nThis is the foundation Empire Talk calls ring on."
+  "versionCode": 26,
+  "versionName": "2.8.0",
+  "tier": "major",
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.0/neverhide-empire-v2.8.0.apk",
+  "changelog": "v2.8.0 — 📡 EMPIRE TALK: INTERNET CALLS\n\nThe dream feature is here. Voice calls + chat between Empire handles — and since the call stream belongs to US, recording captures both sides in quality normal call recording can never reach.\n\n• Claim @yourhandle — no phone numbers, zero personal data\n• 📞 WebRTC voice calls between handles\n• 💬 Recent Chats hub — WhatsApp-style: all conversations and calls in one place, previews, tap to open\n• 🔴 In-call recording (WAV, lands in your recordings library)\n• 🔇 Mute, timer, incoming call cards with Answer/Reject\n• Security: meeting point is RLS-guarded — only Empire apps can read/write\n\nHonest Phase 1 limits: incoming calls ring while the Empire app is open; push-ringing with the app closed is next (the Firebase engine is wired and waiting). Both sides need internet. The APK grew to ~43MB — that is the WebRTC engine inside.\n\nHOW TO USE: open Empire Talk → claim your handle → tell your people to install the Empire + claim theirs → call and chat by handle."
 }
