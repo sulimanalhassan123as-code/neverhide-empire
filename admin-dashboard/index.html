@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Empire Admin — Neverhide Empire Command Center</title>
+<style>
+  :root { --bg:#0a0e14; --card:#111827; --line:#1f2a3d; --cyan:#22d3ee; --purple:#a855f7; --text:#e5e7eb; --dim:#6b7280; }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,sans-serif; }
+  body { background:radial-gradient(1200px 600px at 50% -10%, #12203a 0%, var(--bg) 60%); color:var(--text); min-height:100vh; padding:16px; }
+  .wrap { max-width:900px; margin:0 auto; }
+  h1 { font-size:1.5rem; text-align:center; padding:14px 0 4px;
+       background:linear-gradient(90deg,var(--cyan),var(--purple)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { text-align:center; color:var(--dim); font-size:.8rem; margin-bottom:18px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px;
+          box-shadow:0 0 24px rgba(34,211,238,.05); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+  .stat { background:#0d1526; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
+  .stat .n { font-size:1.7rem; font-weight:700; color:var(--cyan); }
+  .stat .l { font-size:.68rem; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; margin-top:4px; }
+  h2 { font-size:.85rem; color:var(--purple); text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px; }
+  .bars { display:flex; align-items:flex-end; gap:6px; height:120px; }
+  .barcol { flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; position:relative; }
+  .bar { width:100%; border-radius:4px 4px 0 0; background:linear-gradient(180deg,var(--cyan),#0e7490); min-height:2px; }
+  .bar.d { background:linear-gradient(180deg,var(--purple),#6b21a8); }
+  .barlbl { font-size:.55rem; color:var(--dim); text-align:center; margin-top:4px; }
+  .legend { display:flex; gap:16px; font-size:.7rem; color:var(--dim); margin-top:8px; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; vertical-align:middle; }
+  table { width:100%; border-collapse:collapse; font-size:.78rem; }
+  td,th { padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; }
+  th { color:var(--dim); font-size:.68rem; text-transform:uppercase; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:99px; background:#0d1526; border:1px solid var(--line); margin:3px; font-size:.75rem; color:var(--cyan); }
+  .crash { font-family:monospace; font-size:.68rem; color:#f87171; white-space:pre-wrap; word-break:break-all; background:#0d1526; padding:8px; border-radius:8px; margin-top:6px; max-height:140px; overflow:auto; }
+  .muted { color:var(--dim); font-size:.78rem; }
+  input[type=password], input[type=text] { width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:#0d1526; color:var(--text); font-size:1rem; }
+  button { width:100%; margin-top:10px; padding:12px; border:none; border-radius:10px; font-size:1rem; font-weight:600; color:#fff;
+           background:linear-gradient(90deg,var(--cyan),var(--purple)); cursor:pointer; }
+  .refresh-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .btn-sm { width:auto; margin:0; padding:8px 16px; font-size:.8rem; }
+  .hidden { display:none; }
+  .err { color:#f87171; text-align:center; margin-top:8px; font-size:.85rem; }
+  .ok-chip { color:#34d399; font-size:.75rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚔ NEVERHIDE EMPIRE — COMMAND CENTER</h1>
+  <div class="sub">Admin Dashboard · live fleet telemetry</div>
+
+  <div id="login" class="card">
+    <h2>Owner Access</h2>
+    <input type="password" id="key" placeholder="Empire admin key" autocomplete="off">
+    <button onclick="doLogin()">ENTER THE COMMAND CENTER</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+
+  <div id="dash" class="hidden">
+    <div class="refresh-row">
+      <span class="muted">Auto-refresh every 60s · <span id="stamp"></span></span>
+      <button class="btn-sm" onclick="load()">↻ Refresh</button>
+    </div>
+
+    <div class="card">
+      <h2>Fleet</h2>
+      <div class="grid">
+        <div class="stat"><div class="n" id="installs">–</div><div class="l">Installs</div></div>
+        <div class="stat"><div class="n" id="a24">–</div><div class="l">Active 24h</div></div>
+        <div class="stat"><div class="n" id="a7">–</div><div class="l">Active 7d</div></div>
+        <div class="stat"><div class="n" id="opensToday">–</div><div class="l">Opens today</div></div>
+        <div class="stat"><div class="n" id="dls">–</div><div class="l">Update downloads</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Activity — last 14 days</h2>
+      <div class="bars" id="bars"></div>
+      <div class="legend"><span><span class="dot" style="background:var(--cyan)"></span>App opens</span><span><span class="dot" style="background:var(--purple)"></span>Update downloads</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Versions in the wild</h2>
+      <div id="versions" class="muted">No data yet.</div>
+    </div>
+
+    <div class="card">
+      <h2>Empire Talk network</h2>
+      <div id="profiles" class="muted">No data yet.</div>
+      <table id="talkTable"></table>
+    </div>
+
+    <div class="card">
+      <h2>Crash reports</h2>
+      <div id="crashes" class="muted">None — the fleet is clean. <span class="ok-chip">✔</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "https://lyra-0a4285fc.base44.app/functions/empireStats";
+let timer = null;
+
+function doLogin() {
+  const k = document.getElementById("key").value.trim();
+  localStorage.setItem("empire_admin_key", k);
+  load(true);
+}
+
+async function load(first) {
+  const key = localStorage.getItem("empire_admin_key");
+  if (!key) return;
+  try {
+    const r = await fetch(API, { method:"POST", headers:{"Content-Type":"application/json"},
+                                body: JSON.stringify({ admin_key: key }) });
+    if (r.status === 401) {
+      localStorage.removeItem("empire_admin_key");
+      document.getElementById("login").classList.remove("hidden");
+      document.getElementById("dash").classList.add("hidden");
+      document.getElementById("loginErr").textContent = "Wrong key.";
+      return;
+    }
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || "bad response");
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("dash").classList.remove("hidden");
+    document.getElementById("loginErr").textContent = "";
+
+    const f = d.fleet;
+    document.getElementById("installs").textContent = f.installs;
+    document.getElementById("a24").textContent = f.active_24h;
+    document.getElementById("a7").textContent = f.active_7d;
+    document.getElementById("opensToday").textContent = f.opens_today;
+    document.getElementById("dls").textContent = f.total_update_downloads;
+    document.getElementById("stamp").textContent = new Date(d.generated_at).toLocaleTimeString();
+
+    const bars = document.getElementById("bars");
+    const max = Math.max(1, ...d.daily.map(x => Math.max(x.opens, x.downloads)));
+    bars.innerHTML = d.daily.map(x => {
+      const h = Math.round((x.opens / max) * 100);
+      const hd = Math.round((x.downloads / max) * 100);
+      return `<div class="barcol"><div class="bar" style="height:${h}%"></div>` +
+             `<div class="bar d" style="height:${hd}%;margin-top:2px"></div>` +
+             `<div class="barlbl">${x.date.slice(5)}</div></div>`;
+    }).join("");
+
+    const v = Object.entries(d.versions || {});
+    document.getElementById("versions").innerHTML = v.length
+      ? v.map(([ver, n]) => `<span class="pill">v${ver} × ${n}</span>`).join("")
+      : "No data yet.";
+
+    const p = d.talk.profiles || [];
+    document.getElementById("profiles").innerHTML = p.length
+      ? p.map(h => `<span class="pill">@${h}</span>`).join("")
+      : "No handles claimed yet.";
+
+    document.getElementById("talkTable").innerHTML =
+      `<tr><th>Metric</th><th>Value</th></tr>` +
+      `<tr><td>Messages sent</td><td>${d.talk.messages_total}</td></tr>` +
+      `<tr><td>Calls placed</td><td>${d.talk.calls_total}</td></tr>` +
+      d.talk.recent_calls.map(c => `<tr><td>📞 ${c.from} → @${c.to}</td><td>${c.state} · ${c.time ? c.time.slice(0,16).replace("T"," ") : ""}</td></tr>`).join("");
+
+    const c = d.crashes || [];
+    document.getElementById("crashes").innerHTML = c.length
+      ? c.map(x => `<div class="muted">v${x.version} · ${x.device} · ${x.time ? x.time.slice(0,16).replace("T"," ") : ""}</div><div class="crash">${x.report}</div>`).join("<div style='height:10px'></div>")
+      : "None — the fleet is clean. <span class='ok-chip'>✔</span>";
+  } catch (e) {
+    if (first) document.getElementById("loginErr").textContent = "Connection error: " + e.message;
+  }
+}
+
+load();
+timer = setInterval(load, 60000);
+</script>
+</body>
+</html>
