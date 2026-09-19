@@ -1,7 +1,7 @@
 {
-  "versionCode": 18,
-  "versionName": "2.6.5",
+  "versionCode": 19,
+  "versionName": "2.6.6",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.5/neverhide-empire-v2.6.5.apk",
-  "changelog": "v2.6.5 — FREEZER DOCTOR:\n\n🩺 New button in the App Freezer for stuck freezes (\"managed by Shell\" apps that refuse to unfreeze).\n\nWhat it does: fires every release command at every stuck package while capturing EXACTLY what the device answers to each one, checks shell power (Shizuku alive + granted), checks device-owner status, and dumps the package's real OS state.\n\nThe report shows in the app AND is copied to your clipboard — paste it to Lyra in Telegram and he will pinpoint the root cause directly. The Doctor's own attempts may also unfreeze the app on the spot.\n\nSame cert, updates in place over v2.6.4."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.6/neverhide-empire-v2.6.6.apk",
+  "changelog": "v2.6.6 — DOCTOR CRASH FIX:\n\n🎯 Fixed the Freezer Doctor crashing the app (\"keeps stopping\" → back to homepage).\n\nRoot cause found: the Doctor ran raw dumpsys package dumps — their 1-2MB replies blew Android's ~1MB binder IPC limit, which kills the shell process and crashes the app with it.\n\n✅ Every shell command output is now capped at 64KB BEFORE it crosses the IPC boundary (app-wide protection).\n✅ dumpsys calls trimmed server-side — tiny replies only.\n✅ Doctor + freeze/unfreeze taps are fully crash-armored: if anything ever fails, the app survives and SHOWS the error instead of dying.\n\nAlso to be clear: a frozen app is NOT dead. Frozen = the OS refuses to run it. The app, its data, everything is intact and recoverable.\n\nSame cert, updates in place over v2.6.5."
 }
