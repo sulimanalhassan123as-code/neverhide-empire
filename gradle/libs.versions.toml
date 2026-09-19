@@ -7,6 +7,7 @@ activityCompose = "1.9.0"
 composeBom = "2024.06.00"
 coroutines = "1.8.1"
 gms = "4.4.2"
+webrtc = "1.1.1"
 firebaseMessaging = "24.1.0"
 
 [libraries]
@@ -20,6 +21,7 @@ compose-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-tooling = { module = "androidx.compose.ui:ui-tooling" }
 coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
+webrtc = { module = "io.getstream:stream-webrtc-android", version.ref = "webrtc" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

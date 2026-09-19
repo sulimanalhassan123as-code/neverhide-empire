@@ -382,6 +382,8 @@ class MainActivity : ComponentActivity() {
                     SectionHeader("📞", "Communication", Palette.CYAN)
                     FeatureCard("📞", "Calls — Quick Dial", "Instant dialer with call-log access", Palette.CYAN,
                         badge = "NEW") { startActivity(Intent(this@MainActivity, QuickDialActivity::class.java)) }
+                    FeatureCard("📡", "Empire Talk — Internet Calls", "Voice calls + chat between handles • recordable", Palette.GREEN,
+                        badge = "NEW") { startActivity(Intent(this@MainActivity, com.neverhide.empire.talk.EmpireTalkActivity::class.java)) }
 
                     // ===== MORE =====
                     SectionHeader("🚀", "More", Palette.PURPLE)

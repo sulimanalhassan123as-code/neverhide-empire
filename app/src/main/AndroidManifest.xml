@@ -123,6 +123,9 @@
         <activity android:name=".vault.AppVaultActivity"
             android:exported="false"
             android:label="App Vault" />
+        <activity android:name=".talk.EmpireTalkActivity"
+            android:exported="false"
+            android:label="Empire Talk" />
         <service
             android:name=".firebase.EmpireMessagingService"
             android:exported="false">

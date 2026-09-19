@@ -12,8 +12,8 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 25
-        versionName = "2.7.4"
+        versionCode = 26
+        versionName = "2.8.0"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -77,4 +77,5 @@ dependencies {
     debugImplementation(libs.compose.tooling)
     implementation(libs.coroutines.android)
     implementation(libs.firebase.messaging)
+    implementation(libs.webrtc)
 }
