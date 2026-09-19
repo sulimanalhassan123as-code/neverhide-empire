@@ -1,7 +1,7 @@
 {
-  "versionCode": 20,
-  "versionName": "2.6.7",
+  "versionCode": 21,
+  "versionName": "2.7.0",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.6.7/neverhide-empire-v2.6.7.apk",
-  "changelog": "v2.6.7 — THE BLIND FREEZER FIX (root cause found by the owner himself!):\n\n🎯 The mystery is solved: stuck frozen apps were showing as ACTIVE on the Freezer screen — so tapping them was re-FREEZING them instead of unfreezing. The screen was blind to the old freeze state.\n\nWhy: the app read the frozen list through shell pm list flags, but your Android 11 Samsung doesn't support the flag that lists suspended apps (the exact state the old freeze used). The list came back empty — frozen apps looked active forever.\n\n✅ The fix: the app now reads frozen state straight from the OS package manager's own flags — sees BOTH freeze states (disabled + suspended), works on every Android version, no shell needed.\n\n✅ Stuck apps will now finally appear in the ❄ FROZEN section — tap them and the pm unsuspend artillery releases the old freeze for real.\n\n✅ Freezer Doctor now targets the truth-frozen set and reports OS flags per app.\n\nSame cert, updates in place over v2.6.6."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.7.0/neverhide-empire-v2.7.0.apk",
+  "changelog": "v2.7.0 — 🔐 APP VAULT:\n\nDevice-level app locks, PIN-gated. Lock any app and it CANNOT start — not from the launcher, not from another app, not even after a reboot. The lock is an OS-level state: it survives reboots AND the Empire being uninstalled.\n\n🔒 Tap any app to lock it into the Vault (instant freeze)\n🔑 4-6 digit PIN required to unlock or remove (salted SHA-256, stored locally only)\n🔄 AUTO RE-LOCK: any vault app found unlocked freezes again the moment the Vault opens — your phone re-arms itself\n🔒 Lock All in one tap\n🩺 Built on the battle-tested v2.6.x freeze engine with release artillery + truth-read verification\n\nHonest limits (shown in the app): a factory reset clears every device-level state — that wall belongs to Google (FRP), not to any app. Everything short of a reset is defended.\n\nSame cert, updates in place over v2.6.7."
 }
