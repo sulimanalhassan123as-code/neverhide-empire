@@ -84,6 +84,8 @@ private fun VaultScreen() {
     var pinPrompt by remember { mutableStateOf<String?>(null) }   // package pending PIN-gated action
     var pinAction by remember { mutableStateOf("unlock") }
     var pinEntry by remember { mutableStateOf("") }
+    var resetOpen by remember { mutableStateOf(false) }
+    var resetText by remember { mutableStateOf("") }
     var vaultError by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
 
@@ -211,6 +213,52 @@ private fun VaultScreen() {
                 Spacer(Modifier.height(10.dp))
             }
 
+            // FORGOT PIN — offline escape hatch: clears the PIN + vault list
+            // and unfreezes every vault app. The owner can never be locked out
+            // of his own phone, even with no internet and no Lyra.
+            if (pinSaved) {
+                if (!resetOpen) {
+                    Text(
+                        "Forgot PIN?",
+                        color = Palette.TEXT_MUTE, fontSize = 11.sp,
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .clickable { resetOpen = true; resetText = "" }
+                    )
+                } else {
+                    GlassCard(Modifier.fillMaxWidth(), glow = Palette.PINK) {
+                        Text("🔥 EMERGENCY RESET",
+                            color = Palette.PINK, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Clears the PIN and the vault list, then unfreezes every vault app. No data inside your apps is touched. Type RESET to confirm.",
+                            color = Palette.TEXT_MUTE, fontSize = 10.sp)
+                        Spacer(Modifier.height(6.dp))
+                        TextField(
+                            value = resetText,
+                            onValueChange = { resetText = it.uppercase().take(5) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            GlowButton("🔥 Reset", listOf(Palette.PINK, Color(0xFFD50000)), Modifier.weight(1f),
+                                enabled = resetText == "RESET") {
+                                val old = vaultApps.toSet()
+                                prefs.edit().remove(KEY_PIN).remove(KEY_APPS).apply()
+                                pinSaved = false
+                                vaultApps = emptySet()
+                                resetText = ""
+                                resetOpen = false
+                                old.forEach { unfreeze(it) }
+                            }
+                            GlowButton("Cancel", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
+                                resetOpen = false; resetText = ""
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+            }
+
             // PIN prompt (unlock / remove)
             if (pinPrompt != null) {
                 val pkg = pinPrompt!!
@@ -318,7 +366,7 @@ private fun VaultScreen() {
 
             Spacer(Modifier.height(10.dp))
             Text(
-                "Honest limits: locks survive reboot and even Empire uninstall (OS-level state), and vault apps re-lock automatically each time this Vault opens. A factory reset clears everything — that wall belongs to Google (FRP), not to any app.",
+                "Honest limits: locks survive reboot and even Empire uninstall (OS-level state), and vault apps re-lock automatically each time this Vault opens. If you ever forget the PIN: ask Lyra (he holds a copy in your private chat history) or run the Emergency Reset. A factory reset clears everything — that wall belongs to Google (FRP), not to any app.",
                 color = Palette.TEXT_MUTE, fontSize = 10.sp, fontFamily = FontFamily.Monospace
             )
         }
