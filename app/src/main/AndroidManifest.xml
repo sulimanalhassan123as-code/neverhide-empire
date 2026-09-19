@@ -95,8 +95,7 @@
     <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
-    <application
-        android:name=".EmpireApp"
+    <application android:name=".EmpireApp"
         android:allowBackup="false"
         android:networkSecurityConfig="@xml/network_security_config"
         android:icon="@mipmap/ic_launcher"

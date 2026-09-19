@@ -118,26 +118,29 @@ class EmpireTalkActivity : ComponentActivity() {
         // your people, newest first, tap to open.
         LaunchedEffect(myHandle, view) {
             while (isActive && view == "home" && myHandle.isNotBlank()) {
-                val seen = LinkedHashMap<String, Pair<Long, String>>()
-                val msgs = TalkEngine.recentThreads(myHandle)
-                if (msgs != null) {
-                    for (i in 0 until msgs.length()) {
-                        val m = msgs.getJSONObject(i)
-                        val other = if (m.optString("sender") == myHandle)
-                            m.optString("receiver") else m.optString("sender")
-                        if (other.isNotBlank() && !seen.containsKey(other))
-                            seen[other] = m.getLong("id") to ("💬 " + m.optString("body").take(40))
+                val seen = withContext(Dispatchers.IO) {
+                    val local = LinkedHashMap<String, Pair<Long, String>>()
+                    val msgs = TalkEngine.recentThreads(myHandle)
+                    if (msgs != null) {
+                        for (i in 0 until msgs.length()) {
+                            val m = msgs.getJSONObject(i)
+                            val other = if (m.optString("sender") == myHandle)
+                                m.optString("receiver") else m.optString("sender")
+                            if (other.isNotBlank() && !local.containsKey(other))
+                                local[other] = m.getLong("id") to ("💬 " + m.optString("body").take(40))
+                        }
                     }
-                }
-                val calls = TalkEngine.recentCalls(myHandle)
-                if (calls != null) {
-                    for (i in 0 until calls.length()) {
-                        val c = calls.getJSONObject(i)
-                        val other = if (c.optString("caller") == myHandle)
-                            c.optString("callee") else c.optString("caller")
-                        if (other.isNotBlank() && !seen.containsKey(other))
-                            seen[other] = Long.MAX_VALUE to "📞 last: call"
+                    val calls = TalkEngine.recentCalls(myHandle)
+                    if (calls != null) {
+                        for (i in 0 until calls.length()) {
+                            val c = calls.getJSONObject(i)
+                            val other = if (c.optString("caller") == myHandle)
+                                c.optString("callee") else c.optString("caller")
+                            if (other.isNotBlank() && !local.containsKey(other))
+                                local[other] = Long.MAX_VALUE to "📞 last: call"
+                        }
                     }
+                    local
                 }
                 recents = seen.entries.sortedByDescending { it.value.first }
                     .map { it.key to it.value.second }
@@ -202,7 +205,7 @@ class EmpireTalkActivity : ComponentActivity() {
                         // ---- INCOMING CALLS (poll) ----
                         LaunchedEffect(myHandle) {
                             while (isActive && myHandle.isNotBlank()) {
-                                val arr = TalkEngine.incomingCalls(myHandle)
+                                val arr = withContext(Dispatchers.IO) { TalkEngine.incomingCalls(myHandle) }
                                 if (arr != null) {
                                     val list = mutableListOf<Pair<String, String>>()
                                     for (i in 0 until arr.length()) {
@@ -383,13 +386,13 @@ class EmpireTalkActivity : ComponentActivity() {
         LaunchedEffect(Unit) {
             var lastCand = 0L
             while (isActive && !ended) {
-                val row = TalkEngine.getCall(call.callId)
+                val row = withContext(Dispatchers.IO) { TalkEngine.getCall(call.callId) }
                 if (row?.optString("state") == "ended") {
-                    withContext(Dispatchers.Main) { status = "Call ended"; ended = true }
+                    status = "Call ended"; ended = true
                     break
                 }
                 val remoteRole = if (call.role == "caller") "callee" else "caller"
-                val cands = TalkEngine.getCandidates(call.callId, remoteRole, lastCand)
+                val cands = withContext(Dispatchers.IO) { TalkEngine.getCandidates(call.callId, remoteRole, lastCand) }
                 if (cands != null) {
                     for (i in 0 until cands.length()) {
                         val c = cands.getJSONObject(i)
@@ -476,7 +479,7 @@ class EmpireTalkActivity : ComponentActivity() {
 
         LaunchedEffect(other) {
             while (isActive) {
-                val arr = TalkEngine.getMessages(myHandle, other, lastId)
+                val arr = withContext(Dispatchers.IO) { TalkEngine.getMessages(myHandle, other, lastId) }
                 if (arr != null && arr.length() > 0) {
                     withContext(Dispatchers.Main) {
                         for (i in 0 until arr.length()) {
