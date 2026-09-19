@@ -2,6 +2,7 @@ package com.neverhide.empire.updater
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import java.io.File
 import java.security.MessageDigest
 
@@ -11,31 +12,49 @@ import java.security.MessageDigest
  * Before ANY downloaded update is offered for install, we compare the
  * signing certificate of the downloaded APK against the certificate of
  * the already-installed app. If they do not match byte-for-byte, the
- * download is a forgery (or was swapped in transit) and is destroyed.
+ * download is a forgery (or was corrupted/swapped in transit) and is
+ * destroyed.
  *
- * This means even if someone hijacks the update URL or tricks the
- * updater into fetching their APK, Android's signature rule + this
- * check make the poison update impossible to install.
+ * Uses GET_SIGNING_CERTIFICATES (API 28+) — the modern, reliable API for
+ * apps signed with APK Signature Scheme v2/v3 (which is all our builds).
+ * The old deprecated GET_SIGNATURES flag is kept only as a last-resort
+ * fallback for pre-API-28 devices.
  */
 object ApkVerifier {
+
+    private fun firstCert(context: Context, pkgName: String?, archivePath: String?): ByteArray? {
+        val pm = context.packageManager
+        return runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val flags = PackageManager.GET_SIGNING_CERTIFICATES
+                val info = if (archivePath != null) {
+                    pm.getPackageArchiveInfo(archivePath, flags)
+                } else {
+                    pm.getPackageInfo(pkgName!!, flags)
+                }
+                val signingInfo = info?.signingInfo
+                val certs = signingInfo?.apkContentsSigners ?: signingInfo?.signingCertificateHistory
+                certs?.firstOrNull()?.toByteArray()
+            } else {
+                @Suppress("DEPRECATION")
+                val flags = PackageManager.GET_SIGNATURES
+                val info = if (archivePath != null) {
+                    pm.getPackageArchiveInfo(archivePath, flags)
+                } else {
+                    pm.getPackageInfo(pkgName!!, flags)
+                }
+                @Suppress("DEPRECATION")
+                info?.signatures?.firstOrNull()?.toByteArray()
+            }
+        }.getOrNull()
+    }
 
     /** @return true when the downloaded APK is signed with the SAME
      *  certificate as the currently installed Neverhide Empire. */
     fun signatureMatchesInstalled(context: Context, downloadedApk: File): Boolean {
-        return runCatching {
-            val pm = context.packageManager
-
-            // Signature of the app we're currently running
-            val installed = pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNATURES)
-                .signatures?.firstOrNull() ?: return false
-
-            // Signature of the file we just downloaded
-            val downloaded = pm.getPackageArchiveInfo(
-                downloadedApk.absolutePath, PackageManager.GET_SIGNATURES
-            )?.signatures?.firstOrNull() ?: return false
-
-            MessageDigest.isEqual(installed.toByteArray(), downloaded.toByteArray())
-        }.getOrDefault(false)
+        val installed = firstCert(context, context.packageName, null) ?: return false
+        val downloaded = firstCert(context, null, downloadedApk.absolutePath) ?: return false
+        return MessageDigest.isEqual(installed, downloaded)
     }
 
     /** Also verify the package name matches — a same-signed but different

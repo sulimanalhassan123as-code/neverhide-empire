@@ -94,10 +94,11 @@ class AdrenalineUpdater(private val context: Context) {
             .show()
     }
 
-    private fun download(apkUrl: String) {
-        Toast.makeText(context, "Downloading update…", Toast.LENGTH_SHORT).show()
+    private fun download(apkUrl: String, attempt: Int = 1) {
+        Toast.makeText(context, if (attempt == 1) "Downloading update…" else "Retrying download…", Toast.LENGTH_SHORT).show()
         scope.launch {
             try {
+                var expectedLen = -1L
                 val file = withContext(Dispatchers.IO) {
                     val dir = File(context.cacheDir, "apk").apply { mkdirs() }
                     val out = File(dir, "empire-update.apk")
@@ -105,19 +106,47 @@ class AdrenalineUpdater(private val context: Context) {
                         connectTimeout = 15_000; readTimeout = 60_000
                         instanceFollowRedirects = true
                     }
+                    expectedLen = conn.contentLengthLong
                     conn.inputStream.use { input ->
                         java.io.FileOutputStream(out).use { input.copyTo(it) }
                     }
                     out
                 }
+
+                // INTEGRITY: a flaky mobile connection can silently truncate a
+                // big download without throwing — that produces a corrupted
+                // file that looks like tampering to the signature check below.
+                // Catch it here with a friendly retry instead of a scary
+                // security message.
+                if (expectedLen > 0 && file.length() != expectedLen) {
+                    file.delete()
+                    if (attempt < 3) {
+                        Toast.makeText(context,
+                            "Download was interrupted (weak connection) — retrying…",
+                            Toast.LENGTH_SHORT).show()
+                        download(apkUrl, attempt + 1)
+                    } else {
+                        Toast.makeText(context,
+                            "Download kept getting interrupted — try again on stronger wifi/data.",
+                            Toast.LENGTH_LONG).show()
+                    }
+                    return@launch
+                }
+
                 // SECURITY: verify the update is genuinely ours before install
                 val authentic = ApkVerifier.signatureMatchesInstalled(context, file) &&
                         ApkVerifier.packageMatchesInstalled(context, file)
                 if (!authentic) {
                     file.delete()
-                    Toast.makeText(context,
-                        "🚫 SECURITY: update signature failed verification — blocked.",
-                        Toast.LENGTH_LONG).show()
+                    if (attempt < 3) {
+                        // Could still be a bad download even with matching
+                        // Content-Length (rare, but retry before alarming).
+                        download(apkUrl, attempt + 1)
+                    } else {
+                        Toast.makeText(context,
+                            "🚫 SECURITY: update signature failed verification — blocked.",
+                            Toast.LENGTH_LONG).show()
+                    }
                     return@launch
                 }
                 ApkInstaller.install(context, file)
