@@ -62,9 +62,17 @@ class AppVaultActivity : ComponentActivity() {
     }
 }
 
-private const val PREFS = "app_vault"
-private const val KEY_APPS = "vault_apps"
-private const val KEY_PIN = "pin_hash"
+/** Shared vault prefs keys — used by the Vault, the Freezer, and the Empire patrol. */
+object VaultStore {
+    const val PREFS = "app_vault"
+    const val KEY_APPS = "vault_apps"
+    const val KEY_PIN = "pin_hash"
+
+    fun vaultApps(context: android.content.Context): Set<String> =
+        context.getSharedPreferences(VaultStore.PREFS, android.content.Context.MODE_PRIVATE)
+            .getStringSet(VaultStore.KEY_APPS, emptySet()) ?: emptySet()
+}
+
 private const val SALT = "neverhide-empire-vault-v1"
 
 private fun pinHash(pin: String): String =
@@ -76,10 +84,10 @@ private fun pinHash(pin: String): String =
 private fun VaultScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val prefs = remember { context.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
+    val prefs = remember { context.getSharedPreferences(VaultStore.PREFS, Context.MODE_PRIVATE) }
 
-    var vaultApps by remember { mutableStateOf(prefs.getStringSet(KEY_APPS, emptySet()) ?: emptySet()) }
-    var pinSaved by remember { mutableStateOf(prefs.getString(KEY_PIN, null) != null) }
+    var vaultApps by remember { mutableStateOf(prefs.getStringSet(VaultStore.KEY_APPS, emptySet()) ?: emptySet()) }
+    var pinSaved by remember { mutableStateOf(prefs.getString(VaultStore.KEY_PIN, null) != null) }
     var pinSetup by remember { mutableStateOf("") }
     var pinPrompt by remember { mutableStateOf<String?>(null) }   // package pending PIN-gated action
     var pinAction by remember { mutableStateOf("unlock") }
@@ -97,7 +105,7 @@ private fun VaultScreen() {
     val mode = remember { FreezerEngine.powerMode(context) }
 
     fun saveApps() {
-        prefs.edit().putStringSet(KEY_APPS, vaultApps).apply()
+        prefs.edit().putStringSet(VaultStore.KEY_APPS, vaultApps).apply()
     }
 
     fun freeze(pkg: String) {
@@ -205,7 +213,7 @@ private fun VaultScreen() {
                     )
                     Spacer(Modifier.height(6.dp))
                     GlowButton("💾 Save PIN", listOf(Palette.AMBER, Color(0xFFFF8F00)), Modifier.fillMaxWidth(), enabled = pinSetup.length >= 4) {
-                        prefs.edit().putString(KEY_PIN, pinHash(pinSetup)).apply()
+                        prefs.edit().putString(VaultStore.KEY_PIN, pinHash(pinSetup)).apply()
                         pinSaved = true
                         pinSetup = ""
                     }
@@ -243,7 +251,7 @@ private fun VaultScreen() {
                             GlowButton("🔥 Reset", listOf(Palette.PINK, Color(0xFFD50000)), Modifier.weight(1f),
                                 enabled = resetText == "RESET") {
                                 val old = vaultApps.toSet()
-                                prefs.edit().remove(KEY_PIN).remove(KEY_APPS).apply()
+                                prefs.edit().remove(VaultStore.KEY_PIN).remove(VaultStore.KEY_APPS).apply()
                                 pinSaved = false
                                 vaultApps = emptySet()
                                 resetText = ""
@@ -279,7 +287,7 @@ private fun VaultScreen() {
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GlowButton("✅ Confirm", listOf(Palette.GREEN, Color(0xFF00E676)), Modifier.weight(1f), enabled = pinEntry.isNotEmpty()) {
-                            val stored = prefs.getString(KEY_PIN, null)
+                            val stored = prefs.getString(VaultStore.KEY_PIN, null)
                             if (stored != null && pinHash(pinEntry) == stored) {
                                 if (pinAction == "unlock") unfreeze(pkg) else {
                                     vaultApps = vaultApps - pkg

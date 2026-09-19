@@ -156,6 +156,23 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun EmpireHub() {
         val scroll = rememberScrollState()
+        // VAULT PATROL — every time the Empire opens, re-freeze any vault app
+        // that was unlocked (by the owner or by a snooper via Settings → Enable).
+        // Needs freeze power; silently skips when Shizuku/DO is down. Locks stay
+        // active regardless — this only re-arms ones that were opened.
+        LaunchedEffect(Unit) {
+            val vault = com.neverhide.empire.vault.VaultStore.vaultApps(this@MainActivity)
+            if (vault.isNotEmpty()) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    if (com.neverhide.empire.cleaner.FreezerEngine.hasPower(this@MainActivity)) {
+                        val frozen = com.neverhide.empire.cleaner.FreezerEngine.realFrozenNow(this@MainActivity)
+                        vault.filter { !frozen.contains(it) }.forEach {
+                            com.neverhide.empire.cleaner.FreezerEngine.setSuspended(this@MainActivity, it, true)
+                        }
+                    }
+                }
+            }
+        }
         var guardianTheme by remember {
             mutableStateOf(getSharedPreferences("guardian_prefs", MODE_PRIVATE).getInt(GuardianAdminReceiver.KEY_THEME, 0))
         }

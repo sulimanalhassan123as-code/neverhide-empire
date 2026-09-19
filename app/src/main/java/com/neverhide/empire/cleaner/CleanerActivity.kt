@@ -685,6 +685,17 @@ class CleanerActivity : ComponentActivity() {
                     fun toggle(app: android.content.pm.ApplicationInfo, isFrozen: Boolean) {
                         scope.launch {
                             try {
+                                // VAULT GUARD: apps locked in the App Vault can only be
+                                // unfrozen from the Vault (PIN required). The Freezer
+                                // refuses — otherwise a snooper could bypass the
+                                // Vault PIN by tapping unfreeze right here.
+                                if (isFrozen &&
+                                    com.neverhide.empire.vault.VaultStore.vaultApps(context)
+                                        .contains(app.packageName)
+                                ) {
+                                    freezeError = "${labelOf[app]}: 🔒 locked in the App Vault — unlock it there (PIN)"
+                                    return@launch
+                                }
                                 val err = withContext(Dispatchers.IO) {
                                     runCatching {
                                         setSuspended(context, app.packageName, !isFrozen)
@@ -771,7 +782,8 @@ class CleanerActivity : ComponentActivity() {
                     GlowButton("☀️ Unfreeze All (safety)",
                         listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.fillMaxWidth()) {
                         scope.launch {
-                            frozenSet.forEach { pkg ->
+                            val vault = com.neverhide.empire.vault.VaultStore.vaultApps(context)
+                            frozenSet.filter { !vault.contains(it) }.forEach { pkg ->
                                 withContext(Dispatchers.IO) { setSuspended(context, pkg, false) }
                             }
                             frozen = emptySet()
@@ -785,7 +797,8 @@ class CleanerActivity : ComponentActivity() {
                             doctorReport = "Running Doctor…"
                             try {
                                 val rep = withContext(Dispatchers.IO) {
-                                    runDoctor(context, realFrozenNow(context))
+                                    val vault = com.neverhide.empire.vault.VaultStore.vaultApps(context)
+                                    runDoctor(context, realFrozenNow(context) - vault)
                                 }
                                 doctorReport = rep
                                 // Refresh the list after the Doctor's own unfreeze attempts
