@@ -300,15 +300,17 @@ class CleanerActivity : ComponentActivity() {
             //                 also used by Knox Guard itself to freeze apps —
             //                 a stuck app can be in this state, which plain
             //                 pm enable can NEVER release)
-            fun nowBlocked(): Boolean? {
-                val disabled = ShizukuShell.run(context, "pm list packages -d --user 0")
-                    ?: return null
-                val suspended = ShizukuShell.run(context, "pm list packages --suspended --user 0")
-                    ?: return null
-                val inDisabled = disabled.second.lines().any { it.trim() == "package:$pkg" }
-                val inSuspended = suspended.second.lines().any { it.trim() == "package:$pkg" }
-                return inDisabled || inSuspended
-            }
+            // TRUTH READ — via the OS package manager's own flags, NOT shell
+            // lists: pm list flag support differs per Android build (Android 11
+            // Samsung has no --suspended list flag), and a blind list made the
+            // UI show frozen apps as ACTIVE — so taps re-froze stuck apps.
+            // enabled=false covers the disabled state; FLAG_SUSPENDED covers
+            // the suspended state (old freezes + Knox Guard). Works on every
+            // Android version, no shell needed at all.
+            fun nowBlocked(): Boolean? = try {
+                val ai = context.packageManager.getApplicationInfo(pkg, 0)
+                !ai.enabled || (ai.flags and ApplicationInfo.FLAG_SUSPENDED) != 0
+            } catch (e: Exception) { null }
             if (suspend) {
                 ShizukuShell.exec(context, "pm disable-user --user 0 $pkg")
                 val still = nowBlocked()
@@ -348,36 +350,19 @@ class CleanerActivity : ComponentActivity() {
      * reflective API-28 isPackageSuspended(String) when we are Device Owner.
      * Returns null when neither power path is available.
      */
-    private fun suspendedPackages(context: Context): Set<String>? {
-        if (shizukuReady() && shizukuGranted()) {
-            val disabled = ShizukuShell.query(context, "pm list packages -d --user 0")
-                ?: return null
-            val result = disabled.lines()
-                .filter { it.startsWith("package:") }
-                .map { it.removePrefix("package:").trim() }
-                .toMutableSet()
-            // Merge the suspend list too — apps frozen in the OLD scheme (or by
-            // Knox Guard) live there and must still show as FROZEN.
-            ShizukuShell.query(context, "pm list packages --suspended --user 0")
-                ?.lines()
-                ?.filter { it.startsWith("package:") }
-                ?.forEach { result.add(it.removePrefix("package:").trim()) }
-            return result.toSet()
-        }
-        if (isDeviceOwner(context) && Build.VERSION.SDK_INT >= 28) {
-            return try {
-                val dpm = context.getSystemService(DevicePolicyManager::class.java)
-                val m = DevicePolicyManager::class.java.getMethod(
-                    "isPackageSuspended", String::class.java
-                )
-                listFreezableApps(context)
-                    .map { it.packageName }
-                    .filter { m.invoke(dpm, it) as Boolean }
-                    .toSet()
-            } catch (e: Exception) { null }
-        }
-        return null
-    }
+    /**
+     * TRUTH READ for the frozen list — the OS package manager's own flags.
+     * No shell, no pm list flags, no device-owner reflection: works on every
+     * Android version and every Samsung build, and sees BOTH blocking states:
+     *   enabled == false   -> disabled (pm disable-user freezes)
+     *   FLAG_SUSPENDED    -> suspended (old freezer scheme + Knox Guard)
+     * This is the fix for the blind UI that showed stuck frozen apps as ACTIVE.
+     */
+    private fun realFrozenNow(context: Context): Set<String> =
+        listFreezableApps(context)
+            .filter { !it.enabled || (it.flags and ApplicationInfo.FLAG_SUSPENDED) != 0 }
+            .map { it.packageName }
+            .toSet()
 
     /**
      * FREEZER DOCTOR — for stuck freezes. Fires the full release artillery at
@@ -430,6 +415,12 @@ class CleanerActivity : ComponentActivity() {
                 if (r == null) { sb.append(cmd + " -> SHELL UNAVAILABLE\n"); break }
                 sb.append(cmd + " -> exit=" + r.first + " out=" + r.second.trim().take(150) + "\n")
             }
+            val osState = try {
+                val ai = context.packageManager.getApplicationInfo(pkg, 0)
+                "enabled=" + ai.enabled + " suspendedFlag=" +
+                    ((ai.flags and ApplicationInfo.FLAG_SUSPENDED) != 0)
+            } catch (e: Exception) { "getApplicationInfo failed: " + e.message }
+            sb.append("OS-FLAGS: " + osState + "\n")
             val dmp = ShizukuShell.run(context,
                 "dumpsys package " + pkg + " | grep -E 'enabled|suspended|stopped|hidden' | head -8")
             val state = dmp?.second?.lines()
@@ -759,7 +750,7 @@ class CleanerActivity : ComponentActivity() {
                     // the old code ran a blocking shell query during
                     // composition (ANR risk on slow devices).
                     LaunchedEffect(freezerMode) {
-                        liveFrozen = withContext(Dispatchers.IO) { suspendedPackages(context) }
+                        liveFrozen = withContext(Dispatchers.IO) { realFrozenNow(context) }
                     }
                     val frozenSet = liveFrozen ?: frozen
                     Text(
@@ -794,9 +785,9 @@ class CleanerActivity : ComponentActivity() {
                                     freezeError = null
                                     frozen = if (isFrozen) frozenSet - app.packageName
                                     else frozenSet + app.packageName
-                                    // Re-read the REAL device state (source of truth)
+                                    // Re-read the REAL device state (OS flags — source of truth)
                                     liveFrozen = withContext(Dispatchers.IO) {
-                                        suspendedPackages(context)
+                                        realFrozenNow(context)
                                     }
                                 } else {
                                     freezeError = "${labelOf[app]}: $err"
@@ -875,7 +866,7 @@ class CleanerActivity : ComponentActivity() {
                                 withContext(Dispatchers.IO) { setSuspended(context, pkg, false) }
                             }
                             frozen = emptySet()
-                            liveFrozen = withContext(Dispatchers.IO) { suspendedPackages(context) }
+                            liveFrozen = withContext(Dispatchers.IO) { realFrozenNow(context) }
                         }
                     }
                     Spacer(Modifier.height(6.dp))
@@ -884,10 +875,12 @@ class CleanerActivity : ComponentActivity() {
                         scope.launch {
                             doctorReport = "Running Doctor…"
                             try {
-                                val rep = withContext(Dispatchers.IO) { runDoctor(context, frozenSet) }
+                                val rep = withContext(Dispatchers.IO) {
+                                    runDoctor(context, realFrozenNow(context))
+                                }
                                 doctorReport = rep
                                 // Refresh the list after the Doctor's own unfreeze attempts
-                                liveFrozen = withContext(Dispatchers.IO) { suspendedPackages(context) }
+                                liveFrozen = withContext(Dispatchers.IO) { realFrozenNow(context) }
                                 try {
                                     val cm = context.getSystemService(android.content.ClipboardManager::class.java)
                                     cm?.setPrimaryClip(android.content.ClipData.newPlainText("freezer-doctor", rep))
