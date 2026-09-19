@@ -1,7 +1,7 @@
 {
-  "versionCode": 30,
-  "versionName": "2.8.4",
+  "versionCode": 31,
+  "versionName": "2.8.5",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.4/neverhide-empire-v2.8.4.apk",
-  "changelog": "v2.8.4 — 🛠 HANDLE CLAIM FIX\n\nRoot cause: the Supabase server changed how it accepts handle registrations — the old request format was silently rejected, so claiming a handle never actually joined you to the network. Fixed: the app now speaks the new format and verifies you are really on the network before saying so.\n\nAfter updating: open Empire Talk → claim your handle again (it takes one tap) → message @lyra — she is on the network too!"
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.5/neverhide-empire-v2.8.5.apk",
+  "changelog": "v2.8.5 — 📡 FLEET TELEMETRY\n\nThe Empire now has a command center. This version sends one privacy-safe ping when the app opens or downloads an update — no personal data, just a random device id + version + device model — so the owner can see installs, active users and downloads on the new Empire Admin Dashboard.\n\nUpdate and open the app once to appear on your own dashboard!"
 }
