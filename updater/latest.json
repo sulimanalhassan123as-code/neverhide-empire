@@ -1,7 +1,7 @@
 {
-  "versionCode": 27,
-  "versionName": "2.8.1",
+  "versionCode": 29,
+  "versionName": "2.8.3",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.1/neverhide-empire-v2.8.1.apk",
-  "changelog": "v2.8.1 — 📡 EMPIRE TALK (SLIM BUILD)\n\nSame Empire Talk, less than half the size: 18MB instead of 43MB. The fat build carried emulator CPU engines your phone does not have — this one only carries real-phone chips, so the download completes properly on mobile data.\n\nEmpire Talk inside: claim @yourhandle, internet voice calls between handles, WhatsApp-style Recent Chats hub with previews, chat history, incoming call cards, 🔴 in-call recording (WAV into your recordings library), mute. Honest Phase 1 note: incoming calls ring while the Empire app is open; push-ringing with the app closed is the next build (Firebase engine already armed).\n\nHOW TO USE: open Empire Talk → claim your handle → your people install v2.8.1 + claim theirs → call and chat by handle."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.3/neverhide-empire-v2.8.3.apk",
+  "changelog": "v2.8.3 — 🛠 EMPIRE TALK CRASH FIX\n\nFound and killed the crash: network polling loops were running on the main thread — Android kills any app that does that. All Empire Talk network calls now run on the background IO dispatcher. Calls, chats, and the Recent Chats hub should now be stable.\n\nAlso new: crash telemetry. If anything ever crashes again, the exact error trace + device info reach the developer automatically — no cable, no PC needed.\n\nAnd the updater got smarter: a weak connection that truncates the download now triggers a friendly auto-retry instead of the scary security message.\n\nHOW TO USE: Update Center → check → install v2.8.3 → Empire Talk → claim your handle."
 }
