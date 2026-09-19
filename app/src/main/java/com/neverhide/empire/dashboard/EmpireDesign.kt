@@ -85,24 +85,29 @@ fun GlowButton(
     text: String,
     colors: List<Color>,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(14.dp)
     Box(
         modifier
             .shadow(10.dp, shape, spotColor = colors.first().copy(alpha = 0.55f))
-            .background(Brush.linearGradient(colors), shape)
-            .clickable(onClick = onClick)
+            .background(
+                if (enabled) Brush.linearGradient(colors)
+                else Brush.linearGradient(colors.map { it.copy(alpha = 0.35f) }), shape
+            )
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = 13.dp, horizontal = 16.dp),
         contentAlignment = Alignment.Center
-    ) { Text(text, color = Color(0xFF0A0A1A), fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+    ) { Text(text, color = if (enabled) Color(0xFF0A0A1A) else Color(0xFF0A0A1A).copy(alpha = 0.5f), fontWeight = FontWeight.Bold, fontSize = 14.sp) }
 }
 
 /** Small status chip ("ACTIVE", "COMING SOON", "2 NEW"…). */
 @Composable
-fun StatusChip(text: String, color: Color, filled: Boolean = false) {
+fun StatusChip(text: String, color: Color, filled: Boolean = false, onClick: (() -> Unit)? = null) {
     Box(
         Modifier
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .background(
                 if (filled) color.copy(alpha = 0.18f) else Color(0x14000000),
                 RoundedCornerShape(99.dp)

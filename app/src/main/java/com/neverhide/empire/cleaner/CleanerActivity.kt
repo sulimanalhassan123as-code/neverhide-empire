@@ -257,93 +257,13 @@ class CleanerActivity : ComponentActivity() {
 
     // ================= APP FREEZER =================
 
-    private fun isDeviceOwner(context: Context): Boolean =
-        context.getSystemService(DevicePolicyManager::class.java)
-            .isDeviceOwnerApp(context.packageName)
-
-    private fun shizukuReady(): Boolean = try { Shizuku.pingBinder() } catch (e: Exception) { false }
-    private fun shizukuGranted(): Boolean = try {
-        Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-    } catch (e: Exception) { false }
+    private fun isDeviceOwner(context: Context): Boolean = FreezerEngine.isDeviceOwner(context)
+    private fun shizukuReady(): Boolean = FreezerEngine.shizukuReady()
+    private fun shizukuGranted(): Boolean = FreezerEngine.shizukuGranted()
 
     /** Freeze/suspend a package. Returns null on success or an error message. */
-    private fun setSuspended(context: Context, pkg: String, suspend: Boolean): String? {
-        val dpm = context.getSystemService(DevicePolicyManager::class.java)
-        // Path 1 — Device Owner (activated once via ADB): official, instant, reliable.
-        // The setPackagesSuspended(String[], boolean) runtime method exists since API 28,
-        // but SDK 34 removed it from the compile stubs (only the API-33 admin overload
-        // survives there), and that new overload does not exist on Android 11/12 devices.
-        // Reflection is the honest cross-version call: compiles everywhere, runs 28+.
-        if (isDeviceOwner(context) && Build.VERSION.SDK_INT >= 28) {
-            return try {
-                val m = DevicePolicyManager::class.java.getMethod(
-                    "setPackagesSuspended",
-                    Array<String>::class.java, Boolean::class.javaPrimitiveType
-                )
-                m.invoke(dpm, arrayOf(pkg), suspend)
-                null
-            } catch (e: Exception) { e.message }
-        }
-        // Path 2 — Shizuku (shell uid): pm disable-user, works in plain ADB mode.
-        // pm suspend needs the SUSPEND_APPS permission or device-owner status —
-        // the shell identity has NEITHER, so it fails silently with a permission
-        // error (this was the real bug: taps looked like they did nothing).
-        // pm disable-user / pm enable ARE shell-permitted (the standard
-        // non-root freeze technique used by e.g. Shelter/Island/Hail) —
-        // fully disables the app (removed from launcher, can't run at all).
-        if (shizukuReady() && shizukuGranted()) {
-            // pm exit codes LIE on some Samsung builds (prints "Error: ..." but
-            // exits 0), so we never trust the code — we verify the package's
-            // REAL state after every command, against BOTH blocking states:
-            //   -d  = disabled  (what pm disable-user / pm enable manage)
-            //   --suspended = suspended (what pm suspend / pm unsuspend manage,
-            //                 also used by Knox Guard itself to freeze apps —
-            //                 a stuck app can be in this state, which plain
-            //                 pm enable can NEVER release)
-            // TRUTH READ — via the OS package manager's own flags, NOT shell
-            // lists: pm list flag support differs per Android build (Android 11
-            // Samsung has no --suspended list flag), and a blind list made the
-            // UI show frozen apps as ACTIVE — so taps re-froze stuck apps.
-            // enabled=false covers the disabled state; FLAG_SUSPENDED covers
-            // the suspended state (old freezes + Knox Guard). Works on every
-            // Android version, no shell needed at all.
-            fun nowBlocked(): Boolean? = try {
-                val ai = context.packageManager.getApplicationInfo(pkg, 0)
-                !ai.enabled || (ai.flags and ApplicationInfo.FLAG_SUSPENDED) != 0
-            } catch (e: Exception) { null }
-            if (suspend) {
-                ShizukuShell.exec(context, "pm disable-user --user 0 $pkg")
-                val still = nowBlocked()
-                return when {
-                    still == null -> "could not verify freeze (state check failed)"
-                    still -> null
-                    else -> "device refused the freeze"
-                }
-            } else {
-                // UNFREEZE ARTILLERY — fires every release command Android has,
-                // in order, stopping the moment the device confirms the app is
-                // really free. Covers stuck apps in ANY blocking state, including
-                // old freezes and Knox-enforced suspends.
-                val cmds = listOf(
-                    "pm enable --user 0 $pkg",   // reverse pm disable-user
-                    "pm enable $pkg",            // some builds ignore --user
-                    "pm unsuspend --user 0 $pkg", // reverse suspend (Knox Guard state)
-                    "pm unsuspend $pkg"
-                )
-                var lastOut = ""
-                for (cmd in cmds) {
-                    val r = ShizukuShell.run(context, cmd) ?: return "shizuku unavailable"
-                    lastOut = r.second.trim()
-                    val still = nowBlocked()
-                    if (still == null) return "could not verify unfreeze (state check failed)"
-                    if (!still) return null
-                }
-                val tail = lastOut.lineSequence().lastOrNull { it.isNotBlank() } ?: "no pm output"
-                return "stuck: $tail"
-            }
-        }
-        return "no_power"
-    }
+    private fun setSuspended(context: Context, pkg: String, suspend: Boolean): String? =
+        FreezerEngine.setSuspended(context, pkg, suspend)
 
     /**
      * Real suspended-state list. Via Shizuku shell when armed, else via the
@@ -358,11 +278,7 @@ class CleanerActivity : ComponentActivity() {
      *   FLAG_SUSPENDED    -> suspended (old freezer scheme + Knox Guard)
      * This is the fix for the blind UI that showed stuck frozen apps as ACTIVE.
      */
-    private fun realFrozenNow(context: Context): Set<String> =
-        listFreezableApps(context)
-            .filter { !it.enabled || (it.flags and ApplicationInfo.FLAG_SUSPENDED) != 0 }
-            .map { it.packageName }
-            .toSet()
+    private fun realFrozenNow(context: Context): Set<String> = FreezerEngine.realFrozenNow(context)
 
     /**
      * FREEZER DOCTOR — for stuck freezes. Fires the full release artillery at
@@ -432,15 +348,8 @@ class CleanerActivity : ComponentActivity() {
         return sb.toString()
     }
 
-    private fun listFreezableApps(context: Context): List<ApplicationInfo> {
-        val pm = context.packageManager
-        return pm.getInstalledApplications(0)
-            .filter {
-                (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 &&
-                        it.packageName != context.packageName
-            }
-            .sortedBy { it.loadLabel(pm).toString().lowercase(Locale.ROOT) }
-    }
+    private fun listFreezableApps(context: Context): List<ApplicationInfo> =
+        FreezerEngine.listFreezableApps(context)
 
     // ================= UI =================
 

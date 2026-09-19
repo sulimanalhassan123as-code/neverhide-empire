@@ -120,6 +120,9 @@
         <activity android:name=".cleaner.CleanerActivity"
             android:exported="false"
             android:label="Cyber Cleaner" />
+        <activity android:name=".vault.AppVaultActivity"
+            android:exported="false"
+            android:label="App Vault" />
         <activity android:name=".calls.QuickDialActivity"
             android:exported="false"
             android:label="Quick Dial" />

@@ -42,6 +42,7 @@ import com.neverhide.empire.guardian.JumpscareActivity
 import com.neverhide.empire.launcher.Launcher3DActivity
 import com.neverhide.empire.screenshot.FloatingBubbleService
 import com.neverhide.empire.cleaner.CleanerActivity
+import com.neverhide.empire.vault.AppVaultActivity
 import com.neverhide.empire.screenshot.ScreenshotService
 import com.neverhide.empire.tools.ToolsActivity
 import com.neverhide.empire.updater.AdrenalineUpdater
@@ -350,6 +351,8 @@ class MainActivity : ComponentActivity() {
                     SectionHeader("🛡️", "Cyber Cleaner", Palette.CYAN)
                     FeatureCard("🛡️", "Cyber Cleaner & Antivirus", "Junk • Boost • Virus scan • App Freezer", Palette.CYAN,
                         badge = "NEW") { startActivity(Intent(this@MainActivity, CleanerActivity::class.java)) }
+                    FeatureCard("🔐", "App Vault — Device Locks", "PIN-gated device-level app locks • auto re-lock", Palette.PINK,
+                        badge = "NEW") { startActivity(Intent(this@MainActivity, AppVaultActivity::class.java)) }
 
                     // ===== COMMUNICATION =====
                     SectionHeader("📞", "Communication", Palette.CYAN)
