@@ -1,7 +1,7 @@
 {
-  "versionCode": 29,
-  "versionName": "2.8.3",
+  "versionCode": 30,
+  "versionName": "2.8.4",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.3/neverhide-empire-v2.8.3.apk",
-  "changelog": "v2.8.3 — 🛠 EMPIRE TALK CRASH FIX\n\nFound and killed the crash: network polling loops were running on the main thread — Android kills any app that does that. All Empire Talk network calls now run on the background IO dispatcher. Calls, chats, and the Recent Chats hub should now be stable.\n\nAlso new: crash telemetry. If anything ever crashes again, the exact error trace + device info reach the developer automatically — no cable, no PC needed.\n\nAnd the updater got smarter: a weak connection that truncates the download now triggers a friendly auto-retry instead of the scary security message.\n\nHOW TO USE: Update Center → check → install v2.8.3 → Empire Talk → claim your handle."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.4/neverhide-empire-v2.8.4.apk",
+  "changelog": "v2.8.4 — 🛠 HANDLE CLAIM FIX\n\nRoot cause: the Supabase server changed how it accepts handle registrations — the old request format was silently rejected, so claiming a handle never actually joined you to the network. Fixed: the app now speaks the new format and verifies you are really on the network before saying so.\n\nAfter updating: open Empire Talk → claim your handle again (it takes one tap) → message @lyra — she is on the network too!"
 }
