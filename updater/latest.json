@@ -1,7 +1,7 @@
 {
-  "versionCode": 22,
-  "versionName": "2.7.1",
+  "versionCode": 23,
+  "versionName": "2.7.2",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.7.1/neverhide-empire-v2.7.1.apk",
-  "changelog": "v2.7.1 — FORGOT PIN? EMERGENCY RESET\n\nAdds the offline escape hatch for the App Vault.\n\nForgot your PIN? Tap \"Forgot PIN?\" → type RESET → Emergency Reset clears the PIN and the vault list and unfreezes every vault app (no app data touched). Works with zero internet — you can never be locked out of your own phone.\n\nSecond recovery path: Lyra holds a copy of your PIN in your private chat history — just ask him anytime."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.7.2/neverhide-empire-v2.7.2.apk",
+  "changelog": "v2.7.2 — VAULT HARDENING (PIN-guard everywhere)\n\nYou found the bypass holes; they're closed:\n\n🔒 The Freezer now REFUSES to unfreeze vault apps — no more no-PIN back door. Vault apps unlock only in the Vault, with the PIN.\n🔒 Unfreeze All and the Freezer Doctor skip vault apps.\n🔄 EMPIRE RELOCK PATROL: every time the Empire opens, any vault app that was unlocked by hand (Settings → Apps → Enable) re-freezes automatically. Tampering gains a snooper nothing — locks re-arm themselves.\n\nWhy we do NOT offer locking the Settings app: on this phone Shizuku dies on reboot and wireless debugging lives inside Settings — freezing Settings while shell power is down is a true lockout. The patrol covers that tamper path safely instead."
 }
