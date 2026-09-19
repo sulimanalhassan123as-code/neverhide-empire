@@ -73,6 +73,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // EMPIRE PUSH CHANNEL — every installed phone joins the "empire" topic
+        // so the server can reach it (incoming Empire Talk calls, Guardian and
+        // group alerts) even when the app is fully closed.
+        runCatching {
+            com.google.firebase.messaging.FirebaseMessaging.getInstance()
+                .subscribeToTopic("empire")
+        }
         guardianArmed = GuardianAdminReceiver.isAdminActive(this)
         setContent { EmpireHub() }
 
