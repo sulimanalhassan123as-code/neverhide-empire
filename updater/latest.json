@@ -1,7 +1,7 @@
 {
-  "versionCode": 21,
-  "versionName": "2.7.0",
-  "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.7.0/neverhide-empire-v2.7.0.apk",
-  "changelog": "v2.7.0 — 🔐 APP VAULT:\n\nDevice-level app locks, PIN-gated. Lock any app and it CANNOT start — not from the launcher, not from another app, not even after a reboot. The lock is an OS-level state: it survives reboots AND the Empire being uninstalled.\n\n🔒 Tap any app to lock it into the Vault (instant freeze)\n🔑 4-6 digit PIN required to unlock or remove (salted SHA-256, stored locally only)\n🔄 AUTO RE-LOCK: any vault app found unlocked freezes again the moment the Vault opens — your phone re-arms itself\n🔒 Lock All in one tap\n🩺 Built on the battle-tested v2.6.x freeze engine with release artillery + truth-read verification\n\nHonest limits (shown in the app): a factory reset clears every device-level state — that wall belongs to Google (FRP), not to any app. Everything short of a reset is defended.\n\nSame cert, updates in place over v2.6.7."
+  "versionCode": 22,
+  "versionName": "2.7.1",
+  "tier": "minor",
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.7.1/neverhide-empire-v2.7.1.apk",
+  "changelog": "v2.7.1 — FORGOT PIN? EMERGENCY RESET\n\nAdds the offline escape hatch for the App Vault.\n\nForgot your PIN? Tap \"Forgot PIN?\" → type RESET → Emergency Reset clears the PIN and the vault list and unfreezes every vault app (no app data touched). Works with zero internet — you can never be locked out of your own phone.\n\nSecond recovery path: Lyra holds a copy of your PIN in your private chat history — just ask him anytime."
 }
