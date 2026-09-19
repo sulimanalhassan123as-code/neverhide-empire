@@ -3,6 +3,7 @@ package com.neverhide.empire.talk
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -186,13 +187,24 @@ class EmpireTalkActivity : ComponentActivity() {
                                 GlowButton("⚔ Claim Handle", listOf(Palette.CYAN, Palette.PURPLE), Modifier.fillMaxWidth(),
                                     enabled = handleInput.length >= 3) {
                                     myHandle = handleInput
-                                    prefs.edit().putString("handle", handleInput).apply()
-                                    handleSaved = true
                                     val ctx = this@EmpireTalkActivity
                                     ioScope.launch {
                                         val token = ctx.getSharedPreferences("empire_firebase", MODE_PRIVATE)
                                             .getString("fcm_token", null)
-                                        TalkEngine.upsertProfile(handleInput, token)
+                                        // Only tell the user they're on the network when
+                                        // Supabase has ACTUALLY accepted the profile —
+                                        // a silent failure here used to show a fake
+                                        // "on the network" state.
+                                        if (withContext(Dispatchers.IO) { TalkEngine.upsertProfile(handleInput, token) }) {
+                                            prefs.edit().putString("handle", handleInput).apply()
+                                            withContext(Dispatchers.Main) { handleSaved = true }
+                                        } else {
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(ctx,
+                                                    "Claim failed — network/server error. Try again.",
+                                                    Toast.LENGTH_LONG).show()
+                                            }
+                                        }
                                     }
                                 }
                             } else {

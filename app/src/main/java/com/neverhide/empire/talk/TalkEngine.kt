@@ -66,7 +66,13 @@ object TalkEngine {
     fun upsertProfile(handle: String, token: String?): Boolean {
         val o = JSONObject().put("handle", handle).put("app_key", TALK_APP_KEY)
         if (token != null) o.put("fcm_token", token)
-        return http("POST", "/talk_profiles", o.toString(), "resolution=merge-duplicates").code in 200..299
+        // PostgREST 12+ moved upsert resolution from query param to the
+        // Prefer header — the old ?resolution= form is parsed as a filter
+        // and rejected with 400. on_conflict=handle is the key constraint.
+        return http(
+            "POST", "/talk_profiles?on_conflict=handle", o.toString(),
+            "resolution=merge-duplicates"
+        ).code in 200..299
     }
 
     fun startCall(callId: String, from: String, to: String, offer: JSONObject): Boolean {
