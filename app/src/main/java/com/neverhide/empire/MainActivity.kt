@@ -81,6 +81,9 @@ class MainActivity : ComponentActivity() {
                 .subscribeToTopic("empire")
         }
         guardianArmed = GuardianAdminReceiver.isAdminActive(this)
+        // EMPIRE HEARTBEAT — one privacy-safe ping per app open so the owner
+        // can see active users on the admin dashboard (no personal data).
+        com.neverhide.empire.core.EmpireTelemetry.ping(this, "app_open")
         setContent { EmpireHub() }
 
         // 1. Bulletproof watchdog starts immediately

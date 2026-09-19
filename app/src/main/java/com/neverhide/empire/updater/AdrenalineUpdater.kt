@@ -42,6 +42,7 @@ class AdrenalineUpdater(private val context: Context) {
     private val scope = CoroutineScope(Dispatchers.Main)
 
     fun checkForUpdate(onResult: (String) -> Unit = {}) {
+        context.let { com.neverhide.empire.core.EmpireTelemetry.ping(it, "update_check") }
         scope.launch {
             try {
                 val manifest = withContext(Dispatchers.IO) { fetchManifest(MANIFEST_URL) }
@@ -149,6 +150,8 @@ class AdrenalineUpdater(private val context: Context) {
                     }
                     return@launch
                 }
+                // fleet metric: a real download completed
+                com.neverhide.empire.core.EmpireTelemetry.ping(context, "update_download")
                 ApkInstaller.install(context, file)
             } catch (e: Exception) {
                 Toast.makeText(context, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
