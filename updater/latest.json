@@ -1,7 +1,7 @@
 {
-  "versionCode": 24,
-  "versionName": "2.7.3",
+  "versionCode": 25,
+  "versionName": "2.7.4",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.7.3/neverhide-empire-v2.7.3.apk",
-  "changelog": "v2.7.3 — 🔔 FIREBASE PUSH ENGINE\n\nThe wake-up bell is wired into the Empire.\n\n• Your phone can now be reached even when the Empire is fully closed — the same mechanism WhatsApp uses to ring your phone for calls.\n• Incoming call ringing (for Empire Talk), Guardian alerts, and group alerts arrive as high-priority notifications.\n• APK grew slightly — that's the push engine (Firebase messaging).\n• Next: the server side arms (via the Firebase service-account key), then Empire Talk voice + video + chat with recording."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.7.4/neverhide-empire-v2.7.4.apk",
+  "changelog": "v2.7.4 — 📡 EMPIRE PUSH CHANNEL\n\nYour Empire now joins the empire push network at startup.\n\nOnce you update and open the app ONCE, Lyra can send live pushes straight to your phone — even with the Empire fully closed. First test coming right up: a live wake-up alert to prove the pipeline end to end.\n\nThis is the foundation Empire Talk calls ring on."
 }
