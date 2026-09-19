@@ -19,8 +19,21 @@ class ShizukuShellService : IShizukuShell.Stub() {
         val c = cmd ?: return "exit:-1\nnull command"
         return try {
             val proc = Runtime.getRuntime().exec(arrayOf("sh", "-c", c))
-            val out = proc.inputStream.bufferedReader().use { it.readText() }
-            val err = proc.errorStream.bufferedReader().use { it.readText() }
+            // CAP output at 64KB before it ever crosses the binder IPC.
+            // Android's binder reply limit is ~1MB TOTAL for the process;
+            // a raw `dumpsys package` produces 1-2MB and the oversized reply
+            // kills this shell process and crashes the caller. Never again.
+            val cap = 64 * 1024
+            val buf = StringBuilder()
+            val br = proc.inputStream.bufferedReader()
+            val cbuf = CharArray(8192)
+            while (buf.length < cap) {
+                val n = br.read(cbuf)
+                if (n < 0) break
+                buf.append(cbuf, 0, minOf(n, cap - buf.length))
+            }
+            val out = buf.toString()
+            val err = proc.errorStream.bufferedReader().use { it.readText().take(2048) }
             val code = proc.waitFor()
             "exit:$code\n$out$err"
         } catch (e: Exception) {

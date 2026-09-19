@@ -390,6 +390,16 @@ class CleanerActivity : ComponentActivity() {
      * to Lyra for remote root-cause analysis.
      */
     private fun runDoctor(context: Context, pkgs: Set<String>): String {
+        return try {
+            runDoctorInner(context, pkgs)
+        } catch (t: Throwable) {
+            "=== FREEZER DOCTOR CRASHED (recovered) ===\n" +
+                t.javaClass.name + ": " + (t.message ?: "no message") + "\n" +
+                "tell Lyra — this should never happen now"
+        }
+    }
+
+    private fun runDoctorInner(context: Context, pkgs: Set<String>): String {
         val sb = StringBuilder()
         sb.append("=== FREEZER DOCTOR v2.6.5 ===\n")
         sb.append("deviceOwner=" + isDeviceOwner(context) + "\n")
@@ -403,7 +413,7 @@ class CleanerActivity : ComponentActivity() {
         sb.append("disabledList exit=" + (dis?.first) + ": " + (dis?.second ?: "").trim().take(400) + "\n")
         val sus = ShizukuShell.run(context, "pm list packages --suspended --user 0")
         sb.append("suspendedList exit=" + (sus?.first) + ": " + (sus?.second ?: "").trim().take(400) + "\n")
-        val dp = ShizukuShell.run(context, "dumpsys device_policy")
+        val dp = ShizukuShell.run(context, "dumpsys device_policy | grep -i owner | head -6")
         val dpLines = dp?.second?.lines()
             ?.filter { it.contains("Owner", ignoreCase = true) }
             ?.take(3)?.joinToString(" | ") ?: "unavailable"
@@ -420,7 +430,8 @@ class CleanerActivity : ComponentActivity() {
                 if (r == null) { sb.append(cmd + " -> SHELL UNAVAILABLE\n"); break }
                 sb.append(cmd + " -> exit=" + r.first + " out=" + r.second.trim().take(150) + "\n")
             }
-            val dmp = ShizukuShell.run(context, "dumpsys package " + pkg)
+            val dmp = ShizukuShell.run(context,
+                "dumpsys package " + pkg + " | grep -E 'enabled|suspended|stopped|hidden' | head -8")
             val state = dmp?.second?.lines()
                 ?.filter { it.contains("enabled") || it.contains("suspended") || it.contains("stopped") || it.contains("hidden") }
                 ?.map { it.trim() }?.take(6)?.joinToString(" | ") ?: "dumpsys unavailable"
@@ -773,19 +784,25 @@ class CleanerActivity : ComponentActivity() {
 
                     fun toggle(app: android.content.pm.ApplicationInfo, isFrozen: Boolean) {
                         scope.launch {
-                            val err = withContext(Dispatchers.IO) {
-                                setSuspended(context, app.packageName, !isFrozen)
-                            }
-                            if (err == null) {
-                                freezeError = null
-                                frozen = if (isFrozen) frozenSet - app.packageName
-                                else frozenSet + app.packageName
-                                // Re-read the REAL device state (source of truth)
-                                liveFrozen = withContext(Dispatchers.IO) {
-                                    suspendedPackages(context)
+                            try {
+                                val err = withContext(Dispatchers.IO) {
+                                    runCatching {
+                                        setSuspended(context, app.packageName, !isFrozen)
+                                    }.getOrElse { t -> t.message ?: t.javaClass.simpleName }
                                 }
-                            } else {
-                                freezeError = "${labelOf[app]}: $err"
+                                if (err == null) {
+                                    freezeError = null
+                                    frozen = if (isFrozen) frozenSet - app.packageName
+                                    else frozenSet + app.packageName
+                                    // Re-read the REAL device state (source of truth)
+                                    liveFrozen = withContext(Dispatchers.IO) {
+                                        suspendedPackages(context)
+                                    }
+                                } else {
+                                    freezeError = "${labelOf[app]}: $err"
+                                }
+                            } catch (t: Throwable) {
+                                freezeError = "${labelOf[app]}: ${t.javaClass.simpleName}: ${t.message ?: ""}"
                             }
                         }
                     }
@@ -866,14 +883,19 @@ class CleanerActivity : ComponentActivity() {
                         listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.fillMaxWidth()) {
                         scope.launch {
                             doctorReport = "Running Doctor…"
-                            val rep = withContext(Dispatchers.IO) { runDoctor(context, frozenSet) }
-                            doctorReport = rep
-                            // Refresh the list after the Doctor's own unfreeze attempts
-                            liveFrozen = withContext(Dispatchers.IO) { suspendedPackages(context) }
                             try {
-                                val cm = context.getSystemService(android.content.ClipboardManager::class.java)
-                                cm?.setPrimaryClip(android.content.ClipData.newPlainText("freezer-doctor", rep))
-                            } catch (e: Exception) { }
+                                val rep = withContext(Dispatchers.IO) { runDoctor(context, frozenSet) }
+                                doctorReport = rep
+                                // Refresh the list after the Doctor's own unfreeze attempts
+                                liveFrozen = withContext(Dispatchers.IO) { suspendedPackages(context) }
+                                try {
+                                    val cm = context.getSystemService(android.content.ClipboardManager::class.java)
+                                    cm?.setPrimaryClip(android.content.ClipData.newPlainText("freezer-doctor", rep))
+                                } catch (e: Exception) { }
+                            } catch (t: Throwable) {
+                                doctorReport = "DOCTOR ERROR (app survived): " +
+                                    t.javaClass.name + ": " + (t.message ?: "")
+                            }
                         }
                     }
                     if (doctorReport != null) {
