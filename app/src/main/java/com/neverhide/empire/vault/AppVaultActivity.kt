@@ -4,6 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.os.Bundle
+import android.os.Build
+import android.app.KeyguardManager
+import android.hardware.biometrics.BiometricPrompt
+import android.os.CancellationSignal
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -56,6 +61,49 @@ import java.security.MessageDigest
  * (FRP), not to any app. Everything short of a reset is defended.
  */
 class AppVaultActivity : ComponentActivity() {
+    private var onCredentialSuccess: (() -> Unit)? = null
+    private val credentialResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val callback = onCredentialSuccess
+        onCredentialSuccess = null
+        if (result.resultCode == RESULT_OK) callback?.invoke()
+    }
+
+    fun verifyScreenLock(onSuccess: () -> Unit, onUnavailable: () -> Unit) {
+        val manager = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+        if (!manager.isDeviceSecure) { onUnavailable(); return }
+        @Suppress("DEPRECATION")
+        val intent = manager.createConfirmDeviceCredentialIntent(
+            "Verify phone owner", "Use the phone's screen lock to reset the Vault PIN"
+        )
+        if (intent == null) { onUnavailable(); return }
+        onCredentialSuccess = onSuccess
+        credentialResult.launch(intent)
+    }
+
+    fun verifyBiometric(onSuccess: () -> Unit, onUnavailable: () -> Unit) {
+        if (Build.VERSION.SDK_INT < 28) { onUnavailable(); return }
+        val builder = BiometricPrompt.Builder(this)
+            .setTitle("Unlock Neverhide Vault")
+            .setSubtitle("Use your phone's enrolled fingerprint or supported face")
+            .setNegativeButton("Use Vault PIN", mainExecutor) { _, _ -> }
+        if (Build.VERSION.SDK_INT >= 30) {
+            builder.setAllowedAuthenticators(android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STRONG)
+        }
+        val prompt = builder.build()
+        try {
+            prompt.authenticate(CancellationSignal(), mainExecutor,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        onSuccess()
+                    }
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        if (errorCode != BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED &&
+                            errorCode != 13 /* negative button */) onUnavailable()
+                    }
+                })
+        } catch (_: Exception) { onUnavailable() }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { VaultScreen() }
@@ -94,6 +142,7 @@ private fun VaultScreen() {
     var pinEntry by remember { mutableStateOf("") }
     var resetOpen by remember { mutableStateOf(false) }
     var resetText by remember { mutableStateOf("") }
+    val activity = context as AppVaultActivity
     var vaultError by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
 
@@ -121,7 +170,7 @@ private fun VaultScreen() {
         }
     }
 
-    fun unfreeze(pkg: String) {
+    fun unfreeze(pkg: String, onReleased: (() -> Unit)? = null) {
         busy = true
         scope.launch {
             val err = withContext(Dispatchers.IO) {
@@ -130,6 +179,7 @@ private fun VaultScreen() {
             }
             frozenNow = withContext(Dispatchers.IO) { FreezerEngine.realFrozenNow(context) }
             if (err != null) vaultError = "${labelOf[apps.firstOrNull { it.packageName == pkg }] ?: pkg}: $err"
+            else onReleased?.invoke()
             busy = false
         }
     }
@@ -221,9 +271,8 @@ private fun VaultScreen() {
                 Spacer(Modifier.height(10.dp))
             }
 
-            // FORGOT PIN — offline escape hatch: clears the PIN + vault list
-            // and unfreezes every vault app. The owner can never be locked out
-            // of his own phone, even with no internet and no Lyra.
+            // Recovery requires the Android screen lock; knowing a public word
+            // alone must never unlock another person's frozen apps.
             if (pinSaved) {
                 if (!resetOpen) {
                     Text(
@@ -237,7 +286,7 @@ private fun VaultScreen() {
                     GlassCard(Modifier.fillMaxWidth(), glow = Palette.PINK) {
                         Text("🔥 EMERGENCY RESET",
                             color = Palette.PINK, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        Text("Clears the PIN and the vault list, then unfreezes every vault app. No data inside your apps is touched. Type RESET to confirm.",
+                        Text("Clears the Vault PIN and list, then unfreezes vault apps. Your app data stays intact. You must verify with your phone screen lock. Type RESET to confirm.",
                             color = Palette.TEXT_MUTE, fontSize = 10.sp)
                         Spacer(Modifier.height(6.dp))
                         TextField(
@@ -251,12 +300,28 @@ private fun VaultScreen() {
                             GlowButton("🔥 Reset", listOf(Palette.PINK, Color(0xFFD50000)), Modifier.weight(1f),
                                 enabled = resetText == "RESET") {
                                 val old = vaultApps.toSet()
-                                prefs.edit().remove(VaultStore.KEY_PIN).remove(VaultStore.KEY_APPS).apply()
-                                pinSaved = false
-                                vaultApps = emptySet()
-                                resetText = ""
-                                resetOpen = false
-                                old.forEach { unfreeze(it) }
+                                activity.verifyScreenLock(onSuccess = {
+                                    // Keep the list until each app is confirmed unfrozen.
+                                    scope.launch {
+                                        busy = true
+                                        val failures = withContext(Dispatchers.IO) {
+                                            old.mapNotNull { pkg ->
+                                                val error = runCatching { FreezerEngine.setSuspended(context, pkg, false) }
+                                                    .getOrElse { it.message ?: "unfreeze failed" }
+                                                if (error != null) pkg else null
+                                            }
+                                        }
+                                        if (failures.isEmpty()) {
+                                            prefs.edit().remove(VaultStore.KEY_PIN).remove(VaultStore.KEY_APPS).apply()
+                                            pinSaved = false
+                                            vaultApps = emptySet()
+                                            resetText = ""
+                                            resetOpen = false
+                                        } else vaultError = "Could not release: ${failures.joinToString()}. PIN and list kept."
+                                        frozenNow = withContext(Dispatchers.IO) { FreezerEngine.realFrozenNow(context) }
+                                        busy = false
+                                    }
+                                }, onUnavailable = { vaultError = "Set a phone screen lock first to recover the Vault PIN." })
                             }
                             GlowButton("Cancel", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
                                 resetOpen = false; resetText = ""
@@ -290,9 +355,10 @@ private fun VaultScreen() {
                             val stored = prefs.getString(VaultStore.KEY_PIN, null)
                             if (stored != null && pinHash(pinEntry) == stored) {
                                 if (pinAction == "unlock") unfreeze(pkg) else {
-                                    vaultApps = vaultApps - pkg
-                                    saveApps()
-                                    unfreeze(pkg)
+                                    unfreeze(pkg) {
+                                        vaultApps = vaultApps - pkg
+                                        saveApps()
+                                    }
                                 }
                                 pinPrompt = null; pinEntry = ""
                             } else {
@@ -301,6 +367,25 @@ private fun VaultScreen() {
                         }
                         GlowButton("Cancel", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
                             pinPrompt = null; pinEntry = ""
+                        }
+                    }
+                    if (Build.VERSION.SDK_INT >= 28) {
+                        Spacer(Modifier.height(6.dp))
+                        GlowButton("☝ Fingerprint / phone face", listOf(Palette.CYAN, Palette.PINK), Modifier.fillMaxWidth(), enabled = !busy) {
+                            // Capture current action, then clear pending operation before callback.
+                            val target = pkg
+                            val action = pinAction
+                            activity.verifyBiometric(onSuccess = {
+                                if (pinPrompt == target && pinAction == action && !busy) {
+                                    if (action == "unlock") unfreeze(target) else {
+                                        unfreeze(target) {
+                                            vaultApps = vaultApps - target
+                                            saveApps()
+                                        }
+                                    }
+                                    pinPrompt = null; pinEntry = ""
+                                }
+                            }, onUnavailable = { vaultError = "Phone biometric unavailable. Use your Vault PIN." })
                         }
                     }
                 }
@@ -357,7 +442,7 @@ private fun VaultScreen() {
                         Modifier
                             .fillMaxWidth()
                             .background(Color(0x0DFFFFFF), RoundedCornerShape(12.dp))
-                            .clickable(enabled = !busy && FreezerEngine.hasPower(context)) {
+                            .clickable(enabled = !busy && pinSaved && FreezerEngine.hasPower(context)) {
                                 vaultApps = vaultApps + pkg
                                 saveApps()
                                 freeze(pkg)
@@ -374,7 +459,7 @@ private fun VaultScreen() {
 
             Spacer(Modifier.height(10.dp))
             Text(
-                "Honest limits: locks survive reboot and even Empire uninstall (OS-level state), and vault apps re-lock automatically each time this Vault opens. If you ever forget the PIN: ask Lyra (he holds a copy in your private chat history) or run the Emergency Reset. A factory reset clears everything — that wall belongs to Google (FRP), not to any app.",
+                "Recovery needs your Android screen lock; typing RESET alone never unlocks apps. Fingerprint / phone face uses Android's enrolled biometrics, never stores biometric images here, and cannot replace the device's lock screen. If no biometrics are available, use your Vault PIN. Frozen apps may remain frozen after Empire uninstall; restore them before removing Empire.",
                 color = Palette.TEXT_MUTE, fontSize = 10.sp, fontFamily = FontFamily.Monospace
             )
         }
