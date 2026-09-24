@@ -4,12 +4,27 @@ import android.graphics.BlurMaskFilter
 import android.graphics.Paint
 import android.graphics.RectF
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -229,27 +244,90 @@ fun NeuRing(
     theme: NeuTheme,
     label: String,
     value: String,
-    sub: String
+    sub: String,
+    armed: Boolean = true
 ) {
-    Box(
-        Modifier
-            .size(190.dp)
-            .neuFlat(theme, corner = 95.dp)
-            .background(theme.bg, CircleShape)
-            .padding(12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
+    // Slow, endless rotation for the orbiting glow arc — "growing" motion around the ring.
+    val infinite = rememberInfiniteTransition(label = "ringOrbit")
+    val angle by infinite.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3200, easing = LinearEasing)
+        ),
+        label = "angle"
+    )
+    // Gentle breathing pulse on the glow's opacity/width, so it feels alive, not just spinning.
+    val pulse by infinite.animateFloat(
+        initialValue = 0.55f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+    val glowColor = if (armed) theme.accent else theme.textMuted
+
+    Box(Modifier.size(214.dp), contentAlignment = Alignment.Center) {
+        // ===== Orbiting glow arc — deep animation growing around the circle =====
+        Canvas(Modifier.fillMaxSize()) {
+            val stroke = (5.dp.toPx()) * pulse
+            val inset = stroke / 2 + 3.dp.toPx()
+            rotate(angle) {
+                drawArc(
+                    brush = Brush.sweepGradient(
+                        listOf(
+                            glowColor.copy(alpha = 0f),
+                            glowColor.copy(alpha = 0.15f * pulse),
+                            glowColor.copy(alpha = 0.9f * pulse),
+                            glowColor.copy(alpha = 0f)
+                        )
+                    ),
+                    startAngle = 0f,
+                    sweepAngle = 300f,
+                    useCenter = false,
+                    topLeft = androidx.compose.ui.geometry.Offset(inset, inset),
+                    size = androidx.compose.ui.geometry.Size(size.width - inset * 2, size.height - inset * 2),
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                )
+            }
+        }
+
+        // ===== Extruded ring body =====
+        Box(
             Modifier
-                .fillMaxSize()
-                .neuInset(theme, corner = 90.dp)
-                .background(theme.bg, CircleShape),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .size(190.dp)
+                .neuFlat(theme, corner = 95.dp)
+                .background(theme.bg, CircleShape)
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(label, color = theme.accent, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(value, color = theme.textDark, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
-            Text(sub, color = theme.textMuted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .neuInset(theme, corner = 90.dp)
+                    .background(theme.bg, CircleShape)
+                    .padding(horizontal = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    label, color = theme.accent, fontWeight = FontWeight.ExtraBold,
+                    fontSize = 13.sp, letterSpacing = 1.5.sp, maxLines = 1
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    value, color = theme.textDark, fontWeight = FontWeight.ExtraBold,
+                    fontSize = 21.sp, maxLines = 1
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    sub, color = theme.textMuted, fontSize = 9.sp, fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center, maxLines = 2, lineHeight = 12.sp,
+                    modifier = Modifier.fillMaxWidth(0.82f)
+                )
+            }
         }
     }
 }
