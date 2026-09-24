@@ -1,7 +1,7 @@
 {
-  "versionCode": 37,
-  "versionName": "2.9.2",
+  "versionCode": 38,
+  "versionName": "2.9.3",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.2/neverhide-empire-v2.9.2.apk",
-  "changelog": "v2.9.2 — Update Checker Fix\n\nFixed the \"up to date\" false report that could happen right after a fresh release (GitHub CDN caching the manifest for up to 5 minutes). The update check now always fetches the true latest version."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.3/neverhide-empire-v2.9.3.apk",
+  "changelog": "v2.9.3 — Update Checker Permanent Fix\n\nFixed the update check sometimes saying \"up to date\" right after a fresh release. It now reads straight from the GitHub API (no CDN caching), so it always sees the real latest version, instantly."
 }
