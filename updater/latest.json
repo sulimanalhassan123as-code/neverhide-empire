@@ -1,7 +1,7 @@
 {
-  "versionCode": 32,
-  "versionName": "2.8.6",
+  "versionCode": 33,
+  "versionName": "2.8.7",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.6/neverhide-empire-v2.8.6.apk",
-  "changelog": "v2.8.6 — Vault Biometrics\n\nUse an enrolled fingerprint or supported phone face to unlock or remove Vault apps, with Vault PIN fallback. Android 11+ requires strong biometrics. Emergency PIN recovery now requires your phone screen lock; typing RESET alone cannot unlock your apps. Apps are removed from Vault only after successful unfreeze. Charging-eye intruder identification is not included yet."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.7/neverhide-empire-v2.8.7.apk",
+  "changelog": "v2.8.7 — 👻 GHOST MODE\n\nHide the Empire icon from your home screen and app drawer. Guardian, Vault, alerts and updates keep working invisibly in the background.\n\nTo return: dial *#*#2001#*#* in your phone dialer and the Empire opens. Toggle: System section at the bottom of the dashboard.\n\nIMPORTANT: dial *#*#2001#*#* first while the icon is still visible — if the Empire opens, the gate works on your phone, and only then tap Hide icon."
 }
