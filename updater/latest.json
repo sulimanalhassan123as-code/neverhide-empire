@@ -1,7 +1,7 @@
 {
-  "versionCode": 36,
-  "versionName": "2.9.1",
+  "versionCode": 37,
+  "versionName": "2.9.2",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.1/neverhide-empire-v2.9.1.apk",
-  "changelog": "v2.9.1 — Animated Empire Ring\n\nFixed the status circle text overflowing outside the ring.\n\nAdded a deep animation: a glowing arc now orbits continuously around the Empire circle with a gentle breathing pulse, colored to match your active theme."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.2/neverhide-empire-v2.9.2.apk",
+  "changelog": "v2.9.2 — Update Checker Fix\n\nFixed the \"up to date\" false report that could happen right after a fresh release (GitHub CDN caching the manifest for up to 5 minutes). The update check now always fetches the true latest version."
 }
