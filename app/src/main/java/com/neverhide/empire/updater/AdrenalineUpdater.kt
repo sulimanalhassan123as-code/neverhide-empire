@@ -30,13 +30,22 @@ import java.net.URL
 class AdrenalineUpdater(private val context: Context) {
 
     companion object {
-        // Primary: raw manifest from the project repo (public)
+        // Primary: GitHub Contents API — always reflects the true HEAD of
+        // main with NO CDN caching layer in front of it (verified: raw
+        // .githubusercontent.com's Fastly cache ignores query strings
+        // entirely, so query-string cache-busting cannot fix staleness
+        // there — ~5 min after a push it can still serve the OLD manifest
+        // and wrongly tell the user they're up to date). The Contents API
+        // has no such cache, so it is now the primary source of truth.
         private const val MANIFEST_URL =
-            "https://raw.githubusercontent.com/sulimanalhassan123as-code/neverhide-empire/main/updater/latest.json"
-        // Fallback: releases attach the APK — the manifest inside the repo
-        // always carries the right URL, this is just belt-and-braces.
+            "https://api.github.com/repos/sulimanalhassan123as-code/neverhide-empire/contents/updater/latest.json?ref=main"
+        // Fallback 1: jsdelivr's GitHub CDN — independent cache, usually
+        // fresh within seconds of a push (different infra than raw.githubusercontent).
         private const val FALLBACK_MANIFEST_URL =
-            "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/latest/download/latest.json"
+            "https://cdn.jsdelivr.net/gh/sulimanalhassan123as-code/neverhide-empire@main/updater/latest.json"
+        // Fallback 2: the old raw path — eventually consistent (~5 min), last resort.
+        private const val FALLBACK2_MANIFEST_URL =
+            "https://raw.githubusercontent.com/sulimanalhassan123as-code/neverhide-empire/main/updater/latest.json"
     }
 
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -45,15 +54,20 @@ class AdrenalineUpdater(private val context: Context) {
         context.let { com.neverhide.empire.core.EmpireTelemetry.ping(it, "update_check") }
         scope.launch {
             try {
-                val manifest = withContext(Dispatchers.IO) { fetchManifest(MANIFEST_URL) }
+                val manifest = withContext(Dispatchers.IO) { fetchManifest(MANIFEST_URL, isGitHubApi = true) }
                 compareAndPrompt(manifest, onResult)
             } catch (e: Exception) {
                 try {
                     val manifest = withContext(Dispatchers.IO) { fetchManifest(FALLBACK_MANIFEST_URL) }
                     compareAndPrompt(manifest, onResult)
                 } catch (e2: Exception) {
-                    Toast.makeText(context, "Update check failed: ${e2.message}", Toast.LENGTH_LONG).show()
-                    onResult("error")
+                    try {
+                        val manifest = withContext(Dispatchers.IO) { fetchManifest(FALLBACK2_MANIFEST_URL) }
+                        compareAndPrompt(manifest, onResult)
+                    } catch (e3: Exception) {
+                        Toast.makeText(context, "Update check failed: ${e3.message}", Toast.LENGTH_LONG).show()
+                        onResult("error")
+                    }
                 }
             }
         }
@@ -72,19 +86,15 @@ class AdrenalineUpdater(private val context: Context) {
         }
     }
 
-    private fun fetchManifest(url: String): JSONObject {
-        // CACHE-BUST: raw.githubusercontent.com (Fastly CDN) caches
-        // latest.json for up to 5 minutes. Right after a release push, a
-        // check can hit a stale edge and report "up to date" on the old
-        // version. Appending a unique query param makes every request a
-        // cache miss (different URL = different cache key), forcing a
-        // fresh fetch straight from the CDN's origin every time.
-        val bustedUrl = url + (if (url.contains("?")) "&" else "?") + "_cb=" + System.currentTimeMillis()
-        val conn = (URL(bustedUrl).openConnection() as HttpURLConnection).apply {
+    private fun fetchManifest(url: String, isGitHubApi: Boolean = false): JSONObject {
+        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 10_000; readTimeout = 10_000
             instanceFollowRedirects = true
             setRequestProperty("Cache-Control", "no-cache, no-store")
             setRequestProperty("Pragma", "no-cache")
+            // The Contents API returns base64-encoded file content by default;
+            // this Accept header makes it return the raw file body instead.
+            if (isGitHubApi) setRequestProperty("Accept", "application/vnd.github.raw")
         }
         conn.inputStream.bufferedReader().use { return JSONObject(it.readText()) }
     }
