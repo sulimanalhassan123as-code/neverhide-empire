@@ -1,7 +1,7 @@
 {
-  "versionCode": 34,
-  "versionName": "2.8.8",
+  "versionCode": 35,
+  "versionName": "2.9.0",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.8.8/neverhide-empire-v2.8.8.apk",
-  "changelog": "v2.8.8 — Ghost Mode fix: Calculator disguise\n\nDialer secret codes (*#*#2001#*#*) are not honored by the stock Samsung dialer, so the return gate failed on real devices. Fixed: Ghost Mode now disguises the launcher icon as a real, working Calculator app.\n\nTo enter Ghost Mode: System section -> Disguise as Calculator.\nTo return: open the calculator icon, type 2001, tap =.\nAny other calculation works normally -- nothing looks suspicious."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.0/neverhide-empire-v2.9.0.apk",
+  "changelog": "v2.9.0 — NEUMORPHIC EMPIRE MENU\n\nFull soft-UI redesign: extruded 3D cards, carved-in chips, 6 color themes (tap the 🎨 button in the header: Black, White, Red, Gold, Silver, Blue).\n\nNew layout: Empire status ring, accent action bar, Quick Access grid, Guardian hero card, Empire Status stats + permissions progress bar.\n\nEvery feature preserved and reorganized: Guardian, Screenshot + Bubble, 20 Live Wallpapers, Power Tools, Cleaner, Vault, Dial, Talk, 3D Launcher, Quran, Ghost Mode, Updates, Permissions, What's New."
 }
