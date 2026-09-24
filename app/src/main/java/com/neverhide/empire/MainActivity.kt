@@ -404,37 +404,33 @@ class MainActivity : ComponentActivity() {
                     // ===== SYSTEM =====
                     SectionHeader("⚙️", "System", Palette.TEXT_DIM)
                     GlassCard {
-                        Text("👻 GHOST MODE", color = Palette.WHITE, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("👻 GHOST MODE — Calculator disguise", color = Palette.WHITE, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "Hide the Empire icon from the home screen and app drawer. It keeps working invisibly — Guardian, Vault, alerts, updates. To return: dial ${GhostMode.DIAL_CODE} in the phone dialer.",
+                            "Disguises the launcher icon as a plain, working Calculator app. Everything keeps running — Guardian, Vault, alerts, updates. To return: open the Calculator, type ${GhostMode.SECRET_HOST}, tap =.",
                             color = Palette.TEXT_DIM, fontSize = 11.sp
                         )
                         Spacer(Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            GlowButton(
-                                if (ghostOn) "👁 Restore icon" else "🚫 Hide icon now",
-                                listOf(Palette.PURPLE, Color(0xFF4527A0)),
-                                Modifier.weight(1f)
-                            ) {
-                                if (ghostOn) {
-                                    GhostMode.reveal(this@MainActivity)
-                                    ghostOn = false
-                                } else {
-                                    GhostMode.hide(this@MainActivity)
-                                    ghostOn = true
-                                }
-                            }
-                            GlowButton("📞 Test gate", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
-                                Toast.makeText(this@MainActivity, "Now dial ${GhostMode.DIAL_CODE} in the phone app — the Empire should open", Toast.LENGTH_LONG).show()
+                        GlowButton(
+                            if (ghostOn) "👁 Restore Empire icon" else "🧮 Disguise as Calculator",
+                            listOf(Palette.PURPLE, Color(0xFF4527A0)),
+                            Modifier.fillMaxWidth()
+                        ) {
+                            if (ghostOn) {
+                                GhostMode.reveal(this@MainActivity)
+                                ghostOn = false
+                            } else {
+                                GhostMode.hide(this@MainActivity)
+                                ghostOn = true
+                                Toast.makeText(this@MainActivity, "Home screen may take a few seconds to refresh the icon", Toast.LENGTH_LONG).show()
                             }
                         }
                         if (ghostOn) {
                             Spacer(Modifier.height(6.dp))
-                            Text("GHOST ACTIVE — icon hidden. Return: dial ${GhostMode.DIAL_CODE}", color = Palette.PINK, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("GHOST ACTIVE — icon looks like Calculator. Return: open it, type ${GhostMode.SECRET_HOST}, tap =.", color = Palette.PINK, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         } else {
                             Spacer(Modifier.height(6.dp))
-                            Text("Honest limits: the app still shows in Settings → Apps (Android rule) and the watchdog notification stays in the shade. Test the gate BEFORE hiding.", color = Palette.TEXT_MUTE, fontSize = 10.sp)
+                            Text("Honest limits: the app still shows in Settings → Apps by its real name (Android rule), and the watchdog notification stays in the shade. A relaunched home screen may take a moment to swap icons.", color = Palette.TEXT_MUTE, fontSize = 10.sp)
                         }
                         Spacer(Modifier.height(12.dp))
                     }

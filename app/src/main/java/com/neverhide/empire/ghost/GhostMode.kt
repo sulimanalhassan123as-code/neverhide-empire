@@ -34,30 +34,38 @@ object GhostMode {
     private const val PREFS = "empire_prefs"
     private const val KEY = "ghost_mode"
 
-    /** The manifest activity-alias that owns the MAIN/LAUNCHER filter. */
-    fun alias(context: Context): ComponentName =
+    /** The real Empire launcher alias (shown in NORMAL mode). */
+    fun realAlias(context: Context): ComponentName =
         ComponentName(context, "${context.packageName}.GhostAlias")
 
-    /** True when the icon is currently hidden. */
+    /** The Calculator-disguise launcher alias (shown in GHOST mode). */
+    fun decoyAlias(context: Context): ComponentName =
+        ComponentName(context, "${context.packageName}.GhostCalcAlias")
+
+    /** True when the icon is currently disguised as Calculator. */
     fun isEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY, false)
 
+    /** Swap the visible launcher icon from Empire -> Calculator disguise. */
     fun hide(context: Context) {
         context.packageManager.setComponentEnabledSetting(
-            alias(context),
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
+            decoyAlias(context), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP
+        )
+        context.packageManager.setComponentEnabledSetting(
+            realAlias(context), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP
         )
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putBoolean(KEY, true).apply()
     }
 
+    /** Swap the visible launcher icon back from Calculator disguise -> Empire. */
     fun reveal(context: Context) {
         context.packageManager.setComponentEnabledSetting(
-            alias(context),
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP
+            realAlias(context), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP
+        )
+        context.packageManager.setComponentEnabledSetting(
+            decoyAlias(context), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP
         )
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putBoolean(KEY, false).apply()

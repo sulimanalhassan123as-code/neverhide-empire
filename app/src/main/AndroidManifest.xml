@@ -112,12 +112,36 @@
             android:exported="true"
             android:launchMode="singleTop" />
 
-        <!-- ===== Ghost Mode launcher alias (icon lives here, hiding =
-             disabling this alias; MainActivity keeps working) ===== -->
+        <!-- ===== Ghost Mode launcher aliases =====
+             NORMAL mode: .GhostAlias enabled, targets MainActivity, shows
+             the real Neverhide Empire icon + name.
+             GHOST mode: .GhostAlias disabled, .GhostCalcAlias enabled
+             instead — disguises as a plain "Calculator" app. Typing the
+             secret code + "=" inside it opens the real Empire. This has
+             no OEM dependency, unlike dialer secret codes. -->
         <activity-alias
             android:name=".GhostAlias"
             android:targetActivity=".MainActivity"
             android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity
+            android:name=".ghost.CalculatorDecoyActivity"
+            android:exported="false"
+            android:label="Calculator"
+            android:icon="@drawable/ic_calc_decoy" />
+
+        <activity-alias
+            android:name=".GhostCalcAlias"
+            android:targetActivity=".ghost.CalculatorDecoyActivity"
+            android:label="Calculator"
+            android:icon="@drawable/ic_calc_decoy"
+            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
