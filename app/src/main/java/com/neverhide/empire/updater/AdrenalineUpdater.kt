@@ -73,9 +73,18 @@ class AdrenalineUpdater(private val context: Context) {
     }
 
     private fun fetchManifest(url: String): JSONObject {
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+        // CACHE-BUST: raw.githubusercontent.com (Fastly CDN) caches
+        // latest.json for up to 5 minutes. Right after a release push, a
+        // check can hit a stale edge and report "up to date" on the old
+        // version. Appending a unique query param makes every request a
+        // cache miss (different URL = different cache key), forcing a
+        // fresh fetch straight from the CDN's origin every time.
+        val bustedUrl = url + (if (url.contains("?")) "&" else "?") + "_cb=" + System.currentTimeMillis()
+        val conn = (URL(bustedUrl).openConnection() as HttpURLConnection).apply {
             connectTimeout = 10_000; readTimeout = 10_000
             instanceFollowRedirects = true
+            setRequestProperty("Cache-Control", "no-cache, no-store")
+            setRequestProperty("Pragma", "no-cache")
         }
         conn.inputStream.bufferedReader().use { return JSONObject(it.readText()) }
     }
