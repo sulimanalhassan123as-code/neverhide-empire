@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neverhide Empire — Neumorphic Menu v2.9.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root, body[data-theme="white"] {
+      --bg-color: #eef2f6; --card-bg: #eef2f6; --shadow-light: #ffffff; --shadow-dark: #cad1dc;
+      --primary-accent: #a31d1d; --text-dark: #2b3445; --text-muted: #7d899b;
+    }
+    body[data-theme="black"] {
+      --bg-color: #16181a; --card-bg: #16181a; --shadow-light: #202326; --shadow-dark: #0c0d0e;
+      --primary-accent: #ff4757; --text-dark: #f1f5f9; --text-muted: #8a99ad;
+    }
+    body[data-theme="red"] {
+      --bg-color: #2b1215; --card-bg: #2b1215; --shadow-light: #3a191d; --shadow-dark: #1c0b0e;
+      --primary-accent: #ff4d4d; --text-dark: #fecdd3; --text-muted: #fda4af;
+    }
+    body[data-theme="gold"] {
+      --bg-color: #221d17; --card-bg: #221d17; --shadow-light: #2f2820; --shadow-dark: #15120e;
+      --primary-accent: #fbbf24; --text-dark: #fef3c7; --text-muted: #d97706;
+    }
+    body[data-theme="silver"] {
+      --bg-color: #e2e8f0; --card-bg: #e2e8f0; --shadow-light: #ffffff; --shadow-dark: #cbd5e1;
+      --primary-accent: #475569; --text-dark: #0f172a; --text-muted: #64748b;
+    }
+    body[data-theme="blue"] {
+      --bg-color: #0f172a; --card-bg: #0f172a; --shadow-light: #1e293b; --shadow-dark: #080d1a;
+      --primary-accent: #38bdf8; --text-dark: #f8fafc; --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-dark); display: flex; justify-content: center; min-height: 100vh; padding: 15px; transition: background-color 0.4s ease, color 0.4s ease; }
+    .app-container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; position: relative; padding-bottom: 60px; }
+    .neu-flat, .neu-inset, .neu-button { transition: background 0.4s ease, box-shadow 0.4s ease, color 0.4s ease; }
+    .neu-flat { background: var(--card-bg); box-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light); }
+    .neu-inset { background: var(--card-bg); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+    .neu-button { background: var(--card-bg); box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); border: none; cursor: pointer; }
+    .neu-button:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-radius: 20px; position: relative; }
+    .logo { font-size: 1.3rem; font-weight: 800; color: var(--text-dark); }
+    .logo span { color: var(--primary-accent); }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .icon-btn { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .version-chip { padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; color: var(--text-muted); }
+    .color-popup { position: absolute; top: 65px; right: 18px; padding: 14px 16px; border-radius: 18px; z-index: 100; display: flex; flex-direction: column; gap: 10px; opacity: 0; visibility: hidden; transform: translateY(-10px) scale(0.95); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .color-popup.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+    .popup-title { font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+    .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .color-option { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+    .color-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; transition: transform 0.2s ease, border-color 0.2s ease; }
+    .color-option:hover .color-dot { transform: scale(1.15); }
+    .color-option.active .color-dot { border-color: var(--text-dark); transform: scale(1.2); }
+    .option-name { font-size: 0.65rem; font-weight: 700; color: var(--text-dark); }
+    .dot-white { background: #ffffff; border: 1px solid #ccc !important; }
+    .dot-black { background: #16181a; border: 1px solid #444 !important; }
+    .dot-red { background: #ff4d4d; }
+    .dot-gold { background: #fbbf24; }
+    .dot-silver { background: #cbd5e1; }
+    .dot-blue { background: #38bdf8; }
+    .ring-section { display: flex; justify-content: center; margin: 6px 0; }
+    .ring-outer { width: 190px; height: 190px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 12px; }
+    .ring-inner { width: 100%; height: 100%; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .ring-label { font-size: 0.9rem; font-weight: 700; color: var(--primary-accent); margin-bottom: 4px; }
+    .ring-amount { font-size: 1.4rem; font-weight: 800; }
+    .ring-sub { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin-top: 4px; }
+    .action-bar { background-color: var(--primary-accent); border-radius: 50px; padding: 6px; display: flex; gap: 6px; }
+    .action-btn { flex: 1; padding: 14px 0; border-radius: 40px; font-size: 0.95rem; font-weight: 700; color: var(--primary-accent); text-align: center; border: none; background: #ffffff; cursor: pointer; }
+    .section-title { font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .grid-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .grid-icon-box { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
+    .grid-label { font-size: 0.8rem; font-weight: 700; color: var(--text-dark); }
+    .icon-badge { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .bg-red { background: rgba(239, 68, 68, 0.2); }
+    .bg-green { background: rgba(16, 185, 129, 0.2); }
+    .bg-purple { background: rgba(168, 85, 247, 0.2); }
+    .bg-orange { background: rgba(249, 115, 22, 0.2); }
+    .bg-cyan { background: rgba(56, 189, 248, 0.2); }
+    .bg-pink { background: rgba(236, 72, 153, 0.2); }
+    .card { padding: 18px; border-radius: 20px; }
+    .guardian-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .g-icon { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .g-name { font-size: 0.95rem; font-weight: 800; }
+    .g-status { font-size: 0.7rem; font-weight: 700; color: #10b981; }
+    .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .chip { padding: 8px 14px; border-radius: 50px; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); }
+    .chip.active { color: var(--primary-accent); }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+    .toggle-label { font-size: 0.8rem; font-weight: 700; }
+    .switch { width: 44px; height: 24px; border-radius: 50px; position: relative; }
+    .switch.on .knob { transform: translateX(20px); background: var(--primary-accent); }
+    .knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; transition: all 0.2s; box-shadow: 2px 2px 4px var(--shadow-dark); }
+    .stats-card, .spend-card { padding: 18px; border-radius: 20px; }
+    .stats-grid { display: flex; justify-content: space-around; text-align: center; margin-top: 10px; }
+    .stat-number { font-size: 1.3rem; font-weight: 800; }
+    .stat-number.red { color: #ef4444; } .stat-number.green { color: #10b981; } .stat-number.orange { color: #f97316; }
+    .stat-desc { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+    .spend-header { display: flex; justify-content: space-between; align-items: flex-end; }
+    .spend-amount { font-size: 1.3rem; font-weight: 800; color: var(--primary-accent); margin-top: 4px; }
+    .progress-bar { height: 6px; width: 100%; border-radius: 10px; margin-top: 16px; }
+    .progress-fill { width: 90%; height: 100%; background: var(--primary-accent); border-radius: 10px; }
+    .ghost-note { font-size: 0.65rem; color: var(--text-muted); line-height: 1.5; margin-top: 10px; }
+    .whatsapp-btn { position: fixed; bottom: 25px; right: 25px; width: 55px; height: 55px; background: #25d366; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3); cursor: pointer; }
+  </style>
+</head>
+<body data-theme="black">
+  <div class="app-container">
+    <header class="header neu-flat">
+      <div class="logo">Neverhide<span>Empire</span></div>
+      <div class="header-actions">
+        <div class="version-chip neu-inset">v2.9.0</div>
+        <button class="icon-btn neu-button" id="paletteBtn" onclick="togglePopup(event)" title="Change Color Theme">🎨</button>
+        <button class="icon-btn neu-button" title="What's New">🌙</button>
+      </div>
+      <div class="color-popup neu-flat" id="colorPopup">
+        <span class="popup-title">Choose Color</span>
+        <div class="color-grid">
+          <div class="color-option opt-white" onclick="switchTheme('white')"><div class="color-dot dot-white"></div><span class="option-name">White</span></div>
+          <div class="color-option opt-black active" onclick="switchTheme('black')"><div class="color-dot dot-black"></div><span class="option-name">Black</span></div>
+          <div class="color-option opt-red" onclick="switchTheme('red')"><div class="color-dot dot-red"></div><span class="option-name">Red</span></div>
+          <div class="color-option opt-gold" onclick="switchTheme('gold')"><div class="color-dot dot-gold"></div><span class="option-name">Gold</span></div>
+          <div class="color-option opt-silver" onclick="switchTheme('silver')"><div class="color-dot dot-silver"></div><span class="option-name">Silver</span></div>
+          <div class="color-option opt-blue" onclick="switchTheme('blue')"><div class="color-dot dot-blue"></div><span class="option-name">Blue</span></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="ring-section">
+      <div class="ring-outer neu-flat">
+        <div class="ring-inner neu-inset">
+          <span class="ring-label">EMPIRE</span>
+          <span class="ring-amount">SECURE</span>
+          <span class="ring-sub">Guardian ARMED • Ghost ready</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="action-bar">
+      <button class="action-btn">🔄 Updates</button>
+      <button class="action-btn">🔑 Permissions</button>
+    </section>
+
+    <section>
+      <div class="section-title">Quick Access</div>
+      <div class="grid-4">
+        <div class="grid-item"><div class="grid-icon-box neu-button"><div class="icon-badge bg-red">🛡️</div></div><span class="grid-label">Guardian</span></div>
+        <div class="grid-item"><div class="grid-icon-box neu-button"><div class="icon-badge bg-green">🔐</div></div><span class="grid-label">Vault</span></div>
+        <div class="grid-item"><div class="grid-icon-box neu-button"><div class="icon-badge bg-purple">📡</div></div><span class="grid-label">Talk</span></div>
+        <div class="grid-item"><div class="grid-icon-box neu-button"><div class="icon-badge bg-orange">🧹</div></div><span class="grid-label">Cleaner</span></div>
+        <div class="grid-item"><div class="grid-icon-box neu-button"><div class="icon-badge bg-cyan">📞</div></div><span class="grid-label">Dial</span></div>
+        <div class="grid-item"><div class="grid-icon-box neu-button"><div class="icon-badge bg-pink">🖼️</div></div><span class="grid-label">Walls</span></div>
+        <div class="grid-item"><div class="grid-icon-box neu-button"><div class="icon-badge bg-green">🧰</div></div><span class="grid-label">Tools</span></div>
+        <div class="grid-item"><div class="grid-icon-box neu-button"><div class="icon-badge bg-orange">📖</div></div><span class="grid-label">Quran</span></div>
+      </div>
+    </section>
+
+    <section class="card neu-flat">
+      <div class="guardian-row">
+        <div class="g-icon neu-inset">🛡️</div>
+        <div>
+          <div class="g-name">Adrenaline Lock Guardian</div>
+          <div class="g-status">ARMED — wrong passwords trigger the jumpscare</div>
+        </div>
+      </div>
+      <div class="chip-row">
+        <div class="chip neu-flat">🌊 Water</div>
+        <div class="chip neu-inset active">🔥 Fire</div>
+        <div class="chip neu-flat">⚡ Thunder</div>
+        <div class="chip neu-flat">🌑 Void</div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">💥 Gunshot + cracked screen</span>
+        <div class="switch neu-inset on"><div class="knob"></div></div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">👻 Ghost Mode (Calculator disguise)</span>
+        <div class="switch neu-inset"><div class="knob"></div></div>
+      </div>
+    </section>
+
+    <section class="stats-card neu-flat">
+      <div class="section-title">Empire Status</div>
+      <div class="stats-grid">
+        <div><div class="stat-number red">🛡️ ON</div><div class="stat-desc">Guardian</div></div>
+        <div><div class="stat-number green">3</div><div class="stat-desc">Vault apps</div></div>
+        <div><div class="stat-number orange">12</div><div class="stat-desc">Frozen apps</div></div>
+      </div>
+    </section>
+
+    <section class="spend-card neu-flat">
+      <div class="spend-header">
+        <div>
+          <div class="section-title" style="margin-bottom: 2px;">Permissions granted</div>
+          <div class="spend-amount">18 / 20</div>
+        </div>
+        <div class="stat-desc">Secure build</div>
+      </div>
+      <div class="progress-bar neu-inset">
+        <div class="progress-fill"></div>
+      </div>
+      <div class="ghost-note">MAJOR upgrades = APK • MINOR upgrades = news feed, no reinstall. Ghost returns: open Calculator, type 2001, tap =.</div>
+    </section>
+  </div>
+
+  <div class="whatsapp-btn">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+  </div>
+
+  <script>
+    const popup = document.getElementById('colorPopup');
+    function togglePopup(event) { event.stopPropagation(); popup.classList.toggle('open'); }
+    function switchTheme(themeName) {
+      document.body.setAttribute('data-theme', themeName);
+      document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+      const activeOpt = document.querySelector('.opt-' + themeName);
+      if (activeOpt) activeOpt.classList.add('active');
+      popup.classList.remove('open');
+    }
+    document.addEventListener('click', (event) => {
+      if (!popup.contains(event.target) && event.target !== document.getElementById('paletteBtn')) popup.classList.remove('open');
+    });
+  </script>
+</body>
+</html>

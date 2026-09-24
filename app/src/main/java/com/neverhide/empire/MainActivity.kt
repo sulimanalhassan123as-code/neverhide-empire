@@ -196,116 +196,161 @@ class MainActivity : ComponentActivity() {
         val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
         val version = packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
 
+        var uiThemeKey by remember { mutableStateOf(getSharedPreferences("empire_prefs", MODE_PRIVATE).getString("empire_theme", "black") ?: "black") }
+        val T = NeuThemes.from(uiThemeKey)
+        var showThemePopup by remember { mutableStateOf(false) }
+
         MaterialTheme {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Palette.pageBg)
+                    .background(T.bg)
             ) {
                 Column(
                     Modifier
                         .fillMaxSize()
                         .verticalScroll(scroll)
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
-                    // ===== Header =====
-                    Text("👑 Neverhide Empire", color = Palette.CYAN, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        StatusChip("v$version", Palette.CYAN)
-                        Spacer(Modifier.width(6.dp))
-                        StatusChip("${permProgress.first}/${permProgress.second} permissions", Palette.TEXT_DIM)
-                        Spacer(Modifier.width(6.dp))
-                        StatusChip("SECURE BUILD", Palette.GREEN)
+                    // ===== HEADER (neu-flat) =====
+                    NeuCard(T, corner = 20.dp, padding = 12.dp) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Neverhide ", color = T.textDark, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
+                            Text("Empire", color = T.accent, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
+                            Spacer(Modifier.weight(1f))
+                            NeuChip(T, "v$version")
+                            Spacer(Modifier.width(10.dp))
+                            NeuIconButton(T, "🎨") { showThemePopup = !showThemePopup }
+                            Spacer(Modifier.width(10.dp))
+                            NeuIconButton(T, "🌙") { WhatsNew.check(this@MainActivity) }
+                        }
                     }
 
-                    // ===== HERO: Lock Guardian =====
-                    GlassCard(glow = Palette.PURPLE) {
+                    // ===== EMPIRE RING (extruded outer, carved inner) =====
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        NeuRing(
+                            T, "EMPIRE",
+                            if (guardianArmed) "SECURE" else "SET UP",
+                            if (guardianArmed) "Guardian ARMED • everything running" else "Enable the Guardian below"
+                        )
+                    }
+
+                    // ===== ACTION BAR (accent pill) =====
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .background(T.accent, RoundedCornerShape(50.dp))
+                            .padding(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .background(Color.White, RoundedCornerShape(40.dp))
+                                .clickable { AdrenalineUpdater(this@MainActivity).checkForUpdate() }
+                                .padding(vertical = 13.dp),
+                            contentAlignment = Alignment.Center
+                        ) { Text("🔄 Updates", color = T.accent, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp) }
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .background(Color.White, RoundedCornerShape(40.dp))
+                                .clickable { permissionLauncher.launch(PermissionManager.missing(this@MainActivity).toTypedArray()) }
+                                .padding(vertical = 13.dp),
+                            contentAlignment = Alignment.Center
+                        ) { Text("🔑 Permissions", color = T.accent, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp) }
+                    }
+
+                    // ===== QUICK ACCESS (grid-4) =====
+                    NeuSectionLabel("QUICK ACCESS", T)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        NeuTile(T, "🔐", "Vault", Color(0xFF10B981)) { startActivity(Intent(this@MainActivity, AppVaultActivity::class.java)) }
+                        NeuTile(T, "🧹", "Cleaner", Color(0xFFF97316)) { startActivity(Intent(this@MainActivity, CleanerActivity::class.java)) }
+                        NeuTile(T, "📡", "Talk", Color(0xFFA855F7)) { startActivity(Intent(this@MainActivity, com.neverhide.empire.talk.EmpireTalkActivity::class.java)) }
+                        NeuTile(T, "📞", "Dial", Color(0xFF38BDF8)) { startActivity(Intent(this@MainActivity, QuickDialActivity::class.java)) }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        NeuTile(T, "📸", "Capture", Color(0xFFEF4444)) { launchScreenshot() }
+                        NeuTile(T, "🖼️", "Walls", Color(0xFFEC4899)) { setWallpaper(selectedEffect) }
+                        NeuTile(T, "🧰", "Tools", Color(0xFF10B981)) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
+                        NeuTile(T, "📖", "Quran", Color(0xFFF97316)) { startActivity(Intent(this@MainActivity, QuranActivity::class.java)) }
+                    }
+
+                    // ===== GUARDIAN HERO =====
+                    NeuCard(T) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 Modifier
-                                    .size(54.dp)
-                                    .background(Palette.heroGradient, RoundedCornerShape(16.dp))
-                                    .border(1.dp, Palette.PURPLE.copy(alpha = 0.6f), RoundedCornerShape(16.dp)),
+                                    .size(46.dp)
+                                    .neuInset(T, 14.dp)
+                                    .background(T.bg, RoundedCornerShape(14.dp)),
                                 contentAlignment = Alignment.Center
-                            ) { Text("🛡️", fontSize = 26.sp) }
-                            Spacer(Modifier.width(14.dp))
+                            ) { Text("🛡️", fontSize = 21.sp) }
+                            Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
-                                Text("Adrenaline Lock Guardian", color = Palette.WHITE, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                                Text("Adrenaline Lock Guardian", color = T.textDark, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
                                 Text(
-                                    if (guardianArmed) "ARMED — wrong passwords trigger the jumpscare"
-                                    else "NOT ARMED — tap Enable to protect",
-                                    color = if (guardianArmed) Palette.GREEN else Palette.TEXT_DIM, fontSize = 12.sp
+                                    if (guardianArmed) "ARMED — wrong passwords trigger the jumpscare" else "NOT ARMED — enable below to protect",
+                                    color = if (guardianArmed) Color(0xFF10B981) else T.textMuted,
+                                    fontSize = 11.sp, fontWeight = FontWeight.Bold
                                 )
                             }
-                            if (guardianArmed) StatusChip("ACTIVE", Palette.GREEN)
                         }
-                        Spacer(Modifier.height(12.dp))
-                        // Theme picker
-                        val themes = listOf("🌊 Water", "🔥 Fire", "⚡ Thunder", "🌑 Void")
+                        Spacer(Modifier.height(14.dp))
                         Row(
                             Modifier.horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            themes.forEachIndexed { i, label ->
-                                val selected = guardianTheme == i
-                                Box(
-                                    Modifier
-                                        .border(
-                                            if (selected) 2.dp else 1.dp,
-                                            if (selected) Palette.ORANGE else Color(0xFF2A3A4A),
-                                            RoundedCornerShape(10.dp)
-                                        )
-                                        .background(
-                                            if (selected) Color(0xFF332000) else Palette.CARD,
-                                            RoundedCornerShape(10.dp)
-                                        )
-                                        .clickable {
-                                            guardianTheme = i
-                                            getSharedPreferences("guardian_prefs", MODE_PRIVATE)
-                                                .edit().putInt(GuardianAdminReceiver.KEY_THEME, i).apply()
-                                        }
-                                        .padding(horizontal = 14.dp, vertical = 8.dp)
-                                ) {
-                                    Text(label, color = if (selected) Palette.ORANGE else Color.Gray, fontSize = 12.sp)
+                            listOf("🌊 Water", "🔥 Fire", "⚡ Thunder", "🌑 Void").forEachIndexed { i, label ->
+                                NeuChip(T, label, active = guardianTheme == i) {
+                                    guardianTheme = i
+                                    getSharedPreferences("guardian_prefs", MODE_PRIVATE)
+                                        .edit().putInt(GuardianAdminReceiver.KEY_THEME, i).apply()
                                 }
                             }
                         }
-                        Spacer(Modifier.height(12.dp))
-                        // GUARDIAN 2.0 — FX mode + SMS alert config
+                        Spacer(Modifier.height(4.dp))
                         var fxGunshot by remember {
                             mutableStateOf(getSharedPreferences("guardian_prefs", MODE_PRIVATE).getInt("guardian_fx_mode", 1) == 1)
                         }
                         var alertNum by remember {
                             mutableStateOf(getSharedPreferences("guardian_prefs", MODE_PRIVATE).getString("guardian_alert_number", "") ?: "")
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("💥 Gunshot + cracked screen", color = Palette.WHITE, fontSize = 13.sp, modifier = Modifier.weight(1f))
-                            androidx.compose.material3.Switch(
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("💥 Gunshot + cracked screen", color = T.textDark, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Switch(
                                 checked = fxGunshot,
                                 onCheckedChange = { on ->
                                     fxGunshot = on
                                     getSharedPreferences("guardian_prefs", MODE_PRIVATE).edit()
                                         .putInt("guardian_fx_mode", if (on) 1 else 0).apply()
                                 },
-                                colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = Palette.ORANGE)
+                                colors = SwitchDefaults.colors(checkedTrackColor = T.accent)
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            androidx.compose.material3.OutlinedTextField(
+                            OutlinedTextField(
                                 value = alertNum, onValueChange = { alertNum = it },
-                                label = { androidx.compose.material3.Text("SMS alert number (optional)", color = Palette.TEXT_DIM) },
+                                label = { Text("SMS alert number (optional)", color = T.textMuted) },
                                 singleLine = true,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = T.textDark, unfocusedTextColor = T.textDark,
+                                    cursorColor = T.accent, focusedBorderColor = T.accent,
+                                    unfocusedBorderColor = T.textMuted,
+                                    focusedLabelColor = T.textMuted, unfocusedLabelColor = T.textMuted
+                                )
                             )
-                            GlowButton("💾", listOf(Palette.ORANGE, Color(0xFFDD2C00)), Modifier.height(52.dp)) {
+                            NeuButton(T, "💾", accentText = T.accent) {
                                 getSharedPreferences("guardian_prefs", MODE_PRIVATE).edit()
                                     .putString("guardian_alert_number", alertNum.trim()).apply()
                             }
                         }
                         Spacer(Modifier.height(14.dp))
                         if (!guardianArmed) {
-                            GlowButton("🛡️ Enable Lock Guardian", listOf(Palette.ORANGE, Color(0xFFDD2C00)), Modifier.fillMaxWidth()) {
+                            NeuButton(T, "🛡️ Enable Lock Guardian", accentText = T.accent, modifier = Modifier.fillMaxWidth(), corner = 40.dp) {
                                 val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
                                     putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
                                         GuardianAdminReceiver.adminComponent(this@MainActivity))
@@ -317,10 +362,10 @@ class MainActivity : ComponentActivity() {
                             }
                         } else {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                GlowButton("⚔️ Test Jumpscare", listOf(Palette.ORANGE, Color(0xFFDD2C00)), Modifier.weight(1f)) {
+                                NeuButton(T, "⚔️ Test", accentText = T.accent, modifier = Modifier.weight(1f)) {
                                     JumpscareActivity.launch(this@MainActivity, guardianTheme, null)
                                 }
-                                GlowButton("🔕 Disable", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
+                                NeuButton(T, "🔕 Disable", modifier = Modifier.weight(1f)) {
                                     dpm.removeActiveAdmin(GuardianAdminReceiver.adminComponent(this@MainActivity))
                                     guardianArmed = false
                                 }
@@ -329,92 +374,87 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // ===== CAPTURE =====
-                    SectionHeader("📸", "Capture")
-                    GlassCard {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            GlowButton("📸 Screenshot", listOf(Palette.CYAN, Color(0xFF00838F)), Modifier.weight(1f)) { launchScreenshot() }
-                            GlowButton("🫧 Bubble", listOf(Palette.PURPLE, Color(0xFF4A148C)), Modifier.weight(1f)) {
-                                if (Settings.canDrawOverlays(this@MainActivity)) {
-                                    startBubbleService()
-                                } else {
-                                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                        Uri.parse("package:$packageName")))
-                                }
+                    NeuSectionLabel("CAPTURE", T)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        NeuButton(T, "📸 Screenshot", accentText = T.accent, modifier = Modifier.weight(1f)) { launchScreenshot() }
+                        NeuButton(T, "🫧 Bubble", accentText = T.accent, modifier = Modifier.weight(1f)) {
+                            if (Settings.canDrawOverlays(this@MainActivity)) {
+                                startBubbleService()
+                            } else {
+                                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:$packageName")))
                             }
                         }
                     }
 
-                    // ===== WALLPAPERS =====
-                    SectionHeader("🖼️", "Live Wallpapers", Palette.PINK)
-                    GlassCard(glow = Palette.PINK) {
-                        Text("20 GPU effects — Water • Fire • Galaxy • Cyber", color = Palette.TEXT_DIM, fontSize = 12.sp)
-                        Spacer(Modifier.height(10.dp))
-                        LazyRowOfEffects(selectedEffect) { i ->
+                    // ===== LIVE WALLPAPERS =====
+                    NeuSectionLabel("LIVE WALLPAPERS — 20 GPU EFFECTS", T)
+                    NeuCard(T) {
+                        Text("Water • Fire • Galaxy • Cyber — real OpenGL renders", color = T.textMuted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(12.dp))
+                        LazyRowOfEffects(selectedEffect, T) { i ->
                             selectedEffect = i
                             getSharedPreferences("empire_prefs", MODE_PRIVATE)
                                 .edit().putInt("wallpaper_effect", i).apply()
                         }
-                        Spacer(Modifier.height(10.dp))
-                        GlowButton("✨ Set Selected as Wallpaper", listOf(Palette.PINK, Color(0xFFC2185B)), Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.height(12.dp))
+                        NeuButton(T, "✨ Set Selected as Wallpaper", accentText = T.accent, modifier = Modifier.fillMaxWidth(), corner = 40.dp) {
                             setWallpaper(selectedEffect)
                         }
                     }
 
-                    // ===== POWER TOOLS =====
-                    SectionHeader("🧰", "Power Tools", Palette.GREEN)
-                    GlassCard {
-                        Text("16 utilities for everyday power use", color = Palette.TEXT_DIM, fontSize = 12.sp)
-                        Spacer(Modifier.height(12.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ToolTile("🔦", "Light", Palette.CYAN) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
-                            ToolTile("🧭", "Compass", Palette.GREEN) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
-                            ToolTile("🔋", "Battery", Palette.ORANGE) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
-                            ToolTile("🧹", "RAM", Palette.PURPLE) { startActivity(Intent(this@MainActivity, ToolsActivity::class.java)) }
+                    // ===== EMPIRE STATUS (stats + progress) =====
+                    NeuSectionLabel("EMPIRE STATUS", T)
+                    NeuCard(T) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(if (guardianArmed) "ON" else "OFF", color = Color(0xFFEF4444), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                                Text("Guardian", color = T.textMuted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("${permProgress.first}/${permProgress.second}", color = Color(0xFF10B981), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                                Text("Permissions", color = T.textMuted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(if (ghostOn) "ON" else "OFF", color = Color(0xFFF97316), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                                Text("Ghost", color = T.textMuted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            }
                         }
-                        Spacer(Modifier.height(12.dp))
-                        GlowButton("Open all 16 Power Tools", listOf(Palette.GREEN, Color(0xFF00E676)), Modifier.fillMaxWidth()) {
-                            startActivity(Intent(this@MainActivity, ToolsActivity::class.java))
+                        Spacer(Modifier.height(16.dp))
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .neuInset(T, 10.dp)
+                                .height(10.dp)
+                                .background(T.bg, RoundedCornerShape(10.dp))
+                        ) {
+                            val frac = if (permProgress.second == 0) 0f
+                                else permProgress.first.toFloat() / permProgress.second
+                            Box(
+                                Modifier
+                                    .fillMaxHeight()
+                                    .fillMaxWidth(frac.coerceIn(0.02f, 1f))
+                                    .background(T.accent, RoundedCornerShape(10.dp))
+                            )
                         }
-                    }
-
-                    // ===== CYBER CLEANER =====
-                    SectionHeader("🛡️", "Cyber Cleaner", Palette.CYAN)
-                    FeatureCard("🛡️", "Cyber Cleaner & Antivirus", "Junk • Boost • Virus scan • App Freezer", Palette.CYAN,
-                        badge = "NEW") { startActivity(Intent(this@MainActivity, CleanerActivity::class.java)) }
-                    FeatureCard("🔐", "App Vault — Device Locks", "PIN-gated device-level app locks • auto re-lock", Palette.PINK,
-                        badge = "NEW") { startActivity(Intent(this@MainActivity, AppVaultActivity::class.java)) }
-
-                    // ===== COMMUNICATION =====
-                    SectionHeader("📞", "Communication", Palette.CYAN)
-                    FeatureCard("📞", "Calls — Quick Dial", "Instant dialer with call-log access", Palette.CYAN,
-                        badge = "NEW") { startActivity(Intent(this@MainActivity, QuickDialActivity::class.java)) }
-                    FeatureCard("📡", "Empire Talk — Internet Calls", "Voice calls + chat between handles • recordable", Palette.GREEN,
-                        badge = "NEW") { startActivity(Intent(this@MainActivity, com.neverhide.empire.talk.EmpireTalkActivity::class.java)) }
-
-                    // ===== MORE =====
-                    SectionHeader("🚀", "More", Palette.PURPLE)
-                    FeatureCard("🚀", "3D App Launcher", "Sphere • Cube • Circle layouts in OpenGL", Palette.PURPLE) {
-                        startActivity(Intent(this@MainActivity, Launcher3DActivity::class.java))
-                    }
-                    FeatureCard("📖", "Quran Audio", "Full Quran recitation — in development", Palette.GREEN,
-                        badge = "SOON", badgeColor = Palette.AMBER) {
-                        startActivity(Intent(this@MainActivity, QuranActivity::class.java))
-                    }
-
-                    // ===== SYSTEM =====
-                    SectionHeader("⚙️", "System", Palette.TEXT_DIM)
-                    GlassCard {
-                        Text("👻 GHOST MODE — Calculator disguise", color = Palette.WHITE, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Disguises the launcher icon as a plain, working Calculator app. Everything keeps running — Guardian, Vault, alerts, updates. To return: open the Calculator, type ${GhostMode.SECRET_HOST}, tap =.",
-                            color = Palette.TEXT_DIM, fontSize = 11.sp
-                        )
                         Spacer(Modifier.height(8.dp))
-                        GlowButton(
+                        Text("MAJOR upgrades = APK • MINOR upgrades = news feed, no reinstall", color = T.textMuted, fontSize = 9.sp)
+                    }
+
+                    // ===== GHOST MODE =====
+                    NeuSectionLabel("GHOST MODE — CALCULATOR DISGUISE", T)
+                    NeuCard(T) {
+                        Text(
+                            "Disguises the launcher icon as a plain, working Calculator. Everything keeps running — Guardian, Vault, alerts, updates. Return: open the Calculator, type ${GhostMode.SECRET_HOST}, tap =.",
+                            color = T.textMuted, fontSize = 11.sp
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        NeuButton(
+                            T,
                             if (ghostOn) "👁 Restore Empire icon" else "🧮 Disguise as Calculator",
-                            listOf(Palette.PURPLE, Color(0xFF4527A0)),
-                            Modifier.fillMaxWidth()
+                            accentText = T.accent,
+                            modifier = Modifier.fillMaxWidth(),
+                            corner = 40.dp
                         ) {
                             if (ghostOn) {
                                 GhostMode.reveal(this@MainActivity)
@@ -426,32 +466,43 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         if (ghostOn) {
-                            Spacer(Modifier.height(6.dp))
-                            Text("GHOST ACTIVE — icon looks like Calculator. Return: open it, type ${GhostMode.SECRET_HOST}, tap =.", color = Palette.PINK, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(8.dp))
+                            Text("GHOST ACTIVE — icon looks like Calculator. Return: open it, type ${GhostMode.SECRET_HOST}, tap =.", color = T.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         } else {
-                            Spacer(Modifier.height(6.dp))
-                            Text("Honest limits: the app still shows in Settings → Apps by its real name (Android rule), and the watchdog notification stays in the shade. A relaunched home screen may take a moment to swap icons.", color = Palette.TEXT_MUTE, fontSize = 10.sp)
+                            Spacer(Modifier.height(8.dp))
+                            Text("Honest limits: the app still shows in Settings → Apps by its real name (Android rule), and the watchdog notification stays in the shade.", color = T.textMuted, fontSize = 9.sp)
                         }
-                        Spacer(Modifier.height(12.dp))
                     }
-                    GlassCard {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            GlowButton("🔄 Check Updates", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
-                                AdrenalineUpdater(this@MainActivity).checkForUpdate()
-                            }
-                            GlowButton("🔑 Grant Permissions", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
-                                permissionLauncher.launch(PermissionManager.missing(this@MainActivity).toTypedArray())
-                            }
+
+                    // ===== MORE EMPIRE =====
+                    NeuSectionLabel("MORE EMPIRE", T)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        NeuButton(T, "🚀 3D Launcher", accentText = T.accent, modifier = Modifier.weight(1f)) {
+                            startActivity(Intent(this@MainActivity, Launcher3DActivity::class.java))
                         }
-                        Spacer(Modifier.height(8.dp))
-                        Text("MAJOR upgrades = APK • MINOR upgrades = news feed, no reinstall", color = Palette.TEXT_MUTE, fontSize = 10.sp)
-                        Spacer(Modifier.height(8.dp))
-                        GlowButton("🌙 What's New (minor — no reinstall)", listOf(Palette.AMBER, Color(0xFFFF8F00)), Modifier.fillMaxWidth()) {
+                        NeuButton(T, "🌙 What's New", accentText = T.accent, modifier = Modifier.weight(1f)) {
                             WhatsNew.check(this@MainActivity)
                         }
                     }
 
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(24.dp))
+                }
+
+                // ===== THEME POPUP OVERLAY =====
+                if (showThemePopup) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .clickable { showThemePopup = false }
+                    )
+                    Box(Modifier.align(Alignment.TopEnd).padding(top = 74.dp, end = 16.dp)) {
+                        NeuThemePopup(T, uiThemeKey) { key ->
+                            uiThemeKey = key
+                            getSharedPreferences("empire_prefs", MODE_PRIVATE).edit()
+                                .putString("empire_theme", key).apply()
+                            showThemePopup = false
+                        }
+                    }
                 }
             }
         }
@@ -466,7 +517,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun LazyRowOfEffects(selected: Int, onSelect: (Int) -> Unit) {
+    private fun LazyRowOfEffects(selected: Int, T: NeuTheme, onSelect: (Int) -> Unit) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -477,14 +528,12 @@ class MainActivity : ComponentActivity() {
                 val isSelected = entry.id == selected
                 Box(
                     Modifier
+                        .neuFlat(T, corner = 12.dp, offset = 3.dp, blur = 8.dp)
+                        .background(T.bg, RoundedCornerShape(12.dp))
                         .border(
-                            if (isSelected) 2.dp else 1.dp,
-                            if (isSelected) Color(0xFF00E5FF) else Color(0xFF2A3A4A),
-                            RoundedCornerShape(10.dp)
-                        )
-                        .background(
-                            if (isSelected) Color(0xFF002233) else Color(0xFF111827),
-                            RoundedCornerShape(10.dp)
+                            if (isSelected) 2.dp else 0.dp,
+                            if (isSelected) T.accent else Color.Transparent,
+                            RoundedCornerShape(12.dp)
                         )
                         .clickable { onSelect(entry.id) }
                         .padding(horizontal = 10.dp, vertical = 10.dp)
@@ -493,9 +542,10 @@ class MainActivity : ComponentActivity() {
                         Text(entry.emoji, fontSize = 22.sp)
                         Text(
                             entry.name,
-                            color = if (isSelected) Color(0xFF00E5FF) else Color.Gray,
+                            color = if (isSelected) T.accent else T.textMuted,
                             fontSize = 9.sp,
-                            maxLines = 1
+                            maxLines = 1,
+                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold
                         )
                     }
                 }
