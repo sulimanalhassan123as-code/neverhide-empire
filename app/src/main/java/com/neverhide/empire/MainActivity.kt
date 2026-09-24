@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,6 +40,7 @@ import com.neverhide.empire.core.EmpireBackgroundService
 import com.neverhide.empire.core.PermissionManager
 import com.neverhide.empire.guardian.GuardianAdminReceiver
 import com.neverhide.empire.guardian.JumpscareActivity
+import com.neverhide.empire.ghost.GhostMode
 import com.neverhide.empire.launcher.Launcher3DActivity
 import com.neverhide.empire.screenshot.FloatingBubbleService
 import com.neverhide.empire.cleaner.CleanerActivity
@@ -183,6 +185,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        var ghostOn by remember { mutableStateOf(GhostMode.isEnabled(this)) }
         var guardianTheme by remember {
             mutableStateOf(getSharedPreferences("guardian_prefs", MODE_PRIVATE).getInt(GuardianAdminReceiver.KEY_THEME, 0))
         }
@@ -400,6 +403,41 @@ class MainActivity : ComponentActivity() {
 
                     // ===== SYSTEM =====
                     SectionHeader("⚙️", "System", Palette.TEXT_DIM)
+                    GlassCard {
+                        Text("👻 GHOST MODE", color = Palette.WHITE, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Hide the Empire icon from the home screen and app drawer. It keeps working invisibly — Guardian, Vault, alerts, updates. To return: dial ${GhostMode.DIAL_CODE} in the phone dialer.",
+                            color = Palette.TEXT_DIM, fontSize = 11.sp
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            GlowButton(
+                                if (ghostOn) "👁 Restore icon" else "🚫 Hide icon now",
+                                listOf(Palette.PURPLE, Color(0xFF4527A0)),
+                                Modifier.weight(1f)
+                            ) {
+                                if (ghostOn) {
+                                    GhostMode.reveal(this@MainActivity)
+                                    ghostOn = false
+                                } else {
+                                    GhostMode.hide(this@MainActivity)
+                                    ghostOn = true
+                                }
+                            }
+                            GlowButton("📞 Test gate", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
+                                Toast.makeText(this@MainActivity, "Now dial ${GhostMode.DIAL_CODE} in the phone app — the Empire should open", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        if (ghostOn) {
+                            Spacer(Modifier.height(6.dp))
+                            Text("GHOST ACTIVE — icon hidden. Return: dial ${GhostMode.DIAL_CODE}", color = Palette.PINK, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        } else {
+                            Spacer(Modifier.height(6.dp))
+                            Text("Honest limits: the app still shows in Settings → Apps (Android rule) and the watchdog notification stays in the shade. Test the gate BEFORE hiding.", color = Palette.TEXT_MUTE, fontSize = 10.sp)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                    }
                     GlassCard {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             GlowButton("🔄 Check Updates", listOf(Color(0xFF37474F), Color(0xFF263238)), Modifier.weight(1f)) {
