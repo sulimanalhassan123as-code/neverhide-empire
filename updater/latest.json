@@ -1,7 +1,7 @@
 {
-  "versionCode": 38,
-  "versionName": "2.9.3",
+  "versionCode": 39,
+  "versionName": "2.9.4",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.3/neverhide-empire-v2.9.3.apk",
-  "changelog": "v2.9.3 — Update Checker Permanent Fix\n\nFixed the update check sometimes saying \"up to date\" right after a fresh release. It now reads straight from the GitHub API (no CDN caching), so it always sees the real latest version, instantly."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.4/neverhide-empire-v2.9.4.apk",
+  "changelog": "v2.9.4 — Security Update (required)\n\nThe shared database now requires the app security key on every request. This version sends it on all Supabase calls. No other changes.\n\nAll previous versions should update — old versions will be rejected by the database."
 }
