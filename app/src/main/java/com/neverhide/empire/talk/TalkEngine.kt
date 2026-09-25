@@ -49,6 +49,8 @@ object TalkEngine {
             conn.readTimeout = 15000
             conn.setRequestProperty("apikey", SB_ANON)
             conn.setRequestProperty("Authorization", "Bearer $SB_ANON")
+            // RLS gate: talk_* tables only accept requests carrying the Empire key
+            conn.setRequestProperty("x-app-key", TALK_APP_KEY)
             if (prefer != null) conn.setRequestProperty("Prefer", prefer)
             if (body != null) {
                 conn.doOutput = true

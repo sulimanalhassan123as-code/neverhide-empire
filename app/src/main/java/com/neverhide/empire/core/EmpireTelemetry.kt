@@ -58,6 +58,7 @@ object EmpireTelemetry {
                     doOutput = true
                     setRequestProperty("apikey", SB_ANON)
                     setRequestProperty("Authorization", "Bearer $SB_ANON")
+                    setRequestProperty("x-app-key", EMPIRE_APP_KEY)
                     setRequestProperty("Content-Type", "application/json")
                 }
                 conn.outputStream.use { it.write(body.toByteArray()) }
