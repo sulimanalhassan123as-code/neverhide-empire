@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.neverhide.empire.tools.eyecare.EyeCareService
+import com.neverhide.empire.tools.privacy.PrivacyScreenService
 import com.neverhide.empire.tools.siren.SirenService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -88,6 +89,7 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("weather", "Weather", "🌤️", Color(0xFF40C4FF)),
         ToolDef("steps", "Step Counter", "👣", Color(0xFFB388FF)),
         ToolDef("eyecare", "Eye Care", "👀", Color(0xFF64DD17)),
+        ToolDef("privacy", "Privacy Screen", "🔒", Color(0xFF00E5FF)),
         ToolDef("siren", "Find My Phone", "📢", Color(0xFFFF1744)),
         ToolDef("voicefx", "Voice FX", "🎙️", Color(0xFF7C4DFF)),
         ToolDef("soundmeter", "Sound Meter", "📈", Color(0xFFFFD600)),
@@ -120,7 +122,7 @@ class ToolsActivity : ComponentActivity() {
     private fun ToolGrid(onOpen: (String) -> Unit) {
         Column(Modifier.fillMaxSize().padding(20.dp)) {
             Text("🧰 Empire Toolkit", color = Color(0xFF00E5FF), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("16 power tools — all offline unless marked", color = Color.Gray, fontSize = 12.sp)
+            Text("17 power tools — all offline unless marked", color = Color.Gray, fontSize = 12.sp)
             Spacer(Modifier.height(16.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
@@ -176,6 +178,7 @@ class ToolsActivity : ComponentActivity() {
                 "weather" -> WeatherScreen()
                 "steps" -> StepsScreen()
                 "eyecare" -> EyeCareScreen()
+                "privacy" -> PrivacyScreen()
                 "siren" -> SirenScreen()
                 "voicefx" -> VoiceFxScreen()
                 "soundmeter" -> SoundMeterScreen()
@@ -651,7 +654,59 @@ class ToolsActivity : ComponentActivity() {
         }
     }
 
-    // ===================== SIREN / FIND MY PHONE =====================
+    
+    // ===================== PRIVACY SCREEN =====================
+
+    @Composable
+    private fun PrivacyScreen() {
+        val context = LocalContext.current
+        val prefs = remember { context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE) }
+        var on by remember { mutableStateOf(PrivacyScreenService.isRunning(context)) }
+        var hasOverlayPerm by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            InfoCard("Pocket/cover guard: the screen goes pitch black the moment the proximity sensor is covered — pocket, bag, or flipped face-down. Uncover and your screen instantly returns. Overlay never intercepts touches.")
+            if (!hasOverlayPerm) {
+                Button(
+                    onClick = {
+                        context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF))
+                ) { Text("Grant 'Display over other apps'", color = Color.Black) }
+            }
+            Row(
+                Modifier.fillMaxWidth().background(Color(0xFF111827), RoundedCornerShape(12.dp)).padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Privacy Screen Guard", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text("Auto-blank screen when covered", color = Color.Gray, fontSize = 11.sp)
+                }
+                Switch(
+                    checked = on,
+                    onCheckedChange = { checked ->
+                        if (!Settings.canDrawOverlays(context)) {
+                            hasOverlayPerm = false
+                            return@Switch
+                        }
+                        on = checked
+                        prefs.edit().putBoolean("privacy_screen_enabled", checked).apply()
+                        if (checked) PrivacyScreenService.start(context) else PrivacyScreenService.stop(context)
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFF00E5FF))
+                )
+            }
+            if (on) {
+                Text("✅ Active — test it: cover the top of your phone (top sensor) with your palm. Screen goes black. Lift your palm — it returns.", color = Color(0xFF00E5FF), fontSize = 13.sp)
+                Button(
+                    onClick = { PrivacyScreenService.stop(context); PrivacyScreenService.start(context) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2A3A))
+                ) { Text("Restart guard", color = Color(0xFF00E5FF)) }
+            }
+        }
+    }
+
+// ===================== SIREN / FIND MY PHONE =====================
 
     @Composable
     private fun SirenScreen() {

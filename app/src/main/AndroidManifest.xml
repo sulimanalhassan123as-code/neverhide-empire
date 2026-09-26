@@ -276,6 +276,12 @@
             android:exported="false"
             android:foregroundServiceType="specialUse"
             tools:ignore="ForegroundServicePermission" />
+        <!-- ===== Privacy Screen overlay service ===== -->
+        <service
+            android:name=".tools.privacy.PrivacyScreenService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission" />
 
         <!-- ===== Find-my-phone siren service ===== -->
         <service
