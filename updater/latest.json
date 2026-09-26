@@ -1,7 +1,7 @@
 {
-  "versionCode": 39,
-  "versionName": "2.9.4",
+  "versionCode": 40,
+  "versionName": "2.9.5",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.4/neverhide-empire-v2.9.4.apk",
-  "changelog": "v2.9.4 — Security Update (required)\n\nThe shared database now requires the app security key on every request. This version sends it on all Supabase calls. No other changes.\n\nAll previous versions should update — old versions will be rejected by the database."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.5/neverhide-empire-v2.9.5.apk",
+  "changelog": "v2.9.5 — Privacy Screen 🔒\n\nNew Empire Toolkit tool: the screen now goes pitch black the moment the phone is covered — pocket, bag, or flipped face-down — and returns instantly when uncovered. Nobody reads your notifications or chats over your shoulder or through your bag. Never intercepts your touches."
 }
