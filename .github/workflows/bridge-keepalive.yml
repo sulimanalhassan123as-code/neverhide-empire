@@ -1,0 +1,11 @@
+name: WhatsApp Bridge Keep-Alive
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping WhatsApp bridge (prevents Render free-tier sleep so Guardian alerts never hit a cold start)
+        run: curl -sS -m 60 -o /dev/null -w "keepalive HTTP %{http_code}\n" https://whatsapp-bridge-6bdj.onrender.com/
