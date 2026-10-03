@@ -201,8 +201,7 @@ class FaceGuardActivity : ComponentActivity() {
             while (System.currentTimeMillis() - start < 3000) {
                 val d = frame; val w = frameW; val h = frameH
                 if (d != null && w > 0) {
-                    var r = FaceGuard.analyze(this, FaceGuard.nv21ToGray(d, w, h, 270))
-                    if (!r.present) r = FaceGuard.analyze(this, FaceGuard.nv21ToGray(d, w, h, 90))
+                    val r = FaceGuard.analyze(this, d, w, h)
                     if (r.present) r.vec?.let { synchronized(vecs) { vecs.add(it) } }
                 }
                 Thread.sleep(120)
@@ -223,8 +222,7 @@ class FaceGuardActivity : ComponentActivity() {
             var msg = "No frame from camera yet — try again in a second"
             val d = frame; val w = frameW; val h = frameH
             if (d != null && w > 0) {
-                var r = FaceGuard.analyze(this, FaceGuard.nv21ToGray(d, w, h, 270))
-                if (!r.present) r = FaceGuard.analyze(this, FaceGuard.nv21ToGray(d, w, h, 90))
+                val r = FaceGuard.analyze(this, d, w, h)
                 val sc = r.score
                 msg = when {
                     !r.present -> "No face detected — center your face, more light"

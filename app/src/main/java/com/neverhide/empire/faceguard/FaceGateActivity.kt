@@ -47,6 +47,7 @@ class FaceGateActivity : ComponentActivity() {
     private var frameH = 0
     private var wrongCount = 0
     private var intruderFired = false
+    @Volatile private var analyzing = false
     private val main = Handler(Looper.getMainLooper())
 
     private val pinLauncher =
@@ -141,12 +142,13 @@ class FaceGateActivity : ComponentActivity() {
     }
 
     private fun startAnalysisLoop() {
+        if (analyzing) return
+        analyzing = true
         Thread {
             while (!isFinishing && camera != null && !FaceGuard.unlockedThisProcess) {
                 val d = frame; val w = frameW; val h = frameH
                 if (d != null && w > 0) {
-                    val r270 = FaceGuard.analyze(this, FaceGuard.nv21ToGray(d, w, h, 270))
-                    val r = if (r270.present) r270 else FaceGuard.analyze(this, FaceGuard.nv21ToGray(d, w, h, 90))
+                    val r = FaceGuard.analyze(this, d, w, h)
                     val score = r.score
                     if (score != null) {
                         if (score >= FaceGuard.MATCH_THRESHOLD) {
@@ -166,6 +168,7 @@ class FaceGateActivity : ComponentActivity() {
                 }
                 Thread.sleep(700)
             }
+            analyzing = false
         }.start()
     }
 

@@ -11,14 +11,19 @@ import org.json.JSONArray
  *
  * Pipeline (100% offline, no ML model downloads, zero APK size cost):
  *  1. Front-camera preview frames arrive as NV21; the Y (luma) plane is
- *     downscaled to a small grayscale grid.
- *  2. android.media.FaceDetector (built into Android since API 1) locates
- *     the face and eye distance.
- *  3. The face region is cropped around the midpoint, normalized to a fixed
+ *     downscaled to a small SQUARE grayscale grid (96x96).
+ *  2. The grid is checked in 3 orientations (0°, 90°, 270°) — sensor frames
+ *     are landscape while the phone is portrait, so the upright orientation
+ *     is whatever the lighting/rotation of the moment makes it; the pass
+ *     with the HIGHEST face-confidence wins. Square grid makes rotation
+ *     index math trivially safe.
+ *  3. android.media.FaceDetector (built into Android) locates the face and
+ *     eye distance in the winning orientation.
+ *  4. The face region is cropped around the midpoint, normalized to a fixed
  *     24x24 grid, zero-meaned and unit-lengthed.
- *  4. MATCHING = normalized cross-correlation against the owner's enrolled
- *     templates. Above MATCH_THRESHOLD => owner; below REJECT_THRESHOLD with
- *     a face clearly present => wrong person.
+ *  5. MATCHING = normalized cross-correlation against the owner's enrolled
+ *     templates. Enrollment and gating use the identical pipeline, so the
+ *     same physical pose produces comparable templates.
  *
  * HONEST LIMITS (also shown in the app UI): this is a visual deterrent,
  * not certified biometric security. It can be fooled by photos held very
@@ -29,8 +34,7 @@ import org.json.JSONArray
 object FaceGuard {
 
     private const val GRID = 24
-    private const val SCAN_W = 128
-    private const val SCAN_H = 96
+    private const val SCAN = 96           // square scan grid — rotation-safe
     const val MATCH_THRESHOLD = 0.60f
     const val REJECT_THRESHOLD = 0.45f
 
@@ -40,7 +44,7 @@ object FaceGuard {
     data class FaceResult(
         val present: Boolean,
         val score: Float?,   // best similarity vs enrolled owner templates
-        val vec: FloatArray? // face vector for enrollment (null if no face)
+        val vec: FloatArray? // face vector for enrollment (null if templates exist)
     )
 
     // ===================== prefs =====================
@@ -69,82 +73,114 @@ object FaceGuard {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
     }
 
-    // ===================== core =====================
+    // ===================== frame prep =====================
 
-    /**
-     * NV21 luma plane -> downscaled gray grid, rotated upright.
-     * rotationDeg: 0 or 270 (front camera portrait handled by trying both).
-     */
-    fun nv21ToGray(data: ByteArray, frameW: Int, frameH: Int, rotationDeg: Int): ByteArray {
-        val sx = frameW / SCAN_W
-        val sy = frameH / SCAN_H
-        val out = ByteArray(SCAN_W * SCAN_H)
-        for (y in 0 until SCAN_H) {
-            for (x in 0 until SCAN_W) {
-                val gx = x * sx
-                val gy = y * sy
-                val v = (data[gy * frameW + gx].toInt() and 0xFF)
-                when (rotationDeg) {
-                    270 -> out[(SCAN_W - 1 - x) * SCAN_H + y] = v.toByte()  // rotate 270: (x,y) -> (h-1-y, x)... see below
-                    90 -> out[x * SCAN_H + (SCAN_H - 1 - y)] = v.toByte()
-                    else -> out[y * SCAN_W + x] = v.toByte()
-                }
+    /** NV21 luma plane -> 96x96 square gray grid (row-major, in[y*SCAN+x]). */
+    fun nv21ToGray(data: ByteArray, frameW: Int, frameH: Int): ByteArray {
+        val sx = (frameW / SCAN).coerceAtLeast(1)
+        val sy = (frameH / SCAN).coerceAtLeast(1)
+        val out = ByteArray(SCAN * SCAN)
+        for (y in 0 until SCAN) {
+            val gy = y * sy
+            for (x in 0 until SCAN) {
+                out[y * SCAN + x] = data[gy * frameW + x * sx]
             }
         }
         return out
     }
 
+    /** 90° clockwise rotation of the square grid: out[y][x] = in[N-1-x][y]. */
+    fun rot90(g: ByteArray): ByteArray {
+        val out = ByteArray(SCAN * SCAN)
+        for (y in 0 until SCAN)
+            for (x in 0 until SCAN)
+                out[y * SCAN + x] = g[(SCAN - 1 - x) * SCAN + y]
+        return out
+    }
+
+    /** 270° clockwise (= 90° CCW): out[y][x] = in[x][N-1-y]. */
+    fun rot270(g: ByteArray): ByteArray {
+        val out = ByteArray(SCAN * SCAN)
+        for (y in 0 until SCAN)
+            for (x in 0 until SCAN)
+                out[y * SCAN + x] = g[x * SCAN + (SCAN - 1 - y)]
+        return out
+    }
+
+    // ===================== core =====================
+
+    private class Hit(val gray: ByteArray, val face: FaceDetector.Face)
+
     /**
-     * Analyze a downscaled gray frame: detect the face, and if enrolled
-     * templates exist, score it against them.
+     * Analyze one camera frame: detect the best face across the 3
+     * orientations (confidence-ranked), then score it against the enrolled
+     * owner templates.
      */
-    fun analyze(context: Context, gray: ByteArray): FaceResult {
-        // FaceDetector requires an RGB_565 bitmap
-        val bmp = Bitmap.createBitmap(SCAN_W, SCAN_H, Bitmap.Config.RGB_565)
-        for (y in 0 until SCAN_H) {
-            for (x in 0 until SCAN_W) {
-                val v = gray[y * SCAN_W + x].toInt() and 0xFF
+    fun analyze(context: Context, data: ByteArray, frameW: Int, frameH: Int): FaceResult {
+        val base = nv21ToGray(data, frameW, frameH)
+        val candidates = listOf(base, rot90(base), rot270(base))
+
+        var best: Hit? = null
+        var bestConf = 0f
+        for (g in candidates) {
+            val f = detect(g) ?: continue
+            if (f.confidence() > bestConf) {
+                bestConf = f.confidence()
+                best = Hit(g, f)
+            }
+        }
+        val hit = best ?: return FaceResult(false, null, null)
+        if (hit.face.eyesDistance() < 5f) return FaceResult(false, null, null) // too far away
+
+        val vec = extractVec(hit.gray, hit.face)
+        val templates = loadTemplates(context)
+        val score = templates.maxOfOrNull { ncc(it, vec) }
+        return FaceResult(true, score, if (templates.isEmpty()) vec else null)
+    }
+
+    /** Runs FaceDetector on one gray grid; null if no face. */
+    private fun detect(gray: ByteArray): FaceDetector.Face? {
+        // FaceDetector requires an RGB_565 bitmap (width must be even — 96 is)
+        val bmp = Bitmap.createBitmap(SCAN, SCAN, Bitmap.Config.RGB_565)
+        for (y in 0 until SCAN) {
+            for (x in 0 until SCAN) {
+                val v = gray[y * SCAN + x].toInt() and 0xFF
                 bmp.setPixel(x, y, Color.rgb(v, v, v))
             }
         }
-        val detector = FaceDetector(SCAN_W, SCAN_H, 1)
+        val detector = FaceDetector(SCAN, SCAN, 1)
         val faces = arrayOfNulls<FaceDetector.Face>(1)
         val n = detector.findFaces(bmp, faces)
         bmp.recycle()
-        if (n < 1 || faces[0] == null) return FaceResult(false, null, null)
+        return if (n > 0) faces[0] else null
+    }
 
-        val face = faces[0]!!
+    /** Crop a normalized 24x24 vector around the detected face. */
+    private fun extractVec(gray: ByteArray, face: FaceDetector.Face): FloatArray {
         val mp = android.graphics.PointF()
         face.getMidPoint(mp)
         val eyeDist = face.eyesDistance()
-        if (eyeDist < 6f) return FaceResult(false, null, null) // too far away
-
-        // crop a square region around the face, fixed to eye distance
         val half = (eyeDist * 1.3f).coerceAtLeast(8f)
         val vec = FloatArray(GRID * GRID)
         for (gy in 0 until GRID) {
             for (gx in 0 until GRID) {
                 val fx = (mp.x - half) + (gx + 0.5f) / GRID * (2 * half)
                 val fy = (mp.y - half * 1.1f) + (gy + 0.5f) / GRID * (2.2f * half)
-                val cx = fx.toInt().coerceIn(0, SCAN_W - 1)
-                val cy = fy.toInt().coerceIn(0, SCAN_H - 1)
-                vec[gy * GRID + gx] = (gray[cy * SCAN_W + cx].toInt() and 0xFF).toFloat()
+                val cx = fx.toInt().coerceIn(0, SCAN - 1)
+                val cy = fy.toInt().coerceIn(0, SCAN - 1)
+                vec[gy * GRID + gx] = (gray[cy * SCAN + cx].toInt() and 0xFF).toFloat()
             }
         }
         normalize(vec)
-
-        val templates = loadTemplates(context)
-        val score = templates.maxOfOrNull { ncc(it, vec) }
-        return FaceResult(true, score, if (templates.isEmpty()) vec else null)
+        return vec
     }
 
     /**
-     * Enroll from a batch of analyzed face vectors: keeps the clearest
-     * captures as the owner's reference templates.
-     * Returns the number of templates stored.
+     * Enroll from a batch of face vectors: keeps up to 5 distinct captures
+     * as the owner's reference templates. Returns the count stored.
      */
     fun enroll(context: Context, vecs: List<FloatArray>): Int {
-        val picked = vecs.distinctBy { it.toList().hashCode() }.take(5)
+        val picked = vecs.take(5)
         if (picked.isEmpty()) return 0
         val arr = JSONArray()
         for (v in picked) {
@@ -169,7 +205,7 @@ object FaceGuard {
                 if (hex.length != GRID * GRID * 4) return@mapNotNull null
                 val v = FloatArray(GRID * GRID)
                 for (j in 0 until GRID * GRID) {
-                    v[j] = ((hex.substring(j * 4, j * 4 + 4).toInt(16)) - 2048) / 2047f
+                    v[j] = (hex.substring(j * 4, j * 4 + 4).toInt(16) - 2048) / 2047f
                 }
                 v
             }
