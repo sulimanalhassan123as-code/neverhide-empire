@@ -32,6 +32,9 @@ class BootReceiver : BroadcastReceiver() {
         if (prefs.getBoolean("privacy_screen_enabled", false)) {
             com.neverhide.empire.tools.privacy.PrivacyScreenService.start(context)
         }
+        if (prefs.getBoolean("broken_screen_enabled", false)) {
+            com.neverhide.empire.tools.broken.BrokenScreenService.start(context)
+        }
         if (prefs.getBoolean("low_battery_alarm", false)) {
             // Nothing to start — BatteryGuardReceiver is manifest-registered.
         }

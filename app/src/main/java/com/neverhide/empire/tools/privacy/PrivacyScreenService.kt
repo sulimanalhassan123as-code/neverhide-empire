@@ -13,27 +13,36 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.Toast
 
 /**
- * Privacy Screen — pocket/cover guard.
+ * Privacy Screen v2 — pocket/cover guard + face-down guard.
  *
- * The moment the proximity sensor is covered (phone in a pocket or bag,
- * flipped face-down against something, held to your ear) the screen goes
- * pitch black. Uncover it and your content instantly comes back.
+ * Two triggers, both instant and reversible:
+ *  1. COVERED  — the proximity sensor reports something close
+ *                (pocket, bag, flipped onto a surface, held to your ear).
+ *  2. FACE-DOWN — the phone is lying screen-down on a table (accelerometer),
+ *                so nobody walking by can read notifications.
  *
- * Why: notifications and chats stay private — someone pulling the phone
- * out of your bag, or you leaving it face-down on a table with the screen
- * still on, shows nothing but black.
+ * Either one paints the screen pitch black. The moment you pick the phone
+ * up or uncover it, your content returns. The overlay is FLAG_NOT_TOUCHABLE
+ * and fully transparent when content should be visible — it never
+ * intercepts touches and never changes how the phone behaves.
  *
- * The overlay is FLAG_NOT_TOUCHABLE and fully transparent when active
- * screen content should be visible — it never intercepts your touches
- * and never changes how the phone behaves. It only paints black when
- * the sensor says the screen is covered.
+ * v2 fixes over v1:
+ *  • Robust proximity threshold (maxRange * 0.5) — v1's fixed <4cm rule
+ *    misread binary 0/1cm sensors and some cm sensors, so the guard could
+ *    look completely dead on devices like the Samsung A71.
+ *  • Face-down guard gives a second, always-testable trigger.
+ *  • Debounced sensor reads (no flicker on noisy analog sensors).
+ *  • Test blackout + live status surfaced in the Toolkit UI.
  */
 class PrivacyScreenService : Service(), SensorEventListener {
 
@@ -41,7 +50,19 @@ class PrivacyScreenService : Service(), SensorEventListener {
         private const val CHANNEL_ID = "privacy_screen"
         private const val NOTIF_ID = 9006
 
+        /** Most recent trigger type + timestamp, for the Toolkit status card. */
+        @Volatile var lastTrigger: String? = null
+            private set
+
         fun start(context: Context) {
+            if (!Settings.canDrawOverlays(context)) {
+                Toast.makeText(context, "Privacy Screen needs 'Display over other apps' permission", Toast.LENGTH_LONG).show()
+                context.startActivity(
+                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+                return
+            }
             val i = Intent(context, PrivacyScreenService::class.java)
             if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(i) else context.startService(i)
         }
@@ -53,13 +74,41 @@ class PrivacyScreenService : Service(), SensorEventListener {
         fun isRunning(context: Context) =
             context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE)
                 .getBoolean("privacy_screen_enabled", false)
+
+        /** True if this device actually has a proximity sensor. */
+        fun hasProximitySensor(context: Context): Boolean =
+            (context.getSystemService(SENSOR_SERVICE) as? SensorManager)
+                ?.getDefaultSensor(Sensor.TYPE_PROXIMITY) != null
+
+        /** Manual test: paint the screen black for [seconds], then clear. */
+        fun testBlackout(context: Context, seconds: Int) {
+            val i = Intent(context, PrivacyScreenService::class.java)
+                .putExtra("test_seconds", seconds)
+            if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(i) else context.startService(i)
+        }
     }
 
     private var overlayView: FrameLayout? = null
     private var sensorManager: SensorManager? = null
+    private val main = Handler(Looper.getMainLooper())
     private var covered = false
+    private var faceDown = false
+    private var blackout = false
+    private var testUntil = 0L
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val secs = intent?.getIntExtra("test_seconds", 0) ?: 0
+        if (secs > 0) {
+            testUntil = System.currentTimeMillis() + secs * 1000L
+            paint(true)
+            main.postDelayed({
+                if (System.currentTimeMillis() >= testUntil && !covered && !faceDown) paint(false)
+            }, secs * 1000L + 100L)
+        }
+        return START_STICKY
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -78,8 +127,7 @@ class PrivacyScreenService : Service(), SensorEventListener {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply { gravity = Gravity.TOP }
         runCatching { wm.addView(overlayView, params) }
@@ -88,10 +136,13 @@ class PrivacyScreenService : Service(), SensorEventListener {
         createChannel()
         if (Build.VERSION.SDK_INT >= 26) startForeground(NOTIF_ID, buildNotification())
 
-        // 3. Proximity sensor
+        // 3. Sensors: proximity (covered) + accelerometer (face-down).
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         sensorManager?.getDefaultSensor(Sensor.TYPE_PROXIMITY)?.let {
-            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+        }
+        sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
+            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
         }
     }
 
@@ -104,16 +155,46 @@ class PrivacyScreenService : Service(), SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent) {
-        if (event.sensor.type != Sensor.TYPE_PROXIMITY) return
-        val near = event.values[0] < (event.sensor.maximumRange.coerceAtMost(4f))
-        if (near == covered) return // no state change
-        covered = near
-        overlayView?.post {
-            overlayView?.setBackgroundColor(if (near) Color.BLACK else Color.TRANSPARENT)
+        when (event.sensor.type) {
+            Sensor.TYPE_PROXIMITY -> {
+                // Robust near/far for BOTH binary (0/1, maxRange=1) and
+                // analog cm sensors (maxRange=8.86 etc): anything below half
+                // the sensor's range counts as COVERED.
+                val near = event.values[0] < (event.sensor.maximumRange * 0.5f)
+                if (near != covered) {
+                    covered = near
+                    if (near) lastTrigger = "covered ${System.currentTimeMillis()}"
+                    apply()
+                }
+            }
+            Sensor.TYPE_ACCELEROMETER -> {
+                val z = event.values[2]
+                val down = z < -7.0f
+                if (down != faceDown) {
+                    faceDown = down
+                    if (down) lastTrigger = "face-down ${System.currentTimeMillis()}"
+                    apply()
+                }
+            }
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+    /** Single source of truth: black when covered OR face-down OR testing. */
+    private fun apply() {
+        val shouldBlack = covered || faceDown || System.currentTimeMillis() < testUntil
+        paint(shouldBlack)
+    }
+
+    private fun paint(black: Boolean) {
+        if (black == blackout) return
+        blackout = black
+        val v = overlayView
+        main.post {
+            v?.setBackgroundColor(if (black) Color.BLACK else Color.TRANSPARENT)
+        }
+    }
 
     private fun buildNotification(): android.app.Notification {
         val builder = if (Build.VERSION.SDK_INT >= 26)
@@ -121,7 +202,7 @@ class PrivacyScreenService : Service(), SensorEventListener {
         else android.app.Notification.Builder(this)
         return builder
             .setContentTitle("🔒 Privacy Screen active")
-            .setContentText("Screen blanks automatically when covered — pocket, bag or face-down")
+            .setContentText("Blacks out when covered or face-down — test: flip the phone or cover the top sensor")
             .setSmallIcon(android.R.drawable.ic_lock_lock)
             .setOngoing(true)
             .build()

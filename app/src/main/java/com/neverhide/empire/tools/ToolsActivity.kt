@@ -53,6 +53,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.neverhide.empire.tools.eyecare.EyeCareService
 import com.neverhide.empire.tools.privacy.PrivacyScreenService
+import com.neverhide.empire.tools.broken.BrokenScreenService
+import com.neverhide.empire.faceguard.FaceGuard
+import com.neverhide.empire.faceguard.FaceGuardActivity
 import com.neverhide.empire.tools.siren.SirenService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,6 +93,8 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("steps", "Step Counter", "👣", Color(0xFFB388FF)),
         ToolDef("eyecare", "Eye Care", "👀", Color(0xFF64DD17)),
         ToolDef("privacy", "Privacy Screen", "🔒", Color(0xFF00E5FF)),
+        ToolDef("faceguard", "Face Guard", "👤", Color(0xFFB388FF)),
+        ToolDef("brokenscreen", "Broken Screen", "🔨", Color(0xFFFF5252)),
         ToolDef("siren", "Find My Phone", "📢", Color(0xFFFF1744)),
         ToolDef("voicefx", "Voice FX", "🎙️", Color(0xFF7C4DFF)),
         ToolDef("soundmeter", "Sound Meter", "📈", Color(0xFFFFD600)),
@@ -122,7 +127,7 @@ class ToolsActivity : ComponentActivity() {
     private fun ToolGrid(onOpen: (String) -> Unit) {
         Column(Modifier.fillMaxSize().padding(20.dp)) {
             Text("🧰 Empire Toolkit", color = Color(0xFF00E5FF), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("17 power tools — all offline unless marked", color = Color.Gray, fontSize = 12.sp)
+            Text("19 power tools — all offline unless marked", color = Color.Gray, fontSize = 12.sp)
             Spacer(Modifier.height(16.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
@@ -179,6 +184,8 @@ class ToolsActivity : ComponentActivity() {
                 "steps" -> StepsScreen()
                 "eyecare" -> EyeCareScreen()
                 "privacy" -> PrivacyScreen()
+                "faceguard" -> FaceGuardScreen()
+                "brokenscreen" -> BrokenScreenScreen()
                 "siren" -> SirenScreen()
                 "voicefx" -> VoiceFxScreen()
                 "soundmeter" -> SoundMeterScreen()
@@ -660,19 +667,30 @@ class ToolsActivity : ComponentActivity() {
     @Composable
     private fun PrivacyScreen() {
         val context = LocalContext.current
-        val prefs = remember { context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE) }
         var on by remember { mutableStateOf(PrivacyScreenService.isRunning(context)) }
-        var hasOverlayPerm by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+        var hasPerm by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+        var hasSensor by remember { mutableStateOf(PrivacyScreenService.hasProximitySensor(context)) }
+
+        // Re-check permission + running state every time this screen resumes
+        val owner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+        DisposableEffect(owner) {
+            val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
+                if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                    hasPerm = Settings.canDrawOverlays(context)
+                    on = PrivacyScreenService.isRunning(context)
+                }
+            }
+            owner.lifecycle.addObserver(obs)
+            onDispose { owner.lifecycle.removeObserver(obs) }
+        }
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            InfoCard("Pocket/cover guard: the screen goes pitch black the moment the proximity sensor is covered — pocket, bag, or flipped face-down. Uncover and your screen instantly returns. Overlay never intercepts touches.")
-            if (!hasOverlayPerm) {
+            InfoCard("Blacks out instantly when the phone is COVERED (pocket, bag, flipped over — proximity sensor) or FACE-DOWN on a table (accelerometer). Pick it up or uncover it — content returns instantly. Never intercepts your touches.")
+            if (!hasPerm) {
                 Button(
-                    onClick = {
-                        context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF))
-                ) { Text("Grant 'Display over other apps'", color = Color.Black) }
+                    onClick = { context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252))
+                ) { Text("Grant 'Display over other apps' (required)", color = Color.Black) }
             }
             Row(
                 Modifier.fillMaxWidth().background(Color(0xFF111827), RoundedCornerShape(12.dp)).padding(14.dp),
@@ -680,33 +698,123 @@ class ToolsActivity : ComponentActivity() {
             ) {
                 Column(Modifier.weight(1f)) {
                     Text("Privacy Screen Guard", color = Color.White, fontWeight = FontWeight.SemiBold)
-                    Text("Auto-blank screen when covered", color = Color.Gray, fontSize = 11.sp)
+                    Text("Covered or face-down → black", color = Color.Gray, fontSize = 11.sp)
                 }
                 Switch(
                     checked = on,
                     onCheckedChange = { checked ->
                         if (!Settings.canDrawOverlays(context)) {
-                            hasOverlayPerm = false
+                            hasPerm = false
+                            context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
                             return@Switch
                         }
                         on = checked
-                        prefs.edit().putBoolean("privacy_screen_enabled", checked).apply()
+                        context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE)
+                            .edit().putBoolean("privacy_screen_enabled", checked).apply()
                         if (checked) PrivacyScreenService.start(context) else PrivacyScreenService.stop(context)
                     },
                     colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFF00E5FF))
                 )
             }
             if (on) {
-                Text("✅ Active — test it: cover the top of your phone (top sensor) with your palm. Screen goes black. Lift your palm — it returns.", color = Color(0xFF00E5FF), fontSize = 13.sp)
+                Text("✅ Active — test it: flip the phone face-down → instant black. Cover the top sensor with your palm → black. Face-up in hand → normal.", color = Color(0xFF00E5FF), fontSize = 13.sp)
                 Button(
-                    onClick = { PrivacyScreenService.stop(context); PrivacyScreenService.start(context) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2A3A))
-                ) { Text("Restart guard", color = Color(0xFF00E5FF)) }
+                    onClick = { PrivacyScreenService.testBlackout(context, 3) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF111827))
+                ) { Text("Test blackout — 3 seconds", color = Color(0xFF00E5FF)) }
             }
+            if (!hasSensor) Text("⚠️ This device has no proximity sensor — the face-down guard still works.", color = Color(0xFFFF9100), fontSize = 12.sp)
         }
     }
 
-// ===================== SIREN / FIND MY PHONE =====================
+    // ===================== FACE GUARD =====================
+
+    @Composable
+    private fun FaceGuardScreen() {
+        val context = LocalContext.current
+        var enrolled by remember { mutableStateOf(FaceGuard.isEnrolled(context)) }
+        var enabled by remember { mutableStateOf(FaceGuard.isEnabled(context)) }
+        val owner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+        DisposableEffect(owner) {
+            val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
+                if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                    enrolled = FaceGuard.isEnrolled(context)
+                    enabled = FaceGuard.isEnabled(context)
+                }
+            }
+            owner.lifecycle.addObserver(obs)
+            onDispose { owner.lifecycle.removeObserver(obs) }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            InfoCard("Your face becomes Empire's key. Each time the app opens, the front camera checks: owner → instant unlock. Wrong face twice → siren + vibration + intruder selfie + location alert to your Guardian alert number (set it in the Lock Guardian card). A phone-PIN escape hatch is always on the gate. Visual deterrent — not certified biometric security.")
+            Row(
+                Modifier.fillMaxWidth().background(Color(0xFF111827), RoundedCornerShape(12.dp)).padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Gate Empire on app open", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text(if (enrolled) "Face check each open" else "Enroll first", color = Color.Gray, fontSize = 11.sp)
+                }
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = {
+                        if (it && !FaceGuard.isEnrolled(context)) {
+                            enabled = false
+                            return@Switch
+                        }
+                        enabled = it
+                        FaceGuard.setEnabled(context, it)
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFFB388FF))
+                )
+            }
+            Button(
+                onClick = { context.startActivity(Intent(context, FaceGuardActivity::class.java)) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB388FF))
+            ) { Text(if (enrolled) "👤 Re-enroll / test recognition" else "👤 Enroll my face now", color = Color.Black) }
+        }
+    }
+
+    // ===================== BROKEN SCREEN PRANK =====================
+
+    @Composable
+    private fun BrokenScreenScreen() {
+        val context = LocalContext.current
+        var on by remember { mutableStateOf(BrokenScreenService.isRunning(context)) }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            InfoCard("PRANK: while armed, shake the phone VERY hard — the screen 'shatters' with a loud glass-crack sound and a broken-glass overlay. It stays broken until you tap the screen, then re-arms itself. Normal walking and pockets never trigger it — only a deliberate heavy shake does.")
+            Row(
+                Modifier.fillMaxWidth().background(Color(0xFF111827), RoundedCornerShape(12.dp)).padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Broken Screen Prank", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text("Shake HARD → shatter. Tap → repair.", color = Color.Gray, fontSize = 11.sp)
+                }
+                Switch(
+                    checked = on,
+                    onCheckedChange = { checked ->
+                        if (checked && !Settings.canDrawOverlays(context)) {
+                            context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+                            return@Switch
+                        }
+                        on = checked
+                        context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE)
+                            .edit().putBoolean("broken_screen_enabled", checked).apply()
+                        if (checked) BrokenScreenService.start(context) else BrokenScreenService.stop(context)
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFFFF5252))
+                )
+            }
+            Button(
+                onClick = { BrokenScreenService.breakNow(context) },
+                enabled = on,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF111827))
+            ) { Text("🔨 Test — break the screen now", color = Color(0xFFFF5252)) }
+        }
+    }
+
+    // ===================== SIREN / FIND MY PHONE =====================
 
     @Composable
     private fun SirenScreen() {

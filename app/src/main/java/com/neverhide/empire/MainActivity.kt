@@ -125,6 +125,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (com.neverhide.empire.faceguard.FaceGuard.isEnabled(this) &&
+            com.neverhide.empire.faceguard.FaceGuard.isEnrolled(this) &&
+            !com.neverhide.empire.faceguard.FaceGuard.unlockedThisProcess
+        ) {
+            startActivity(Intent(this, com.neverhide.empire.faceguard.FaceGateActivity::class.java))
+        }
+    }
+
     private fun requestSpecialPermissions() {
         if (!Settings.canDrawOverlays(this)) {
             startActivity(

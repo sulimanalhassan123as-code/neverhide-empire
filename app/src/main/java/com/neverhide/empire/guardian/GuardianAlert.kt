@@ -39,7 +39,7 @@ object GuardianAlert {
         "https://whatsapp-bridge-6bdj.onrender.com/guardian/alert"
     private const val BRIDGE_SECRET = "1d15d106f20d08fd901d974b7812e2285f183e5a6ad8aaba"
 
-    fun fire(context: Context, photoPath: String?) {
+    fun fire(context: Context, photoPath: String?, reason: String = "password") {
         val prefs = context.getSharedPreferences(
             GuardianAdminReceiver.GUARDIAN_PREFS, Context.MODE_PRIVATE
         )
@@ -55,8 +55,13 @@ object GuardianAlert {
             val maps = loc?.let { "https://maps.google.com/?q=${it.latitude},${it.longitude}" }
             val time = SimpleDateFormat("dd MMM yyyy, HH:mm:ss", Locale.US).format(Date())
             val caption = buildString {
-                append("🚨 NEVERHIDE GUARDIAN ALERT\n")
-                append("Someone entered a WRONG PASSWORD on your phone!\n\n")
+                if (reason == "face") {
+                    append("🚨 NEVERHIDE FACE GUARD ALERT\n")
+                    append("Someone who is NOT you just opened your phone!\n\n")
+                } else {
+                    append("🚨 NEVERHIDE GUARDIAN ALERT\n")
+                    append("Someone entered a WRONG PASSWORD on your phone!\n\n")
+                }
                 append("🕒 Time: $time\n")
                 append("📍 Location: ${maps ?: "unavailable — no GPS/network fix (try again outdoors or with mobile data on)"}\n")
                 if (loc != null) {
@@ -150,18 +155,27 @@ object GuardianAlert {
                 append('}')
             }
 
-            val conn = URL(BRIDGE_URL).openConnection() as HttpsURLConnection
-            conn.requestMethod = "POST"
-            conn.connectTimeout = 15_000
-            conn.readTimeout = 20_000
-            conn.doOutput = true
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.setRequestProperty("x-bridge-secret", BRIDGE_SECRET)
-            val os: OutputStream = conn.outputStream
-            os.write(json.toByteArray(Charsets.UTF_8))
-            os.close()
-            conn.responseCode  // fire and forget
-            conn.disconnect()
+            // Wake-and-retry: if the bridge is asleep (Render free tier),
+            // this first request wakes it up (~40-60s cold boot). The retries
+            // then deliver the alert instead of silently losing it.
+            for (attempt in 1..3) {
+                val conn = URL(BRIDGE_URL).openConnection() as HttpsURLConnection
+                conn.requestMethod = "POST"
+                conn.connectTimeout = 15_000
+                conn.readTimeout = 20_000
+                conn.doOutput = true
+                conn.setRequestProperty("Content-Type", "application/json")
+                conn.setRequestProperty("x-bridge-secret", BRIDGE_SECRET)
+                try {
+                    val os: OutputStream = conn.outputStream
+                    os.write(json.toByteArray(Charsets.UTF_8))
+                    os.close()
+                    if (conn.responseCode == 200) return@runCatching
+                } finally {
+                    conn.disconnect()
+                }
+                if (attempt < 3) Thread.sleep(45_000)
+            }
         }
     }
 

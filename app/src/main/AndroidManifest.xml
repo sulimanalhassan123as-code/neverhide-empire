@@ -148,6 +148,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
+        <activity android:name=".faceguard.FaceGuardActivity" android:exported="false" />
+        <activity
+            android:name=".faceguard.FaceGateActivity"
+            android:exported="false"
+            android:excludeFromRecents="true" />
         <activity android:name=".cleaner.CleanerActivity"
             android:exported="false"
             android:label="Cyber Cleaner" />
@@ -279,6 +284,12 @@
         <!-- ===== Privacy Screen overlay service ===== -->
         <service
             android:name=".tools.privacy.PrivacyScreenService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission" />
+        <!-- ===== Broken Screen prank overlay service ===== -->
+        <service
+            android:name=".tools.broken.BrokenScreenService"
             android:exported="false"
             android:foregroundServiceType="specialUse"
             tools:ignore="ForegroundServicePermission" />
