@@ -210,10 +210,10 @@ class BrokenScreenService : Service(), SensorEventListener {
                 val bend = f0 * (1f - 0.25f * t / len)
                 phase += 2f * Math.PI.toFloat() * bend / sr
                 val env = Math.exp((-t / (len / 3.2)).toDouble()).toFloat()
-                val s = (Math.sin(phase.toDouble()) * env * 0.5f).toInt()
+                val s = (Math.sin(phase.toDouble()) * env * 0.5f).toFloat() // full float amplitude
                 val idx = start + t
                 val cur = buf[idx].toInt() / Short.MAX_VALUE.toFloat()
-                buf[idx] = (((cur + s / Short.MAX_VALUE.toFloat()).coerceIn(-1f, 1f)) * Short.MAX_VALUE).toInt().toShort()
+                buf[idx] = ((cur + s).coerceIn(-1f, 1f) * Short.MAX_VALUE).toInt().toShort()
             }
         }
         // 3. Short white noise "settle" tail
