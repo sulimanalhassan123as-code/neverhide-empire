@@ -37,5 +37,8 @@
       "title": "Two-tier updates are live",
       "note": "From now on: MAJOR upgrades (new APK) arrive through Check Updates. MINOR upgrades (news, tips, small fixes) arrive right here \u2014 no reinstall, just refresh. The website shows both."
     }
-  ]
+  ],
+  "versionName": "2.9.8",
+  "headline": "\u2b12 Split Screen Launcher",
+  "body": "Launch any app into the other split-screen pane \u2014 one tap. Termux + Settings quick buttons kill the ADB pairing headache."
 }

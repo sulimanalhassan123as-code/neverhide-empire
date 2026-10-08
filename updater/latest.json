@@ -1,7 +1,7 @@
 {
-  "versionCode": 42,
-  "versionName": "2.9.7",
+  "versionCode": 43,
+  "versionName": "2.9.8",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.7/neverhide-empire-v2.9.7.apk",
-  "changelog": "v2.9.7 - Screen Recorder\n\n- NEW Screen Recorder: native recording with MAX (60fps/24Mbps), HIGH (1080p/16Mbps) and WHATSAPP (720p/6Mbps) presets.\n- Send as DOCUMENT = WhatsApp sends the ORIGINAL file, zero quality loss.\n- DIRECT send from the app: post recordings to your WhatsApp Status or any number's chat without opening WhatsApp.\n- Pause/resume from the notification, recordings gallery with play, rename, delete."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.8/neverhide-empire-v2.9.8.apk",
+  "changelog": "v2.9.8 - Split Screen Launcher\n\n- NEW Split Screen tool (Toolkit): launch ANY app in the other split-screen pane with one tap.\n- Quick buttons for Termux + Settings \u2014 built for the ADB pairing workflow (popup stays alive while you type).\n- Searchable list of all installed apps; falls back to normal open if the device refuses split."
 }
