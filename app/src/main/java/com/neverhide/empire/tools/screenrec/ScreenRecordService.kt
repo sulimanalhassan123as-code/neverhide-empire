@@ -59,6 +59,12 @@ class ScreenRecordService : Service() {
         const val PRESET_WHATSAPP = "whatsapp"
 
         // Live state for the UI
+        // uiTick: bumped on EVERY state change (start/pause/resume/stop/error).
+        // Compose cannot observe plain @Volatile vars — v2.9.7 bug: the UI never
+        // learned recording had started, so the screen looked dead after the
+        // user accepted the system popup. The UI collects this flow instead.
+        val uiTick = kotlinx.coroutines.flow.MutableStateFlow(0)
+        private fun bumpUi() { uiTick.value = uiTick.value + 1 }
         @Volatile var isRecording = false
         @Volatile var isPaused = false
         @Volatile var startedAt = 0L
@@ -122,6 +128,7 @@ class ScreenRecordService : Service() {
                     runCatching { recorder?.pause() }
                     isPaused = true
                     updateNotification()
+                    bumpUi()
                 }
             }
             ACTION_RESUME -> {
@@ -129,6 +136,7 @@ class ScreenRecordService : Service() {
                     runCatching { recorder?.resume() }
                     isPaused = false
                     updateNotification()
+                    bumpUi()
                 }
             }
         }
@@ -200,9 +208,19 @@ class ScreenRecordService : Service() {
             startedAt = System.currentTimeMillis()
             lastError = null
             updateNotification()
+            bumpUi()
+            android.widget.Toast.makeText(
+                applicationContext, "● REC — recording… (see notification to stop)",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
         } catch (e: Exception) {
             lastError = e.message ?: "recorder error"
+            android.widget.Toast.makeText(
+                applicationContext, "Recording failed: $lastError",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
             cleanup()
+            bumpUi()
             stopSelf()
         }
     }
@@ -211,7 +229,14 @@ class ScreenRecordService : Service() {
         if (!isRecording) { stopSelf(); return }
         runCatching { recorder?.stop() }
         lastSavedPath = outFile?.absolutePath
+        val savedName = outFile?.name
         cleanup()
+        bumpUi()
+        android.widget.Toast.makeText(
+            applicationContext,
+            "✅ Saved: $savedName",
+            android.widget.Toast.LENGTH_LONG
+        ).show()
         stopSelf()
     }
 

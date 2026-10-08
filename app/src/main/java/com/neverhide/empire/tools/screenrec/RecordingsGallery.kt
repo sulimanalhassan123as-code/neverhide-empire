@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -80,8 +81,19 @@ fun ScreenRecorderScreen() {
         }
     }
 
+    // v2.9.9 fix: SRS.isRecording is a plain var Compose cannot see.
+    // Collect the service's uiTick so the screen ACTUALLY flips to the
+    // recording panel the moment recording starts (v2.9.7 showed nothing).
+    var recState by remember { mutableStateOf(SRS.isRecording) }
+    LaunchedEffect(Unit) {
+        SRS.uiTick.collect {
+            recState = SRS.isRecording
+            refresh = refresh + 1
+        }
+    }
+
     Column(Modifier.fillMaxSize()) {
-        if (SRS.isRecording) {
+        if (recState) {
             RecordingPanel()
         } else {
             // ---- preset + start ----
