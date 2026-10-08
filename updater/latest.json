@@ -1,7 +1,7 @@
 {
-  "versionCode": 41,
-  "versionName": "2.9.6",
+  "versionCode": 42,
+  "versionName": "2.9.7",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.6/neverhide-empire-v2.9.6.apk",
-  "changelog": "v2.9.6 - Face Guard + Broken Screen + Privacy Screen v2\n\n- Face Guard: camera face check on app open. Wrong face -> siren + selfie + location alert to your set number. PIN escape hatch always available.\n- Broken Screen prank: heavy shake shatters the screen with crack sound, stays until you tap.\n- Privacy Screen v2: fixed dead sensors + new face-down guard + test blackout.\n- WhatsApp Guardian photos: wake-and-retry so photos always deliver."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.7/neverhide-empire-v2.9.7.apk",
+  "changelog": "v2.9.7 - Screen Recorder\n\n- NEW Screen Recorder: native recording with MAX (60fps/24Mbps), HIGH (1080p/16Mbps) and WHATSAPP (720p/6Mbps) presets.\n- Send as DOCUMENT = WhatsApp sends the ORIGINAL file, zero quality loss.\n- DIRECT send from the app: post recordings to your WhatsApp Status or any number's chat without opening WhatsApp.\n- Pause/resume from the notification, recordings gallery with play, rename, delete."
 }

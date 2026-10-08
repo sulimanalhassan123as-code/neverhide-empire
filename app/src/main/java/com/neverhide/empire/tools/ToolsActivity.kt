@@ -102,7 +102,8 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("alarm", "Alarms & Timer", "⏰", Color(0xFFFF9100)),
         ToolDef("calendar", "Next Events", "📅", Color(0xFF448AFF)),
         ToolDef("location", "My Location", "📍", Color(0xFFFF5252)),
-        ToolDef("animscale", "Animation Scale", "🎚️", Color(0xFFB0BEC5))
+        ToolDef("animscale", "Animation Scale", "🎚️", Color(0xFFB0BEC5)),
+        ToolDef("screenrec", "Screen Record", "🎬", Color(0xFFFF4081))
     )
 
     @Composable
@@ -127,7 +128,7 @@ class ToolsActivity : ComponentActivity() {
     private fun ToolGrid(onOpen: (String) -> Unit) {
         Column(Modifier.fillMaxSize().padding(20.dp)) {
             Text("🧰 Empire Toolkit", color = Color(0xFF00E5FF), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("19 power tools — all offline unless marked", color = Color.Gray, fontSize = 12.sp)
+            Text("20 power tools — all offline unless marked", color = Color.Gray, fontSize = 12.sp)
             Spacer(Modifier.height(16.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
@@ -194,6 +195,7 @@ class ToolsActivity : ComponentActivity() {
                 "calendar" -> CalendarScreen()
                 "location" -> LocationScreen()
                 "animscale" -> AnimScaleScreen()
+                "screenrec" -> com.neverhide.empire.tools.screenrec.ScreenRecorderScreen()
             }
         }
     }

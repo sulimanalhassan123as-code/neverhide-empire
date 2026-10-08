@@ -2,4 +2,5 @@
 <paths>
     <cache-path name="apk_cache" path="apk/" />
     <external-cache-path name="ext_apk_cache" path="apk/" />
+    <external-files-path name="empire_movies" path="Movies/" />
 </paths>

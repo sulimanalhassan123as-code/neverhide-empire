@@ -283,6 +283,10 @@
             tools:ignore="ForegroundServicePermission" />
         <!-- ===== Privacy Screen overlay service ===== -->
         <service
+            android:name=".tools.screenrec.ScreenRecordService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+        <service
             android:name=".tools.privacy.PrivacyScreenService"
             android:exported="false"
             android:foregroundServiceType="specialUse"
