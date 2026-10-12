@@ -89,7 +89,7 @@ class FaceGuardActivity : ComponentActivity() {
                             })
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(260.dp)
+                    modifier = Modifier.fillMaxWidth().aspectRatio(3f / 4f)
                 )
 
                 Button(
@@ -163,10 +163,20 @@ class FaceGuardActivity : ComponentActivity() {
         runCatching {
             val cam = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT) ?: return
             val params = cam.parameters
+            // v2.10.4: sharp 4:3 preview (was the smallest size <=480px = blurry,
+            // stretched crop). Analysis still downsamples to 96x96 so speed is unchanged.
             val size = params.supportedPreviewSizes
-                .filter { it.width <= 480 }
-                .minByOrNull { it.width * it.height } ?: params.previewSize
+                .filter { it.width <= 1280 && Math.abs(it.width * 3 - it.height * 4) < 8 }
+                .maxByOrNull { it.width * it.height }
+                ?: params.supportedPreviewSizes
+                    .filter { it.width <= 1280 }
+                    .maxByOrNull { it.width * it.height }
+                ?: params.previewSize
             params.setPreviewSize(size.width, size.height)
+            runCatching {
+                if (params.supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE))
+                    params.focusMode = Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE
+            }
             cam.parameters = params
             cam.setDisplayOrientation(90)
             cam.setPreviewDisplay(holder)

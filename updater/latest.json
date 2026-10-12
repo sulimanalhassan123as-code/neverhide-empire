@@ -1,7 +1,7 @@
 {
-  "versionCode": 48,
-  "versionName": "2.10.3",
+  "versionCode": 49,
+  "versionName": "2.10.4",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.3/neverhide-empire-v2.10.3.apk",
-  "changelog": "v2.10.3 - Guardian selfie: fixes CAMERA_IN_USE.\n\n- Guardian now releases Peek Guard's camera before taking the intruder selfie (our own tools were blocking it).\n- Up to 5 attempts, waiting longer when the camera is busy."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.4/neverhide-empire-v2.10.4.apk",
+  "changelog": "v2.10.4 - Face Guard preview: bigger, sharper, no zoom crop.\n\n- Preview box is now a tall 3:4 frame so your whole face and shoulders fit.\n- Uses a sharp 4:3 camera preview (up to 1280px) instead of the tiny blurry one.\n- Continuous autofocus for a clearer picture."
 }
