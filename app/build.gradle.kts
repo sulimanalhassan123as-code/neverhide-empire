@@ -12,8 +12,8 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 49
-        versionName = "2.10.4"
+        versionCode = 50
+        versionName = "2.10.5"
         vectorDrawables { useSupportLibrary = true }
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
@@ -66,6 +66,9 @@ android {
 }
 
 dependencies {
+    implementation("androidx.media3:media3-transformer:1.3.1")
+    implementation("androidx.media3:media3-common:1.3.1")
+    implementation("androidx.media3:media3-effect:1.3.1")
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
     implementation(libs.androidx.core.ktx)

@@ -322,6 +322,8 @@ private fun BridgeSender(file: File) {
     var number by remember { mutableStateOf("") }
     var caption by remember { mutableStateOf("") }
     var state by remember { mutableStateOf("") } // "" | sending | ok | fail
+    var phase by remember { mutableStateOf("") }
+    var pct by remember { mutableIntStateOf(0) }
 
     Column(
         Modifier
@@ -364,13 +366,22 @@ private fun BridgeSender(file: File) {
         Button(
             onClick = {
                 state = "sending"
+                phase = "Shrinking video…"
+                pct = 0
                 val target = if (toStatus) "status" else number.trim()
-                Thread {
-                    val res = BridgeVideoSend.send(
-                        target, caption, file
-                    ) { pct -> /* progress not shown per-file; too fast to matter */ }
-                    state = if (res.first) "ok" else "fail:${res.second}"
-                }.start()
+                val appCtx = context.applicationContext
+                ShareCompressor.compress(appCtx, file, { p -> pct = p }) { small ->
+                    val toSend = small ?: file   // fall back to original if shrink fails
+                    phase = "Uploading ${"%.1f".format(toSend.length() / 1024.0 / 1024.0)} MB…"
+                    pct = 0
+                    Thread {
+                        val res = BridgeVideoSend.send(
+                            target, caption, toSend
+                        ) { p -> pct = p }
+                        if (small != null) runCatching { small.delete() }
+                        state = if (res.first) "ok" else "fail:${res.second}"
+                    }.start()
+                }
             },
             enabled = state != "sending",
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
@@ -385,7 +396,14 @@ private fun BridgeSender(file: File) {
         when {
             state == "ok" -> Text("✅ Sent! Check WhatsApp.", color = Color(0xFF69F0AE), fontSize = 12.sp)
             state.startsWith("fail:") -> Text("⚠ ${state.removePrefix("fail:")}", color = Color(0xFFFF5252), fontSize = 12.sp)
-            state == "sending" -> Text("Uploading ${"%.1f".format(file.length() / 1024.0 / 1024.0)} MB — keep app open", color = Color.Gray, fontSize = 11.sp)
+            state == "sending" -> Column {
+                Text("$phase  $pct%", color = Color(0xFF00E5FF), fontSize = 12.sp)
+                LinearProgressIndicator(
+                    progress = { pct / 100f },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+                Text("Keep the app open", color = Color.Gray, fontSize = 11.sp)
+            }
         }
     }
 }
@@ -530,5 +548,68 @@ object BridgeVideoSend {
         size += ("--$boundary\r\nContent-Disposition: form-data; name=\"video\"; filename=\"x.mp4\"\r\nContent-Type: video/mp4\r\n\r\n").toByteArray().size
         size += ("\r\n--$boundary--\r\n").toByteArray().size
         return size
+    }
+}
+
+
+/**
+ * Shrinks a recording for sending: 720p-ish, ~2.5 Mbps H.264. A 22 MB clip
+ * becomes ~2-3 MB, so it uploads in seconds on 4G. Original file is untouched.
+ */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+object ShareCompressor {
+    fun compress(
+        context: android.content.Context,
+        src: File,
+        onPct: (Int) -> Unit,
+        onDone: (File?) -> Unit
+    ) {
+        val out = File(context.cacheDir, "share_" + src.nameWithoutExtension + ".mp4")
+        runCatching { out.delete() }
+        val main = android.os.Handler(android.os.Looper.getMainLooper())
+        main.post {
+            try {
+                val video = androidx.media3.transformer.DefaultEncoderFactory.Builder(context)
+                    .setRequestedVideoEncoderSettings(
+                        androidx.media3.transformer.VideoEncoderSettings.Builder()
+                            .setBitrate(2_500_000).build()
+                    ).build()
+                val transformer = androidx.media3.transformer.Transformer.Builder(context)
+                    .setVideoMimeType(androidx.media3.common.MimeTypes.VIDEO_H264)
+                    .setEncoderFactory(video)
+                    .addListener(object : androidx.media3.transformer.Transformer.Listener {
+                        override fun onCompleted(
+                            composition: androidx.media3.transformer.Composition,
+                            result: androidx.media3.transformer.ExportResult
+                        ) { onDone(out) }
+                        override fun onError(
+                            composition: androidx.media3.transformer.Composition,
+                            result: androidx.media3.transformer.ExportResult,
+                            e: androidx.media3.transformer.ExportException
+                        ) { onDone(null) }
+                    }).build()
+                val item = androidx.media3.common.MediaItem.fromUri(android.net.Uri.fromFile(src))
+                val edited = androidx.media3.transformer.EditedMediaItem.Builder(item)
+                    .setEffects(androidx.media3.transformer.Effects(
+                        emptyList(),
+                        listOf(androidx.media3.effect.Presentation.createForHeight(720))
+                    )).build()
+                transformer.start(edited, out.absolutePath)
+                // progress poll
+                val holder = androidx.media3.transformer.ProgressHolder()
+                val tick = object : Runnable {
+                    override fun run() {
+                        val st = transformer.getProgress(holder)
+                        if (st != androidx.media3.transformer.Transformer.PROGRESS_STATE_NOT_STARTED &&
+                            st != androidx.media3.transformer.Transformer.PROGRESS_STATE_UNAVAILABLE) {
+                            onPct(holder.progress)
+                        }
+                        if (!out.exists() || out.length() == 0L || st != androidx.media3.transformer.Transformer.PROGRESS_STATE_NOT_STARTED)
+                            main.postDelayed(this, 400)
+                    }
+                }
+                main.postDelayed(tick, 400)
+            } catch (e: Exception) { onDone(null) }
+        }
     }
 }

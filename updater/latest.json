@@ -1,7 +1,7 @@
 {
-  "versionCode": 49,
-  "versionName": "2.10.4",
+  "versionCode": 50,
+  "versionName": "2.10.5",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.4/neverhide-empire-v2.10.4.apk",
-  "changelog": "v2.10.4 - Face Guard preview: bigger, sharper, no zoom crop.\n\n- Preview box is now a tall 3:4 frame so your whole face and shoulders fit.\n- Uses a sharp 4:3 camera preview (up to 1280px) instead of the tiny blurry one.\n- Continuous autofocus for a clearer picture."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.5/neverhide-empire-v2.10.5.apk",
+  "changelog": "v2.10.5 - Fast Direct send.\n\n- Direct send now shrinks the video on your phone first (720p, ~2.5 Mbps): a 22 MB clip becomes ~2-3 MB and uploads in seconds.\n- Real progress bar with percent for both shrinking and uploading (no more frozen 'Uploading...').\n- Original recording is never changed; if shrinking fails it sends the original."
 }
