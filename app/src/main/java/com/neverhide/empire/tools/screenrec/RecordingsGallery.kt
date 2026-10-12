@@ -414,7 +414,7 @@ private fun videoDuration(f: File): String {
         val ms = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
         val s = ms / 1000
         String.format(Locale.US, "%d:%02d", s / 60, s % 60)
-    } catch (e: Exception) { "0:00" } finally { r.release() }
+    } catch (e: Exception) { "?" } finally { r.release() }
 }
 
 private fun playVideo(context: android.content.Context, f: File) {

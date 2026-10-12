@@ -157,7 +157,7 @@ class ScreenRecordService : Service() {
             val mgr = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
             projection = mgr.getMediaProjection(resultCode, projectionToken!!)
             projection?.registerCallback(object : MediaProjection.Callback() {
-                override fun onStop() { finishRecording() }
+                override fun onStop() { if (isRecording) finishRecording() }
             }, Handler(Looper.getMainLooper()))
 
             val metrics = resources.displayMetrics
@@ -233,15 +233,30 @@ class ScreenRecordService : Service() {
 
     private fun finishRecording() {
         if (!isRecording) { stopSelf(); return }
-        runCatching { recorder?.stop() }
-        lastSavedPath = outFile?.absolutePath
-        val savedName = outFile?.name
+        // v2.10.1: MP4 needs the encoder to FINISH writing its index (moov atom)
+        // or the file shows 0:00 / won't seek. Resume if paused, stop the
+        // recorder FIRST (before the virtual display is torn down), and log
+        // failures instead of swallowing them.
+        var stopOk = true
+        try {
+            if (isPaused) runCatching { recorder?.resume() }
+            Thread.sleep(250) // let the last frames reach the muxer
+            recorder?.stop()
+        } catch (e: Exception) {
+            stopOk = false
+            lastError = "stop failed: ${e.message}"
+        }
+        val f = outFile
+        // a failed stop leaves an unplayable stub — delete it instead of keeping junk
+        if (!stopOk && f != null) runCatching { f.delete() }
+        lastSavedPath = if (stopOk) f?.absolutePath else null
+        val savedName = if (stopOk) f?.name else null
         cleanup()
         bumpUi()
         if (!silentMode) {
             android.widget.Toast.makeText(
                 applicationContext,
-                "✅ Saved: $savedName",
+                if (stopOk) "✅ Saved: $savedName" else "⚠️ Recording too short or interrupted — not saved",
                 android.widget.Toast.LENGTH_LONG
             ).show()
         }
@@ -250,6 +265,7 @@ class ScreenRecordService : Service() {
 
     private fun cleanup() {
         runCatching { display?.release() }
+        runCatching { recorder?.reset() }
         runCatching { recorder?.release() }
         runCatching { projection?.stop() }
         display = null
