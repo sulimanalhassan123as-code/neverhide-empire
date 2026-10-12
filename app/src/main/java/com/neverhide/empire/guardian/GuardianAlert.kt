@@ -68,7 +68,7 @@ object GuardianAlert {
                     append("   accuracy: ~${loc.accuracy.toInt()}m\n")
                 }
                 if (photoPath != null) append("📷 Intruder selfie attached below.")
-                else append("📷 Selfie not captured (camera was blocked).")
+                else append("📷 Selfie not captured: ${IntruderCamera.lastError.ifBlank { "camera unavailable" }}.")
             }
 
             // 2. SMS — offline safety net, includes maps link

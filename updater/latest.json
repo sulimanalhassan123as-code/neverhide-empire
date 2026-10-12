@@ -1,7 +1,7 @@
 {
-  "versionCode": 46,
-  "versionName": "2.10.1",
+  "versionCode": 47,
+  "versionName": "2.10.2",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.1/neverhide-empire-v2.10.1.apk",
-  "changelog": "v2.10.1 - Screen Recorder: fixes clips saving with 0:00 duration.\n\n- Recorder is now stopped BEFORE the capture display is torn down, with a short settle so the MP4 index is written (clips show real duration and seek correctly).\n- Broken/too-short clips are no longer kept as junk files.\n- Unreadable duration shows ? instead of a fake 0:00."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.2/neverhide-empire-v2.10.2.apk",
+  "changelog": "v2.10.2 - Guardian intruder selfie fix.\n\n- Selfie capture rewritten: 3 attempts with longer camera-open timeouts, proper still-capture request, exposure warm-up so the photo is not black, upright orientation.\n- If it still fails, the alert now tells you the exact reason instead of just 'camera was blocked'."
 }
