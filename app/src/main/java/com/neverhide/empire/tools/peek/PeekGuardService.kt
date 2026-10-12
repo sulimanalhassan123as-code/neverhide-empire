@@ -47,6 +47,8 @@ class PeekGuardService : Service() {
 
     companion object {
         const val ACTION_START = "com.neverhide.empire.peek.START"
+        /** Guardian needs the front camera for the intruder selfie: release it NOW. */
+        const val ACTION_YIELD = "com.neverhide.empire.peek.YIELD"
         const val ACTION_STOP = "com.neverhide.empire.peek.STOP"
         const val ACTION_TEST = "com.neverhide.empire.peek.TEST"
         private const val CHANNEL_ID = "peekguard"
@@ -110,6 +112,11 @@ class PeekGuardService : Service() {
                 main.postDelayed(sampler, SAMPLE_MS)
             }
             ACTION_STOP -> {
+                stopGuard()
+            }
+            ACTION_YIELD -> {
+                // release camera hardware immediately, keep nothing running
+                // (Guardian selfie has priority over privacy-screen guard)
                 stopGuard()
             }
             ACTION_TEST -> {

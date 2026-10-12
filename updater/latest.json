@@ -1,7 +1,7 @@
 {
-  "versionCode": 47,
-  "versionName": "2.10.2",
+  "versionCode": 48,
+  "versionName": "2.10.3",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.2/neverhide-empire-v2.10.2.apk",
-  "changelog": "v2.10.2 - Guardian intruder selfie fix.\n\n- Selfie capture rewritten: 3 attempts with longer camera-open timeouts, proper still-capture request, exposure warm-up so the photo is not black, upright orientation.\n- If it still fails, the alert now tells you the exact reason instead of just 'camera was blocked'."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.3/neverhide-empire-v2.10.3.apk",
+  "changelog": "v2.10.3 - Guardian selfie: fixes CAMERA_IN_USE.\n\n- Guardian now releases Peek Guard's camera before taking the intruder selfie (our own tools were blocking it).\n- Up to 5 attempts, waiting longer when the camera is busy."
 }

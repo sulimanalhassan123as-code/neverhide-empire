@@ -33,7 +33,7 @@ class GuardianCaptureService : Service() {
         private const val CHANNEL_ID = "guardian_capture"
         private const val NOTIF_ID = 4471
         private const val EXTRA_THEME = "theme"
-        private const val WATCHDOG_MS = 25_000L
+        private const val WATCHDOG_MS = 40_000L
 
         fun start(context: Context, theme: Int) {
             val i = Intent(context, GuardianCaptureService::class.java)

@@ -49,11 +49,25 @@ object IntruderCamera {
             ) {
                 lastError = "camera permission not granted"
             } else {
-                for (attempt in 1..3) {
+                // Free the front camera from our OWN other camera holders
+                // (Peek Guard, Face Guard) so Android doesn't refuse us with
+                // CAMERA_IN_USE. Selfie of the intruder beats everything.
+                runCatching {
+                    context.startService(
+                        android.content.Intent(context,
+                            com.neverhide.empire.tools.peek.PeekGuardService::class.java)
+                            .setAction(com.neverhide.empire.tools.peek.PeekGuardService.ACTION_YIELD)
+                    )
+                }
+                try { Thread.sleep(700) } catch (_: InterruptedException) {}
+                for (attempt in 1..5) {
                     photoPath = tryOnce(context, attempt)
                     if (photoPath != null) { lastError = ""; break }
                     Log.w(TAG, "attempt $attempt failed: $lastError")
-                    try { Thread.sleep(400) } catch (_: InterruptedException) {}
+                    // camera busy -> wait longer so the other holder can let go
+                    val wait = if (lastError.contains("in use", true) ||
+                        lastError.contains("CAMERA_IN_USE")) 1200L else 400L
+                    try { Thread.sleep(wait) } catch (_: InterruptedException) {}
                 }
             }
             android.os.Handler(context.mainLooper).post { onDone(photoPath) }
