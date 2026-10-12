@@ -59,6 +59,7 @@ fun ScreenRecorderScreen() {
     val context = LocalContext.current
     var preset by remember { mutableStateOf(SRS.PRESET_HIGH) }
     var mic by remember { mutableStateOf(false) }
+    var silent by remember { mutableStateOf(false) }
     var refresh by remember { mutableStateOf(0) }
     val projectionManager =
         remember { context.getSystemService(MediaProjectionManager::class.java) }
@@ -68,7 +69,7 @@ fun ScreenRecorderScreen() {
     ) { result ->
         val data = result.data
         if (result.resultCode == Activity.RESULT_OK && data != null) {
-            SRS.start(context, result.resultCode, data, preset, mic)
+            SRS.start(context, result.resultCode, data, preset, mic, silent)
         }
     }
 
@@ -93,7 +94,7 @@ fun ScreenRecorderScreen() {
     }
 
     Column(Modifier.fillMaxSize()) {
-        if (recState) {
+        if (recState && !SRS.silentMode) {
             RecordingPanel()
         } else {
             // ---- preset + start ----
@@ -115,6 +116,20 @@ fun ScreenRecorderScreen() {
             )
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("🔇 Silent mode", color = Color(0xFF9E9E9E), fontSize = 13.sp)
+                Spacer(Modifier.width(8.dp))
+                Switch(
+                    checked = silent,
+                    onCheckedChange = { silent = it },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFF9E9E9E))
+                )
+                if (silent) {
+                    Spacer(Modifier.width(6.dp))
+                    Text("no REC panel, no toasts", color = Color.Gray, fontSize = 10.sp)
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("🎙 Record microphone", color = Color.White, fontSize = 13.sp)
                 Spacer(Modifier.width(8.dp))
                 Switch(
@@ -124,20 +139,28 @@ fun ScreenRecorderScreen() {
                 )
             }
             Spacer(Modifier.height(14.dp))
-            Button(
-                onClick = {
-                    if (mic &&
-                        ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
-                        != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        micLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                    } else {
-                        projectionLauncher.launch(projectionManager.createScreenCaptureIntent())
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744)),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
-            ) { Text("● START RECORDING", color = Color.White, fontWeight = FontWeight.Bold) }
+            if (SRS.isRecording && SRS.silentMode) {
+                Button(
+                    onClick = { SRS.stop(context) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161)),
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                ) { Text("⏹ STOP SILENT RECORDING", color = Color.White, fontWeight = FontWeight.Bold) }
+            } else {
+                Button(
+                    onClick = {
+                        if (mic &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                            != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            micLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        } else {
+                            projectionLauncher.launch(projectionManager.createScreenCaptureIntent())
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744)),
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                ) { Text("● START RECORDING", color = Color.White, fontWeight = FontWeight.Bold) }
+            }
             SRS.lastError?.let {
                 Spacer(Modifier.height(8.dp))
                 Text("⚠ $it", color = Color(0xFFFF5252), fontSize = 12.sp)

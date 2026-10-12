@@ -104,7 +104,8 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("location", "My Location", "📍", Color(0xFFFF5252)),
         ToolDef("animscale", "Animation Scale", "🎚️", Color(0xFFB0BEC5)),
         ToolDef("screenrec", "Screen Record", "🎬", Color(0xFFFF4081)),
-        ToolDef("split", "Split Screen", "⬒", Color(0xFF00BFA5))
+        ToolDef("split", "Split Screen", "⬒", Color(0xFF00BFA5)),
+        ToolDef("peek", "Peek Guard", "🕵️", Color(0xFF00E5FF))
     )
 
     @Composable
@@ -198,6 +199,7 @@ class ToolsActivity : ComponentActivity() {
                 "animscale" -> AnimScaleScreen()
                 "screenrec" -> com.neverhide.empire.tools.screenrec.ScreenRecorderScreen()
                 "split" -> com.neverhide.empire.tools.split.SplitScreenScreen()
+                "peek" -> com.neverhide.empire.tools.peek.PeekGuardScreen()
             }
         }
     }

@@ -52,6 +52,7 @@ class ScreenRecordService : Service() {
         private const val EXTRA_DATA = "data"
         private const val EXTRA_PRESET = "preset"
         private const val EXTRA_MIC = "mic"
+        private const val EXTRA_SILENT = "silent"
         const val NOTIF_ID = 4242
 
         const val PRESET_MAX = "max"
@@ -66,6 +67,7 @@ class ScreenRecordService : Service() {
         val uiTick = kotlinx.coroutines.flow.MutableStateFlow(0)
         private fun bumpUi() { uiTick.value = uiTick.value + 1 }
         @Volatile var isRecording = false
+        @Volatile var silentMode = false  // v2.10.0: stealth recording mode
         @Volatile var isPaused = false
         @Volatile var startedAt = 0L
         @Volatile var lastSavedPath: String? = null
@@ -80,13 +82,14 @@ class ScreenRecordService : Service() {
             return dir
         }
 
-        fun start(context: Context, resultCode: Int, data: Intent, preset: String, mic: Boolean) {
+        fun start(context: Context, resultCode: Int, data: Intent, preset: String, mic: Boolean, silent: Boolean = false) {
             val i = Intent(context, ScreenRecordService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_RESULT_CODE, resultCode)
                 putExtra(EXTRA_DATA, data)
                 putExtra(EXTRA_PRESET, preset)
                 putExtra(EXTRA_MIC, mic)
+                putExtra(EXTRA_SILENT, silent)
             }
             context.startForegroundService(i)
         }
@@ -119,6 +122,7 @@ class ScreenRecordService : Service() {
                 resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
                 projectionToken = @Suppress("DEPRECATION") intent.getParcelableExtra(EXTRA_DATA)
                 mic = intent.getBooleanExtra(EXTRA_MIC, false)
+                silentMode = intent.getBooleanExtra(EXTRA_SILENT, false)
                 val preset = intent.getStringExtra(EXTRA_PRESET) ?: PRESET_HIGH
                 if (!isRecording) beginRecording(preset)
             }
@@ -209,10 +213,12 @@ class ScreenRecordService : Service() {
             lastError = null
             updateNotification()
             bumpUi()
-            android.widget.Toast.makeText(
-                applicationContext, "● REC — recording… (see notification to stop)",
-                android.widget.Toast.LENGTH_LONG
-            ).show()
+            if (!silentMode) {
+                android.widget.Toast.makeText(
+                    applicationContext, "● REC — recording… (see notification to stop)",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            }
         } catch (e: Exception) {
             lastError = e.message ?: "recorder error"
             android.widget.Toast.makeText(
@@ -232,11 +238,13 @@ class ScreenRecordService : Service() {
         val savedName = outFile?.name
         cleanup()
         bumpUi()
-        android.widget.Toast.makeText(
-            applicationContext,
-            "✅ Saved: $savedName",
-            android.widget.Toast.LENGTH_LONG
-        ).show()
+        if (!silentMode) {
+            android.widget.Toast.makeText(
+                applicationContext,
+                "✅ Saved: $savedName",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
         stopSelf()
     }
 
@@ -272,6 +280,11 @@ class ScreenRecordService : Service() {
     }
 
     private fun buildNotif(text: String): Notification {
+        // Silent mode: low-key notification (Android REQUIRES a foreground
+        // service notification — cannot be fully hidden without root, but it
+        // can be made discreet).
+        val effTitle = if (silentMode) "Empire" else "Neverhide Screen Recorder"
+        val effText = if (silentMode) "Background service" else text
         val stopPI = PendingIntent.getService(
             this, 1,
             Intent(this, ScreenRecordService::class.java).setAction(ACTION_STOP),
@@ -285,8 +298,8 @@ class ScreenRecordService : Service() {
         )
         return NotificationCompat.Builder(this, "screenrec")
             .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentTitle("Neverhide Screen Recorder")
-            .setContentText(text)
+            .setContentTitle(effTitle)
+            .setContentText(effText)
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .addAction(android.R.drawable.ic_media_pause, if (isPaused) "Resume" else "Pause", pausePI)

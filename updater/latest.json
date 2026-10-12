@@ -1,7 +1,7 @@
 {
-  "versionCode": 44,
-  "versionName": "2.9.9",
+  "versionCode": 45,
+  "versionName": "2.10.0",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.9.9/neverhide-empire-v2.9.9.apk",
-  "changelog": "v2.9.9 - Screen Recorder FIXED (root cause found)\n\n- BUG FIX: after accepting the recording popup the app showed NOTHING - the recording indicator was invisible to the UI (plain var, not Compose state). The screen now flips to the LIVE REC panel instantly.\n- Toast feedback: 'REC started' when recording begins, 'Saved: filename' when it stops.\n- Pause/Resume state updates the UI live.\n- Includes v2.9.8 Split Screen Launcher."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.0/neverhide-empire-v2.10.0.apk",
+  "changelog": "v2.10.0 - Peek Guard + Silent Recording\n\n- NEW Peek Guard: someone looks over your shoulder -> screen goes BLACK instantly (front camera counts faces). Auto-clears when they leave.\n- NEW Dim Shield: dark tint mode - readable straight-on, hard to read from an angle.\n- NEW Silent Recording mode in Screen Recorder: no REC panel, no toasts - invisible recording.\n- Screen Recorder UI now shows the REC panel the moment recording starts (v2.9.9 fix)."
 }
