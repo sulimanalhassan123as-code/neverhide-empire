@@ -1,7 +1,7 @@
 {
-  "versionCode": 53,
-  "versionName": "2.12.0",
-  "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.12.0/neverhide-empire-v2.12.0.apk",
-  "changelog": "v2.12.0 - DLS Pad replaced by DLS LIVE BOOST.\n\n- The floating gamepad is REMOVED completely (no more accessibility touch injection or overlay).\n- NEW Live Boost: watches for the game in the foreground. The moment DLS is on screen, every background app freezes so the live match gets all CPU/RAM/network.\n- AUTOMATIC RESTORE: leave the match, close the game, or stop the service - everything returns to normal instantly, double-checked so nothing flickers.\n- No-stuck guarantees: only apps IT froze are restored (your own frozen apps untouched); leftovers from crashed sessions release on start; keyboard/launcher/system/game/Empire never frozen; if Shizuku dies mid-match everything restores and boost stops.\n- Needs Usage Access granted once (to detect when the game opens/closes) + Shizuku running."
+  "versionCode": 54,
+  "versionName": "2.12.1",
+  "tier": "minor",
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.12.1/neverhide-empire-v2.12.1.apk",
+  "changelog": "v2.12.1 - DLS Live Boost NETWORK HOLD\n\nWhen the match goes LIVE:\n- Data Saver switches ON \u2014 Android itself cuts background data for every app\n- WhatsApp (and the game) stay whitelisted \u2014 messages keep trickling in\n- Wi-Fi low-latency lock \u2014 lower ping on Wi-Fi\n- Background apps frozen as before\n\nWhen you leave the game everything reverts to exactly how it was."
 }

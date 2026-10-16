@@ -17,6 +17,7 @@ import android.provider.Settings
 import android.widget.Toast
 import com.neverhide.empire.MainActivity
 import com.neverhide.empire.cleaner.FreezerEngine
+import com.neverhide.empire.cleaner.ShizukuShell
 
 /**
  * DLS LIVE BOOST (v2.12.0) — replaced the gamepad overlay.
@@ -192,8 +193,9 @@ class GameBoostService : Service() {
             .putBoolean("boosting", true)
             .apply()
         targets.forEach { pkg -> FreezerEngine.setSuspended(this, pkg, true) }
-        updateNotif("LIVE — ${targets.size} background apps frozen for the match")
-        mainToast("📡 LIVE: ${targets.size} background apps frozen — full power to the match")
+        val saved = applyNetworkBoost()
+        updateNotif("LIVE — ${targets.size} apps frozen${if (saved) " + Data Saver ON (WhatsApp whitelisted)" else ""}")
+        mainToast("📡 LIVE: ${targets.size} apps frozen${if (saved) " + Data Saver ON — WhatsApp stays connected" else ""} — full power to the match")
     }
 
     /** Releases exactly what WE froze. Returns how many. */
@@ -201,12 +203,83 @@ class GameBoostService : Service() {
         val p = prefs(this)
         val weFroze = p.getStringSet("we_froze", emptySet())?.toSet() ?: emptySet()
         weFroze.forEach { pkg -> FreezerEngine.setSuspended(this, pkg, false) }
+        runCatching { removeNetworkBoost() }
         p.edit()
             .putStringSet("we_froze", emptySet<String>())
             .putBoolean("boosting", false)
             .apply()
         if (!silent && weFroze.isNotEmpty()) mainToast("Restored ${weFroze.size} apps ✅")
         return weFroze.size
+    }
+
+    // ===================== network boost (v2.12.1) =====================
+
+    private var wifiLock: android.net.wifi.WifiManager.WifiLock? = null
+    private val whiteApps: List<String>
+        get() = listOf("com.whatsapp", "com.whatsapp.w4b", targetGame(this), packageName)
+
+    private fun netpolicy(cmd: String): String? =
+        runCatching { ShizukuShell.run(this, cmd)?.second?.trim() }.getOrNull()
+
+    /**
+     * NETWORK HOLD — the strongest legal move without root:
+     *  1. Wi-Fi low-latency lock (lower ping while on Wi-Fi)
+     *  2. Data Saver ON — Android itself restricts ALL background data
+     *  3. WhatsApp (and the game) whitelisted, so messages keep trickling
+     * Returns true if the shell legs ran (Shizuku up).
+     */
+    private fun applyNetworkBoost(): Boolean {
+        // 1. Wi-Fi lock — pure app API, no shell needed
+        runCatching {
+            val wm = getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+            @Suppress("DEPRECATION")
+            if (wm.isWifiEnabled) {
+                val mode = if (android.os.Build.VERSION.SDK_INT >= 29)
+                    4 /* WIFI_MODE_FULL_LOW_LATENCY */ else 3 /* HIGH_PERF */
+                wifiLock = wm.createWifiLock(mode, "empire_gameboost").also { it.acquire() }
+            }
+        }
+        // 2. + 3. Data Saver + whitelist via Shizuku shell
+        val p = prefs(this)
+        val prev = netpolicy("cmd netpolicy get restrict-background")
+        if (prev != null) {
+            val wasOn = prev.contains("true") || prev.contains("enabled")
+            if (!p.contains("ds_prev")) {
+                p.edit().putString("ds_prev", wasOn.toString()).putBoolean("ds_applied", true).apply()
+            }
+            netpolicy("cmd netpolicy set restrict-background true")
+            val pm = packageManager
+            for (pkg in whiteApps) {
+                runCatching {
+                    val uid = pm.getApplicationInfo(pkg, 0).uid
+                    netpolicy("cmd netpolicy add restrict-background-whitelist $uid")
+                }
+            }
+            return true
+        }
+        return false
+    }
+
+    /** Restores Data Saver to whatever it was BEFORE the match; releases the Wi-Fi lock. */
+    private fun removeNetworkBoost() {
+        runCatching { wifiLock?.takeIf { it.isHeld }?.release() }
+        wifiLock = null
+        val p = prefs(this)
+        if (!p.getBoolean("ds_applied", false)) return
+        val wasOn = p.getString("ds_prev", "false") == "true"
+        netpolicy("cmd netpolicy set restrict-background ${if (wasOn) "true" else "false"}")
+        // only remove our whitelist entries if Data Saver is now OFF
+        // (if the user had Data Saver on before, leave whitelists untouched)
+        if (!wasOn) {
+            val pm = packageManager
+            for (pkg in whiteApps) {
+                runCatching {
+                    val uid = pm.getApplicationInfo(pkg, 0).uid
+                    netpolicy("cmd netpolicy remove restrict-background-whitelist $uid")
+                }
+            }
+        }
+        p.edit().remove("ds_prev").remove("ds_applied").apply()
     }
 
     // ===================== plumbing =====================
