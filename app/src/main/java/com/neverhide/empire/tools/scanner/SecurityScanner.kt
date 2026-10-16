@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.provider.Settings
 import com.neverhide.empire.guardian.GuardianAdminReceiver
@@ -72,11 +73,16 @@ object SecurityScanner {
             val perms = pi.requestedPermissions ?: emptyArray()
             val flagged = perms.filter { SPY_PERMS.containsKey(it) }
 
-            // Sideloaded?
+            // System / pre-installed / licensed firmware apps are NOT sideloads:
+            // their installer legitimately reads as "unknown" because they came
+            // with the firmware. Only USER-installed apps from outside the
+            // trusted stores count as sideloaded.
+            val isSystem = (pi.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                    (pi.applicationInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
             val installer = runCatching {
                 pm.getInstallSourceInfo(pkg).installingPackageName
             }.getOrNull()
-            val sideloaded = installer !in TRUSTED_INSTALLERS
+            val sideloaded = !isSystem && installer !in TRUSTED_INSTALLERS
 
             // Spyware combo: mic or SMS + location, all in a sideloaded app
             val hasMic = perms.contains(Manifest.permission.RECORD_AUDIO)
@@ -99,8 +105,28 @@ object SecurityScanner {
                 findings.add(Finding(2, "⚠️", label,
                     "Sideloaded and can install APKs or draw over your screen — " +
                             "classic silent-installer behavior"))
-            } else if (flagged.count { it == Manifest.permission.RECEIVE_SMS } > 0) {
+            } else if (!isSystem && flagged.count { it == Manifest.permission.RECEIVE_SMS } > 0) {
                 findings.add(Finding(1, "ℹ️", label, "Can receive/intercept SMS (OTP codes)"))
+            }
+        }
+
+        // 2b) User-installed apps from completely unknown sources — honest
+        // signal without the system-app false positives.
+        for (pi in packages) {
+            if (pi.packageName == me) continue
+            val isSystem = (pi.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                    (pi.applicationInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+            if (isSystem) continue
+            val installer = runCatching {
+                pm.getInstallSourceInfo(pi.packageName).installingPackageName
+            }.getOrNull()
+            if (installer == null) {
+                val label = runCatching {
+                    pi.applicationInfo.loadLabel(pm).toString()
+                }.getOrDefault(pi.packageName)
+                findings.add(Finding(1, "ℹ️", label,
+                    "Installed from an unknown source (not Play Store / Galaxy Store). " +
+                            "Fine if you installed it yourself — e.g. Termux, Shizuku, Empire."))
             }
         }
 

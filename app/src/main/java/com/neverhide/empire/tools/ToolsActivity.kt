@@ -485,10 +485,24 @@ class ToolsActivity : ComponentActivity() {
                 BigButton("🔍 Scan All Apps", Color(0xFFFF4081)) {
                     results = context.packageManager.getInstalledPackages(
                         PackageManager.GET_PERMISSIONS
-                    ).map { pi ->
+                    ).filter { pi ->
+                        // system / licensed firmware apps are excluded — they hold
+                        // many permissions legitimately and are not user risks
+                        (pi.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0 &&
+                        (pi.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0
+                    }.map { pi ->
                         val perms = pi.requestedPermissions ?: emptyArray()
                         val score = perms.count { it in dangerous }
-                        (pi.applicationInfo.loadLabel(context.packageManager).toString() to score)
+                        val src = runCatching {
+                            val ins = context.packageManager.getInstallSourceInfo(pi.packageName).installingPackageName
+                            when (ins) {
+                                "com.android.vending" -> "Play Store"
+                                "com.sec.android.app.samsungapps" -> "Galaxy Store"
+                                null -> "unknown source"
+                                else -> ins
+                            }
+                        }.getOrDefault("unknown source")
+                        (pi.applicationInfo.loadLabel(context.packageManager).toString() + "  ·  $src" to score)
                     }.sortedByDescending { it.second }
                     scanned = true
                 }
