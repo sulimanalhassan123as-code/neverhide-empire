@@ -105,7 +105,8 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("animscale", "Animation Scale", "🎚️", Color(0xFFB0BEC5)),
         ToolDef("screenrec", "Screen Record", "🎬", Color(0xFFFF4081)),
         ToolDef("split", "Split Screen", "⬒", Color(0xFF00BFA5)),
-        ToolDef("peek", "Peek Guard", "🕵️", Color(0xFF00E5FF))
+        ToolDef("peek", "Peek Guard", "🕵️", Color(0xFF00E5FF)),
+        ToolDef("gamepad", "DLS Pad", "🎮", Color(0xFF00E5FF))
     )
 
     @Composable
@@ -130,7 +131,7 @@ class ToolsActivity : ComponentActivity() {
     private fun ToolGrid(onOpen: (String) -> Unit) {
         Column(Modifier.fillMaxSize().padding(20.dp)) {
             Text("🧰 Empire Toolkit", color = Color(0xFF00E5FF), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("21 power tools — all offline unless marked", color = Color.Gray, fontSize = 12.sp)
+            Text("23 power tools — all offline unless marked", color = Color.Gray, fontSize = 12.sp)
             Spacer(Modifier.height(16.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
@@ -200,6 +201,7 @@ class ToolsActivity : ComponentActivity() {
                 "screenrec" -> com.neverhide.empire.tools.screenrec.ScreenRecorderScreen()
                 "split" -> com.neverhide.empire.tools.split.SplitScreenScreen()
                 "peek" -> com.neverhide.empire.tools.peek.PeekGuardScreen()
+                "gamepad" -> com.neverhide.empire.tools.gamepad.GamePadScreen()
             }
         }
     }

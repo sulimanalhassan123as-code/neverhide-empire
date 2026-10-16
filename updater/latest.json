@@ -1,7 +1,7 @@
 {
-  "versionCode": 51,
-  "versionName": "2.10.6",
-  "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.6/neverhide-empire-v2.10.6.apk",
-  "changelog": "v2.10.6 - Freezer visibility fix + Direct send no longer hangs.\n\n- FREEZER: frozen apps no longer vanish from the list. The scanner now sees apps in disabled-user and Knox-suspended states, so Unfreeze All and the Doctor can find and restore them.\n- DIRECT SEND: shrinking now has a 90s watchdog; if it stalls it falls back to sending the original. Upload retries are bounded and every failure shows the exact reason instead of loading forever."
+  "versionCode": 52,
+  "versionName": "2.11.0",
+  "tier": "major",
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.11.0/neverhide-empire-v2.11.0.apk",
+  "changelog": "v2.11.0 - NEW: DLS Pad (football game controller).\n\n- Floating pad over the game: big neon run-circle joystick + A/B/C buttons positioned where YOUR thumbs rest; taps are injected into the game's own controls.\n- Calibrate screen: slide to match where DLS puts its joystick and A/B/C on your screen.\n- GAME MODE: freezes all background apps during live matches so nothing competes for CPU/RAM/network - they are restored when you stop. Needs Shizuku.\n- Needs Accessibility permission once (Settings > Accessibility > Neverhide GamePad) - the only non-root way to inject touches."
 }
