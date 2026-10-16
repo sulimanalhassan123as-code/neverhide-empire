@@ -1,7 +1,7 @@
 {
-  "versionCode": 52,
-  "versionName": "2.11.0",
+  "versionCode": 53,
+  "versionName": "2.12.0",
   "tier": "major",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.11.0/neverhide-empire-v2.11.0.apk",
-  "changelog": "v2.11.0 - NEW: DLS Pad (football game controller).\n\n- Floating pad over the game: big neon run-circle joystick + A/B/C buttons positioned where YOUR thumbs rest; taps are injected into the game's own controls.\n- Calibrate screen: slide to match where DLS puts its joystick and A/B/C on your screen.\n- GAME MODE: freezes all background apps during live matches so nothing competes for CPU/RAM/network - they are restored when you stop. Needs Shizuku.\n- Needs Accessibility permission once (Settings > Accessibility > Neverhide GamePad) - the only non-root way to inject touches."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.12.0/neverhide-empire-v2.12.0.apk",
+  "changelog": "v2.12.0 - DLS Pad replaced by DLS LIVE BOOST.\n\n- The floating gamepad is REMOVED completely (no more accessibility touch injection or overlay).\n- NEW Live Boost: watches for the game in the foreground. The moment DLS is on screen, every background app freezes so the live match gets all CPU/RAM/network.\n- AUTOMATIC RESTORE: leave the match, close the game, or stop the service - everything returns to normal instantly, double-checked so nothing flickers.\n- No-stuck guarantees: only apps IT froze are restored (your own frozen apps untouched); leftovers from crashed sessions release on start; keyboard/launcher/system/game/Empire never frozen; if Shizuku dies mid-match everything restores and boost stops.\n- Needs Usage Access granted once (to detect when the game opens/closes) + Shizuku running."
 }

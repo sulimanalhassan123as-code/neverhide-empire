@@ -106,7 +106,7 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("screenrec", "Screen Record", "🎬", Color(0xFFFF4081)),
         ToolDef("split", "Split Screen", "⬒", Color(0xFF00BFA5)),
         ToolDef("peek", "Peek Guard", "🕵️", Color(0xFF00E5FF)),
-        ToolDef("gamepad", "DLS Pad", "🎮", Color(0xFF00E5FF))
+        ToolDef("gamepad", "DLS Live Boost", "📡", Color(0xFF00E5FF))
     )
 
     @Composable
@@ -201,7 +201,7 @@ class ToolsActivity : ComponentActivity() {
                 "screenrec" -> com.neverhide.empire.tools.screenrec.ScreenRecorderScreen()
                 "split" -> com.neverhide.empire.tools.split.SplitScreenScreen()
                 "peek" -> com.neverhide.empire.tools.peek.PeekGuardScreen()
-                "gamepad" -> com.neverhide.empire.tools.gamepad.GamePadScreen()
+                "gamepad" -> com.neverhide.empire.tools.gameboost.GameBoostScreen()
             }
         }
     }

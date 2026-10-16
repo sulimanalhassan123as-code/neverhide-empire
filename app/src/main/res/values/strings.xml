@@ -3,5 +3,4 @@
     <string name="qs_screenshot">Empire Shot</string>
     <string name="wallpaper_desc">Neverhide Empire 3D live wallpapers — 20 GPU effects</string>
     <string name="guardian_name">Adrenaline Lock Guardian</string>
-    <string name="gamepad_accessibility_desc">Lets the DLS Pad overlay send taps to the game under it. Reads nothing, tracks nothing.</string>
 </resources>
