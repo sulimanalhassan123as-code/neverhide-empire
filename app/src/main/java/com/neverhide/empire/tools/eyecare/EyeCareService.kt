@@ -74,10 +74,18 @@ class EyeCareService : Service() {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    // CRITICAL on Samsung One UI: without ALT_FOCUSABLE_IM the
+                    // keyboard treats this full-screen filter as a tapjacking
+                    // overlay and blocks typing. With it, the IME layers ABOVE
+                    // the filter and typing works normally.
+                    WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP
+            softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED or
+                    WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING
         }
         runCatching { wm.addView(overlayView, params) }
 

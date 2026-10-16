@@ -1,7 +1,7 @@
 {
-  "versionCode": 55,
-  "versionName": "2.12.2",
+  "versionCode": 56,
+  "versionName": "2.12.3",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.12.2/neverhide-empire-v2.12.2.apk",
-  "changelog": "v2.12.2 - Security Scanner Accuracy Fix\n\n- No more false 'sideloaded' flags on pre-installed / system / licensed firmware apps (their installer legitimately reads as 'unknown').\n- Only USER-installed apps from outside Play Store / Galaxy Store are marked sideloaded.\n- Quick permission scan now shows ONLY your installed apps (system apps excluded) + shows where each app came from.\n- New honest info line: user apps from unknown sources (your own Termux/Shizuku/Empire installs)."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.12.3/neverhide-empire-v2.12.3.apk",
+  "changelog": "v2.12.3 - Eye Care keyboard fix\n\n- FIX: Eye Care filter no longer blocks typing. Added FLAG_ALT_FOCUSABLE_IM + NOT_TOUCH_MODAL so Samsung One UI's keyboard layers above the filter instead of treating it as a tapjacking threat.\n- Filter now also sets SOFT_INPUT_ADJUST_NOTHING to stop keyboard flicker while the warm tint is on."
 }
