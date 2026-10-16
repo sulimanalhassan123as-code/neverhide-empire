@@ -1,7 +1,7 @@
 {
-  "versionCode": 50,
-  "versionName": "2.10.5",
+  "versionCode": 51,
+  "versionName": "2.10.6",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.5/neverhide-empire-v2.10.5.apk",
-  "changelog": "v2.10.5 - Fast Direct send.\n\n- Direct send now shrinks the video on your phone first (720p, ~2.5 Mbps): a 22 MB clip becomes ~2-3 MB and uploads in seconds.\n- Real progress bar with percent for both shrinking and uploading (no more frozen 'Uploading...').\n- Original recording is never changed; if shrinking fails it sends the original."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.10.6/neverhide-empire-v2.10.6.apk",
+  "changelog": "v2.10.6 - Freezer visibility fix + Direct send no longer hangs.\n\n- FREEZER: frozen apps no longer vanish from the list. The scanner now sees apps in disabled-user and Knox-suspended states, so Unfreeze All and the Doctor can find and restore them.\n- DIRECT SEND: shrinking now has a 90s watchdog; if it stalls it falls back to sending the original. Upload retries are bounded and every failure shows the exact reason instead of loading forever."
 }

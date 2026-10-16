@@ -112,10 +112,21 @@ object FreezerEngine {
             .map { it.packageName }
             .toSet()
 
-    /** Non-system apps (excluding the Empire itself) the user may lock. */
+    /**
+     * Non-system apps (excluding the Empire itself) the user may lock.
+     *
+     * v2.10.6 FIX: getInstalledApplications(0) HIDES apps frozen with
+     * pm disable-user / Knox suspend on Samsung Android 11 — so frozen
+     * apps vanished from the Freezer UI ("can't find them anywhere") while
+     * still frozen on the device, and Unfreeze All/Doctor had nothing to
+     * work on. MATCH_UNINSTALLED_PACKAGES returns EVERY installed app
+     * regardless of user state; flags still report enabled/FLAG_SUSPENDED.
+     */
     fun listFreezableApps(context: Context): List<ApplicationInfo> {
         val pm = context.packageManager
-        return pm.getInstalledApplications(0)
+        val flags = PackageManager.MATCH_UNINSTALLED_PACKAGES
+        return runCatching { pm.getInstalledApplications(flags) }
+            .getOrElse { pm.getInstalledApplications(0) }
             .filter {
                 (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 &&
                         it.packageName != context.packageName

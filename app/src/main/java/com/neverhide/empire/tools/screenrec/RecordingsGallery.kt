@@ -481,7 +481,7 @@ object BridgeVideoSend {
      * target = "status" (post to WhatsApp status) or a phone number.
      * Returns (true, "") on success or (false, reason).
      */
-    fun send(target: String, caption: String, file: File, onProgress: (Int) -> Unit): Pair<Boolean, String> {
+    fun send(target: String, caption: String, file: File, wakeAttempt: Int = 0, onProgress: (Int) -> Unit): Pair<Boolean, String> {
         return try {
             val boundary = "EmpireBoundary" + System.currentTimeMillis()
             val conn = URL(URL_STR).openConnection() as HttpURLConnection
@@ -526,13 +526,27 @@ object BridgeVideoSend {
             out.close()
 
             val code = conn.responseCode
-            val resp = conn.inputStream.bufferedReader().readText()
+            val resp = runCatching {
+                conn.inputStream.bufferedReader().readText()
+            }.getOrElse { conn.errorStream?.bufferedReader()?.readText() ?: "" }
             val ok = code == 200 && resp.contains("\"ok\":true")
-            if (ok) true to "" else false to "bridge error $code"
+            when {
+                ok -> true to ""
+                // 503 = bridge waking up (Render free tier) — bounded retry
+                code == 503 && wakeAttempt < 2 -> {
+                    Thread.sleep(45_000)
+                    send(target, caption, file, wakeAttempt + 1, onProgress)
+                }
+                // 429 = rate limit — telling the user beats spinning forever
+                code == 429 -> false to "bridge busy (rate limit) — try again in 2 min"
+                else -> false to "bridge error $code ${resp.take(60)}"
+            }
         } catch (e: Exception) {
-            // Render free tier sleeps — one wake retry
-            try { Thread.sleep(45_000); send(target, caption, file, onProgress) }
-            catch (e2: Exception) { false to (e.message ?: "network error") }
+            // network error — one wake retry max, then an honest failure
+            if (wakeAttempt < 1) {
+                try { Thread.sleep(45_000); send(target, caption, file, wakeAttempt + 1, onProgress) }
+                catch (e2: Exception) { false to (e.message ?: "network error") }
+            } else false to (e.message ?: "network error")
         }
     }
 
@@ -568,6 +582,8 @@ object ShareCompressor {
         runCatching { out.delete() }
         val main = android.os.Handler(android.os.Looper.getMainLooper())
         main.post {
+            val done = java.util.concurrent.atomic.AtomicBoolean(false)
+            fun finish(file: File?) { if (done.compareAndSet(false, true)) onDone(file) }
             try {
                 val video = androidx.media3.transformer.DefaultEncoderFactory.Builder(context)
                     .setRequestedVideoEncoderSettings(
@@ -581,12 +597,12 @@ object ShareCompressor {
                         override fun onCompleted(
                             composition: androidx.media3.transformer.Composition,
                             result: androidx.media3.transformer.ExportResult
-                        ) { onDone(out) }
+                        ) { finish(out) }
                         override fun onError(
                             composition: androidx.media3.transformer.Composition,
                             result: androidx.media3.transformer.ExportResult,
                             e: androidx.media3.transformer.ExportException
-                        ) { onDone(null) }
+                        ) { finish(null) }
                     }).build()
                 val item = androidx.media3.common.MediaItem.fromUri(android.net.Uri.fromFile(src))
                 val edited = androidx.media3.transformer.EditedMediaItem.Builder(item)
@@ -595,17 +611,24 @@ object ShareCompressor {
                         listOf(androidx.media3.effect.Presentation.createForHeight(720))
                     )).build()
                 transformer.start(edited, out.absolutePath)
-                // progress poll
+                // progress poll — STOPS when the export finishes
                 val holder = androidx.media3.transformer.ProgressHolder()
+                val startedAt = System.currentTimeMillis()
                 val tick = object : Runnable {
                     override fun run() {
+                        if (done.get()) return
                         val st = transformer.getProgress(holder)
                         if (st != androidx.media3.transformer.Transformer.PROGRESS_STATE_NOT_STARTED &&
                             st != androidx.media3.transformer.Transformer.PROGRESS_STATE_UNAVAILABLE) {
                             onPct(holder.progress)
                         }
-                        if (!out.exists() || out.length() == 0L || st != androidx.media3.transformer.Transformer.PROGRESS_STATE_NOT_STARTED)
-                            main.postDelayed(this, 400)
+                        // WATCHDOG: never let the UI hang on "Shrinking…" —
+                        // fall back to sending the original file after 90s
+                        if (System.currentTimeMillis() - startedAt > 90_000) {
+                            finish(null)
+                            return
+                        }
+                        main.postDelayed(this, 400)
                     }
                 }
                 main.postDelayed(tick, 400)
