@@ -4,6 +4,12 @@
     {
       "date": "2026-11-02",
       "tier": "minor",
+      "title": "Silent self-update + one-tap split (v2.13.1)",
+      "note": "Empire now installs its own updates: download, signature check, pm install through Shizuku, restart. Nothing to tap. The split bubble also arrived: pick pane A and pane B once, then tap the floating bubble anywhere in the phone."
+    },
+    {
+      "date": "2026-11-02",
+      "tier": "minor",
       "title": "Privacy Screen removed (v2.12.5)",
       "note": "Deleted the privacy blackout tool completely: service, tool card, boot auto-start and manifest entry. It was the cause of the frozen black screen and the blocked taps. Broken Screen prank now self-clears after 10 seconds so no overlay can trap you."
     },
@@ -44,7 +50,7 @@
       "note": "From now on: MAJOR upgrades (new APK) arrive through Check Updates. MINOR upgrades (news, tips, small fixes) arrive right here \u2014 no reinstall, just refresh. The website shows both."
     }
   ],
-  "versionName": "2.12.5",
-  "headline": "\ud83d\udd12 Privacy Screen removed: your phone can never be blacked out again",
-  "body": "The Privacy Screen tool has been removed. Its sensor could latch on and paint a black layer over everything, which made the phone look dead. Eye Care is untouched and typing still works. Broken Screen now clears itself after 10 seconds."
+  "versionName": "2.13.1",
+  "headline": "\u26a1 Empire updates itself now \u2014 no more APK installs",
+  "body": "Every launch checks for the newest build, verifies the signature, and installs it silently through Shizuku. Plus the one-tap split bubble that works from inside any app."
 }

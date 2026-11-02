@@ -12,8 +12,8 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 58
-        versionName = "2.12.5"
+        versionCode = 60
+        versionName = "2.13.1"
         vectorDrawables { useSupportLibrary = true }
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }

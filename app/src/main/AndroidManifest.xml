@@ -281,6 +281,16 @@
             android:exported="false"
             android:foregroundServiceType="specialUse"
             tools:ignore="ForegroundServicePermission" />
+        <!-- ===== Split Screen one-tap bubble (system-wide) ===== -->
+        <service
+            android:name=".tools.split.SplitBubbleService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Floating split-screen bubble usable from any app" />
+        </service>
         <!-- Privacy Screen removed in v2.12.4: caused a stuck full-screen blackout -->
         <service
             android:name=".tools.screenrec.ScreenRecordService"

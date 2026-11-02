@@ -50,7 +50,11 @@ class AdrenalineUpdater(private val context: Context) {
 
     private val scope = CoroutineScope(Dispatchers.Main)
 
-    fun checkForUpdate(onResult: (String) -> Unit = {}) {
+    /** true = install without any dialog (auto mode) */
+    private var autoMode = false
+
+    fun checkForUpdate(auto: Boolean = false, onResult: (String) -> Unit = {}) {
+        autoMode = auto
         context.let { com.neverhide.empire.core.EmpireTelemetry.ping(it, "update_check") }
         scope.launch {
             try {
@@ -78,7 +82,13 @@ class AdrenalineUpdater(private val context: Context) {
         val remote = manifest.optLong("versionCode", current)
 
         if (remote > current) {
-            promptInstall(manifest)
+            // Silent whenever Shizuku can install for us, or when the caller
+            // asked for automatic updating. Never prompt in that case.
+            if (autoMode || SilentInstaller.available(context)) {
+                download(manifest.optString("apkUrl", ""), silent = true)
+            } else {
+                promptInstall(manifest)
+            }
             onResult("update")
         } else {
             Toast.makeText(context, "✅ You are up to date (${manifest.optString("versionName", "")})", Toast.LENGTH_SHORT).show()
@@ -109,12 +119,12 @@ class AdrenalineUpdater(private val context: Context) {
         AlertDialog.Builder(context)
             .setTitle("🚀 Update available: v$name")
             .setMessage(log.ifBlank { "A new version of Neverhide Empire is ready." })
-            .setPositiveButton("Download & Install") { _, _ -> download(apkUrl) }
+            .setPositiveButton("Download & Install") { _, _ -> download(apkUrl, silent = SilentInstaller.available(context)) }
             .setNegativeButton("Later", null)
             .show()
     }
 
-    private fun download(apkUrl: String, attempt: Int = 1) {
+    private fun download(apkUrl: String, attempt: Int = 1, silent: Boolean = false) {
         Toast.makeText(context, if (attempt == 1) "Downloading update…" else "Retrying download…", Toast.LENGTH_SHORT).show()
         scope.launch {
             try {
@@ -144,7 +154,7 @@ class AdrenalineUpdater(private val context: Context) {
                         Toast.makeText(context,
                             "Download was interrupted (weak connection) — retrying…",
                             Toast.LENGTH_SHORT).show()
-                        download(apkUrl, attempt + 1)
+                        download(apkUrl, attempt + 1, silent)
                     } else {
                         Toast.makeText(context,
                             "Download kept getting interrupted — try again on stronger wifi/data.",
@@ -161,7 +171,7 @@ class AdrenalineUpdater(private val context: Context) {
                     if (attempt < 3) {
                         // Could still be a bad download even with matching
                         // Content-Length (rare, but retry before alarming).
-                        download(apkUrl, attempt + 1)
+                        download(apkUrl, attempt + 1, silent)
                     } else {
                         Toast.makeText(context,
                             "🚫 SECURITY: update signature failed verification — blocked.",
@@ -171,6 +181,18 @@ class AdrenalineUpdater(private val context: Context) {
                 }
                 // fleet metric: a real download completed
                 com.neverhide.empire.core.EmpireTelemetry.ping(context, "update_download")
+
+                // SILENT SELF-INSTALL: pm install -r through Shizuku.
+                if (silent) {
+                    val ok = withContext(Dispatchers.IO) { SilentInstaller.install(context, file) }
+                    if (ok) {
+                        com.neverhide.empire.core.EmpireTelemetry.ping(context, "update_silent_ok")
+                        Toast.makeText(context, "✅ Updated to the newest Empire", Toast.LENGTH_LONG).show()
+                        runCatching { file.delete() }
+                        return@launch
+                    }
+                    Toast.makeText(context, "Shizuku unavailable — using the installer prompt", Toast.LENGTH_LONG).show()
+                }
                 ApkInstaller.install(context, file)
             } catch (e: Exception) {
                 Toast.makeText(context, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()

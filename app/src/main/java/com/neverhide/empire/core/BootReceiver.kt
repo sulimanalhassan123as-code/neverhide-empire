@@ -29,6 +29,9 @@ class BootReceiver : BroadcastReceiver() {
         if (prefs.getBoolean("eye_care_enabled", false)) {
             EyeCareService.start(context)
         }
+        if (prefs.getBoolean("split_bubble_enabled", false)) {
+            com.neverhide.empire.tools.split.SplitBubbleService.start(context)
+        }
         if (prefs.getBoolean("broken_screen_enabled", false)) {
             com.neverhide.empire.tools.broken.BrokenScreenService.start(context)
         }

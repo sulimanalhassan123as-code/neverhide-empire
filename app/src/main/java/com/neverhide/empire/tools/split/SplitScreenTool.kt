@@ -3,6 +3,7 @@ package com.neverhide.empire.tools.split
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,6 +14,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +50,23 @@ import androidx.compose.ui.unit.sp
 fun SplitScreenScreen() {
     val context = LocalContext.current
     var search by remember { mutableStateOf("") }
+    val prefs = remember { context.getSharedPreferences("empire_prefs", android.content.Context.MODE_PRIVATE) }
+
+    // ---- ONE-TAP SYSTEM-WIDE BUBBLE STATE ----
+    var bubbleOn by remember { mutableStateOf(SplitBubbleService.isRunning(context)) }
+    var pkgA by remember { mutableStateOf(prefs.getString("split_pkg_a", SplitBubbleService.DEFAULT_A) ?: SplitBubbleService.DEFAULT_A) }
+    var pkgB by remember { mutableStateOf(prefs.getString("split_pkg_b", SplitBubbleService.DEFAULT_B) ?: SplitBubbleService.DEFAULT_B) }
+    // null = tapping an app launches it in split; "a"/"b" = tapping an app assigns that slot
+    var assign by remember { mutableStateOf<String?>(null) }
+
+    val owner = LocalLifecycleOwner.current
+    DisposableEffect(owner) {
+        val obs = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_RESUME) bubbleOn = SplitBubbleService.isRunning(context)
+        }
+        owner.lifecycle.addObserver(obs)
+        onDispose { owner.lifecycle.removeObserver(obs) }
+    }
 
     Column(
         Modifier
@@ -72,6 +93,54 @@ fun SplitScreenScreen() {
         TipCard("TERMUX PAIRING RECIPE: 1) Launch ⚙️ Settings in split (button above). 2) In the Settings pane open Developer options → Wireless debugging → Pair device. 3) Switch THIS pane to Termux (Recents → Termux). 4) adb pair IP:PAIR_PORT with the code shown. The popup never closes because Settings never leaves the screen.", Color(0xFFFFD600))
         Spacer(Modifier.height(14.dp))
 
+        // ================= ONE-TAP SYSTEM-WIDE BUBBLE =================
+        Text("⬒ ONE-TAP BUBBLE (WORKS IN ANY APP)", color = Color(0xFF00BFA5), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        Row(
+            Modifier.fillMaxWidth()
+                .background(Color(0xFF111827), RoundedCornerShape(10.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("Floating split bubble", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    if (bubbleOn) "Tap it anywhere to split A + B" else "Off — turn on to split from any app",
+                    color = Color.Gray, fontSize = 11.sp
+                )
+            }
+            Switch(
+                checked = bubbleOn,
+                onCheckedChange = { on ->
+                    if (on && !Settings.canDrawOverlays(context)) {
+                        Toast.makeText(context, "Allow display over other apps first", Toast.LENGTH_LONG).show()
+                        bubbleOn = false
+                    } else {
+                        bubbleOn = on
+                        prefs.edit().putBoolean("split_bubble_enabled", on).apply()
+                        if (on) SplitBubbleService.start(context) else SplitBubbleService.stop(context)
+                    }
+                },
+                colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFF00BFA5))
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PairSlot("A", appLabel(context, pkgA), Color(0xFF40C4FF), assign == "a", Modifier.weight(1f)) { assign = "a" }
+            PairSlot("B", appLabel(context, pkgB), Color(0xFFFFD600), assign == "b", Modifier.weight(1f)) { assign = "b" }
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            when (assign) {
+                "a" -> "Now tap any app below to make it pane A"
+                "b" -> "Now tap any app below to make it pane B"
+                else -> "Tap Set A or Set B, then pick the app. Bubble splits them in one tap."
+            },
+            color = if (assign != null) Color(0xFF00E5FF) else Color.Gray, fontSize = 11.sp
+        )
+        Spacer(Modifier.height(14.dp))
+
         Text("📱 ALL APPS", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(6.dp))
         OutlinedTextField(
@@ -96,7 +165,13 @@ fun SplitScreenScreen() {
                         .fillMaxWidth()
                         .background(Color(0xFF111827), RoundedCornerShape(10.dp))
                         .border(1.dp, Color(0xFF1E2A3A), RoundedCornerShape(10.dp))
-                        .clickable { launchAdjacent(context, app.packageName) }
+                        .clickable {
+                            when (assign) {
+                                "a" -> { pkgA = app.packageName; prefs.edit().putString("split_pkg_a", app.packageName).apply(); assign = null }
+                                "b" -> { pkgB = app.packageName; prefs.edit().putString("split_pkg_b", app.packageName).apply(); assign = null }
+                                else -> launchAdjacent(context, app.packageName)
+                            }
+                        }
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -182,3 +257,24 @@ private fun launchAdjacent(context: Context, packageName: String?) {
         Toast.makeText(context, "Could not launch: ${e.message}", Toast.LENGTH_SHORT).show()
     }
 }
+
+
+@Composable
+private fun PairSlot(tag: String, label: String, color: Color, active: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(
+        modifier
+            .background(color.copy(alpha = if (active) 0.25f else 0.10f), RoundedCornerShape(10.dp))
+            .border(1.dp, if (active) color else color.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(tag, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.width(6.dp))
+        Text(label, color = Color.White, fontSize = 12.sp, maxLines = 1)
+    }
+}
+
+private fun appLabel(context: Context, pkg: String): String = try {
+    context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(pkg, 0)).toString()
+} catch (e: Exception) { pkg }

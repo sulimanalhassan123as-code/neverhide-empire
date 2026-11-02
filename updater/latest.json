@@ -1,7 +1,7 @@
 {
-  "versionCode": 58,
-  "versionName": "2.12.5",
+  "versionCode": 60,
+  "versionName": "2.13.1",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.12.5/neverhide-empire-v2.12.5.apk",
-  "changelog": "v2.12.5 - Privacy Screen removed\n\n- FIX: The Privacy Screen tool is gone. Its proximity trigger could latch black and paint over Eye Care, so the phone looked frozen and would not accept taps.\n- SAFETY: every full-screen overlay now has an escape path. Broken Screen prank self-dismisses after 10 seconds.\n- Eye Care stays, and still lets you type."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.1/neverhide-empire-v2.13.1.apk",
+  "changelog": "v2.13.1 - The app updates itself\n\n- NEW: silent self-install through Shizuku. On every launch Empire checks for a new version, downloads it, verifies the signature, installs it with no installer screen and no tapping.\n- Split Screen: floating bubble splits your saved pair of apps from inside ANY app, one tap.\n- If Shizuku is off, it falls back to the normal prompt instead of failing quietly."
 }

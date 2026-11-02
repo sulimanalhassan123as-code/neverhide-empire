@@ -88,6 +88,15 @@ class MainActivity : ComponentActivity() {
         com.neverhide.empire.core.EmpireTelemetry.ping(this, "app_open")
         setContent { EmpireHub() }
 
+        // 0. SELF-UPDATE ON LAUNCH — silent through Shizuku, no APK handling.
+        // Owner's rule (2026-11-02): the app updates itself, always.
+        runCatching {
+            val prefs = getSharedPreferences("empire_prefs", MODE_PRIVATE)
+            if (prefs.getBoolean("auto_update_enabled", true)) {
+                AdrenalineUpdater(this).checkForUpdate(auto = true)
+            }
+        }
+
         // 1. Bulletproof watchdog starts immediately
         EmpireBackgroundService.start(this)
 
