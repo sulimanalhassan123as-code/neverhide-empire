@@ -16,7 +16,9 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.provider.Settings
@@ -165,6 +167,11 @@ class BrokenScreenService : Service(), SensorEventListener {
         ).apply { gravity = Gravity.TOP }
 
         runCatching { wm.addView(root, params) }.onSuccess { overlay = root }
+
+        // FAIL-SAFE (v2.12.5): an opaque prank overlay must never be able to
+        // trap the phone. If the tap-to-dismiss listener is ever missed, this
+        // watchdog removes the overlay on its own after 10 seconds.
+        Handler(Looper.getMainLooper()).postDelayed({ removeOverlay() }, 10_000L)
 
         // sound + vibration
         Thread { playGlassShatter() }.start()

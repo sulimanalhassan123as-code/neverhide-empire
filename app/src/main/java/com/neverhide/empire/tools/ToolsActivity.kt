@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.neverhide.empire.tools.eyecare.EyeCareService
-import com.neverhide.empire.tools.privacy.PrivacyScreenService
 import com.neverhide.empire.tools.broken.BrokenScreenService
 import com.neverhide.empire.faceguard.FaceGuard
 import com.neverhide.empire.faceguard.FaceGuardActivity
@@ -92,7 +91,6 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("weather", "Weather", "🌤️", Color(0xFF40C4FF)),
         ToolDef("steps", "Step Counter", "👣", Color(0xFFB388FF)),
         ToolDef("eyecare", "Eye Care", "👀", Color(0xFF64DD17)),
-        ToolDef("privacy", "Privacy Screen", "🔒", Color(0xFF00E5FF)),
         ToolDef("faceguard", "Face Guard", "👤", Color(0xFFB388FF)),
         ToolDef("brokenscreen", "Broken Screen", "🔨", Color(0xFFFF5252)),
         ToolDef("siren", "Find My Phone", "📢", Color(0xFFFF1744)),
@@ -187,7 +185,6 @@ class ToolsActivity : ComponentActivity() {
                 "weather" -> WeatherScreen()
                 "steps" -> StepsScreen()
                 "eyecare" -> EyeCareScreen()
-                "privacy" -> PrivacyScreen()
                 "faceguard" -> FaceGuardScreen()
                 "brokenscreen" -> BrokenScreenScreen()
                 "siren" -> SirenScreen()
@@ -685,69 +682,6 @@ class ToolsActivity : ComponentActivity() {
 
     
     // ===================== PRIVACY SCREEN =====================
-
-    @Composable
-    private fun PrivacyScreen() {
-        val context = LocalContext.current
-        var on by remember { mutableStateOf(PrivacyScreenService.isRunning(context)) }
-        var hasPerm by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
-        var hasSensor by remember { mutableStateOf(PrivacyScreenService.hasProximitySensor(context)) }
-
-        // Re-check permission + running state every time this screen resumes
-        val owner = androidx.compose.ui.platform.LocalLifecycleOwner.current
-        DisposableEffect(owner) {
-            val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
-                if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                    hasPerm = Settings.canDrawOverlays(context)
-                    on = PrivacyScreenService.isRunning(context)
-                }
-            }
-            owner.lifecycle.addObserver(obs)
-            onDispose { owner.lifecycle.removeObserver(obs) }
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            InfoCard("Blacks out instantly when the phone is COVERED (pocket, bag, flipped over — proximity sensor) or FACE-DOWN on a table (accelerometer). Pick it up or uncover it — content returns instantly. Never intercepts your touches.")
-            if (!hasPerm) {
-                Button(
-                    onClick = { context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252))
-                ) { Text("Grant 'Display over other apps' (required)", color = Color.Black) }
-            }
-            Row(
-                Modifier.fillMaxWidth().background(Color(0xFF111827), RoundedCornerShape(12.dp)).padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Privacy Screen Guard", color = Color.White, fontWeight = FontWeight.SemiBold)
-                    Text("Covered or face-down → black", color = Color.Gray, fontSize = 11.sp)
-                }
-                Switch(
-                    checked = on,
-                    onCheckedChange = { checked ->
-                        if (!Settings.canDrawOverlays(context)) {
-                            hasPerm = false
-                            context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
-                            return@Switch
-                        }
-                        on = checked
-                        context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE)
-                            .edit().putBoolean("privacy_screen_enabled", checked).apply()
-                        if (checked) PrivacyScreenService.start(context) else PrivacyScreenService.stop(context)
-                    },
-                    colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFF00E5FF))
-                )
-            }
-            if (on) {
-                Text("✅ Active — test it: flip the phone face-down → instant black. Cover the top sensor with your palm → black. Face-up in hand → normal.", color = Color(0xFF00E5FF), fontSize = 13.sp)
-                Button(
-                    onClick = { PrivacyScreenService.testBlackout(context, 3) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF111827))
-                ) { Text("Test blackout — 3 seconds", color = Color(0xFF00E5FF)) }
-            }
-            if (!hasSensor) Text("⚠️ This device has no proximity sensor — the face-down guard still works.", color = Color(0xFFFF9100), fontSize = 12.sp)
-        }
-    }
 
     // ===================== FACE GUARD =====================
 

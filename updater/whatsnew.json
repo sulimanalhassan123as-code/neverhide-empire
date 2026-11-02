@@ -1,6 +1,12 @@
 {
-  "updatedAt": "2026-09-11",
+  "updatedAt": "2026-11-02",
   "items": [
+    {
+      "date": "2026-11-02",
+      "tier": "minor",
+      "title": "Privacy Screen removed (v2.12.5)",
+      "note": "Deleted the privacy blackout tool completely: service, tool card, boot auto-start and manifest entry. It was the cause of the frozen black screen and the blocked taps. Broken Screen prank now self-clears after 10 seconds so no overlay can trap you."
+    },
     {
       "date": "2026-09-11",
       "tier": "minor",
@@ -38,7 +44,7 @@
       "note": "From now on: MAJOR upgrades (new APK) arrive through Check Updates. MINOR upgrades (news, tips, small fixes) arrive right here \u2014 no reinstall, just refresh. The website shows both."
     }
   ],
-  "versionName": "2.9.9",
-  "headline": "\ud83c\udfac Screen Recorder: fixed invisible-recording bug",
-  "body": "The screen now shows the LIVE REC panel the moment you accept the popup, with toast feedback on start and save. Plus the v2.9.8 Split Screen Launcher."
+  "versionName": "2.12.5",
+  "headline": "\ud83d\udd12 Privacy Screen removed: your phone can never be blacked out again",
+  "body": "The Privacy Screen tool has been removed. Its sensor could latch on and paint a black layer over everything, which made the phone look dead. Eye Care is untouched and typing still works. Broken Screen now clears itself after 10 seconds."
 }

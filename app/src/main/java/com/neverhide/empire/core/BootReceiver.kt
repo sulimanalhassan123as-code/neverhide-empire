@@ -29,9 +29,6 @@ class BootReceiver : BroadcastReceiver() {
         if (prefs.getBoolean("eye_care_enabled", false)) {
             EyeCareService.start(context)
         }
-        if (prefs.getBoolean("privacy_screen_enabled", false)) {
-            com.neverhide.empire.tools.privacy.PrivacyScreenService.start(context)
-        }
         if (prefs.getBoolean("broken_screen_enabled", false)) {
             com.neverhide.empire.tools.broken.BrokenScreenService.start(context)
         }
