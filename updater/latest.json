@@ -1,7 +1,7 @@
 {
-  "versionCode": 60,
-  "versionName": "2.13.1",
+  "versionCode": 61,
+  "versionName": "2.13.2",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.1/neverhide-empire-v2.13.1.apk",
-  "changelog": "v2.13.1 - The app updates itself\n\n- NEW: silent self-install through Shizuku. On every launch Empire checks for a new version, downloads it, verifies the signature, installs it with no installer screen and no tapping.\n- Split Screen: floating bubble splits your saved pair of apps from inside ANY app, one tap.\n- If Shizuku is off, it falls back to the normal prompt instead of failing quietly."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.2/neverhide-empire-v2.13.2.apk",
+  "changelog": "v2.13.2 - Security scrub\n\n- The WhatsApp bridge secret leaked in the public repo and inside every APK. It is rotated and the old key is dead.\n- The secret now comes from local build config, never from committed source. Same for the signing passwords.\n- Everything else unchanged: guardian alerts, recording upload, split bubble, silent self-update."
 }

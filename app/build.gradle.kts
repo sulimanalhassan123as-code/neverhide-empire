@@ -1,8 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.services)
 }
+
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun localSecret(key: String, fallback: String = ""): String =
+    (localProps.getProperty(key) ?: System.getenv(key) ?: fallback)
 
 android {
     namespace = "com.neverhide.empire"
@@ -12,18 +21,19 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 60
-        versionName = "2.13.1"
+        versionCode = 61
+        versionName = "2.13.2"
         vectorDrawables { useSupportLibrary = true }
+        buildConfigField("String", "BRIDGE_SECRET", "\"" + localSecret("bridge.secret") + "\"")
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     signingConfigs {
         create("release") {
             storeFile = file("../empire-release.keystore")
-            storePassword = "neverhide2024"
+            storePassword = localSecret("keystore.storePassword")
             keyAlias = "empire-key"
-            keyPassword = "neverhide2024"
+            keyPassword = localSecret("keystore.keyPassword")
         }
     }
 
@@ -58,6 +68,7 @@ android {
     buildFeatures {
         aidl = true
         compose = true
+        buildConfig = true
     }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
     packaging {

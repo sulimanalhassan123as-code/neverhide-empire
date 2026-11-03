@@ -475,7 +475,8 @@ private fun shareToWhatsapp(context: android.content.Context, f: File, asDocumen
 object BridgeVideoSend {
     private const val URL_STR =
         "https://whatsapp-bridge-6bdj.onrender.com/video/send"
-    private const val SECRET = "1d15d106f20d08fd901d974b7812e2285f183e5a6ad8aaba"
+    // SECURITY (v2.13.2): injected at build time, never committed.
+    private val SECRET: String = com.neverhide.empire.BuildConfig.BRIDGE_SECRET
 
     /**
      * target = "status" (post to WhatsApp status) or a phone number.

@@ -37,7 +37,9 @@ object GuardianAlert {
 
     private const val BRIDGE_URL =
         "https://whatsapp-bridge-6bdj.onrender.com/guardian/alert"
-    private const val BRIDGE_SECRET = "1d15d106f20d08fd901d974b7812e2285f183e5a6ad8aaba"
+    // SECURITY (v2.13.2): never hardcode this. It is injected at build time from
+    // local.properties (untracked) so the public repo and this source file stay clean.
+    private val BRIDGE_SECRET: String = com.neverhide.empire.BuildConfig.BRIDGE_SECRET
 
     fun fire(context: Context, photoPath: String?, reason: String = "password") {
         val prefs = context.getSharedPreferences(
