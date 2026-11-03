@@ -1,7 +1,7 @@
 {
-  "versionCode": 61,
-  "versionName": "2.13.2",
+  "versionCode": 62,
+  "versionName": "2.13.3",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.2/neverhide-empire-v2.13.2.apk",
-  "changelog": "v2.13.2 - Security scrub\n\n- The WhatsApp bridge secret leaked in the public repo and inside every APK. It is rotated and the old key is dead.\n- The secret now comes from local build config, never from committed source. Same for the signing passwords.\n- Everything else unchanged: guardian alerts, recording upload, split bubble, silent self-update."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.3/neverhide-empire-v2.13.3.apk",
+  "changelog": "v2.13.3 - CI leak closed\n\n- The workflow file leaked the keystore password and could commit a keystore into the public repo. Removed.\n- Keystore now restored from an encrypted repo secret, passwords written at build time only, and shredded after.\n- Keystore password rotated; same signing key, so this installs as a normal update."
 }

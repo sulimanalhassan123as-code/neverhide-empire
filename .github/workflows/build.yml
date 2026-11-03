@@ -31,28 +31,48 @@ jobs:
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1 || true
 
-      - name: Ensure signing keystore exists
+      # SECURITY (2026-11-03): this step used to hardcode the keystore password
+      # AND commit the generated keystore back into a PUBLIC repo. A CI run on a
+      # fresh clone would therefore publish the signing key and re-key every
+      # future APK. Both are gone. The keystore now comes ONLY from the
+      # KEYSTORE_BASE64 repository secret; if it is missing we fail loudly
+      # instead of inventing a new identity.
+      - name: Restore signing keystore from secret
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          if [ ! -f empire-release.keystore ]; then
-            keytool -genkeypair -keystore empire-release.keystore \
-              -storetype JKS -storepass neverhide2024 -keypass neverhide2024 \
-              -alias empire-key -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Never Hide Empire, OU=Never Hide Tech, O=Never Hide, L=Accra, C=GH"
-            git config user.name "Empire CI"
-            git config user.email "ci@neverhide.tech"
-            git add empire-release.keystore
-            git commit -m "ci: add signing keystore"
-            git push || echo "PUSH_FAILED_CONTINUE"
-            echo "KEYSTORE_CREATED_AND_PUSHED"
-          else
-            echo "KEYSTORE_ALREADY_PRESENT"
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::KEYSTORE_BASE64 secret is missing. Refusing to build unsigned or re-keyed."
+            exit 1
           fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > empire-release.keystore
+          echo "keystore restored ($(wc -c < empire-release.keystore) bytes)"
+
+      # Passwords reach Gradle through local.properties, which is gitignored and
+      # is the same mechanism local builds use. No literal ever touches the repo.
+      - name: Write local.properties from secrets
+        env:
+          KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}
+          KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
+          BRIDGE_SECRET: ${{ secrets.BRIDGE_SECRET }}
+        run: |
+          {
+            echo "sdk.dir=$ANDROID_HOME"
+            echo "keystore.storePassword=$KEYSTORE_STORE_PASSWORD"
+            echo "keystore.keyPassword=$KEYSTORE_KEY_PASSWORD"
+            echo "bridge.secret=$BRIDGE_SECRET"
+          } > local.properties
+          echo "local.properties written"
 
       - name: Build release APK (log captured)
         run: |
           chmod +x gradlew
           set -o pipefail
           ./gradlew --no-daemon assembleRelease 2>&1 | tee build.log
+
+      - name: Shred keystore after build
+        if: always()
+        run: rm -f empire-release.keystore local.properties || true
 
       - name: Upload build logs
         if: always()
