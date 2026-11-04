@@ -10,8 +10,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Hardened 2026-11-04: this job only builds and uploads artifacts. It no
+    # longer commits or pushes anything (the keystore-push step was removed in
+    # v2.13.3), so write access was unused privilege on a workflow that decodes
+    # a secret onto disk. Read is sufficient.
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: Checkout
