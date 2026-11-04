@@ -21,8 +21,8 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 62
-        versionName = "2.13.3"
+        versionCode = 63
+        versionName = "2.13.4"
         vectorDrawables { useSupportLibrary = true }
         buildConfigField("String", "BRIDGE_SECRET", "\"" + localSecret("bridge.secret") + "\"")
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
@@ -30,7 +30,9 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("../empire-release.keystore")
+            // Path is overridable so CI can keep the keystore OUT of the repo
+            // workspace entirely (in $RUNNER_TEMP). Default = local dev layout.
+            storeFile = file(localSecret("keystore.path", "../empire-release.keystore"))
             storePassword = localSecret("keystore.storePassword")
             keyAlias = "empire-key"
             keyPassword = localSecret("keystore.keyPassword")
