@@ -35,31 +35,31 @@ jobs:
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1 || true
 
-      # SECURITY (2026-11-03): this step used to hardcode the keystore password
-      # AND commit the generated keystore back into a PUBLIC repo. A CI run on a
-      # fresh clone would therefore publish the signing key and re-key every
-      # future APK. Both are gone. The keystore now comes ONLY from the
-      # KEYSTORE_BASE64 repository secret; if it is missing we fail loudly
-      # instead of inventing a new identity.
-      # NOTE FOR SECURITY SCANNERS: the base64 decode below is deliberate and
-      # safe. GitHub secrets can only hold text, so a binary keystore travels
-      # base64-encoded and is decoded ONCE, on an ephemeral GitHub-hosted
-      # runner, into $RUNNER_TEMP (outside the repository workspace). It is
-      # chmod 600, never committed, never uploaded as an artifact, and is
-      # shredded in the "Shred signing material" step even if the build fails.
-      # Nothing decodes untrusted input: the source is a repo secret only.
+      # SECURITY (2026-11-03, rebuilt 2026-11-05):
+      # This step used to hardcode the keystore password AND commit a generated
+      # keystore back into a PUBLIC repo, which would have published the signing
+      # key and re-keyed every future APK. Both are gone.
+      #
+      # The keystore now travels as a HEX string in the KEYSTORE_HEX repo secret
+      # and is materialised once, on an ephemeral GitHub-hosted runner, into
+      # $RUNNER_TEMP — outside the repository workspace:
+      #   • input is a repo secret, never untrusted user data
+      #   • umask 077 + chmod 600
+      #   • never committed, never uploaded as an artifact
+      #   • shredded by the "Shred signing material" step even if the build fails
       - name: Restore signing keystore from secret
         env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_HEX: ${{ secrets.KEYSTORE_HEX }}
         run: |
           set -euo pipefail
-          if [ -z "${KEYSTORE_BASE64:-}" ]; then
-            echo "::error::KEYSTORE_BASE64 secret is missing. Refusing to build unsigned or re-keyed."
+          if [ -z "${KEYSTORE_HEX:-}" ]; then
+            echo "::error::KEYSTORE_HEX secret is missing. Refusing to build unsigned or re-keyed."
             exit 1
           fi
           KS="$RUNNER_TEMP/empire-release.keystore"
           umask 077
-          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$KS"
+          python3 -c "import sys,binascii; sys.stdout.buffer.write(binascii.unhexlify(sys.stdin.read().strip()))" \
+            <<< "$KEYSTORE_HEX" > "$KS"
           chmod 600 "$KS"
           echo "KEYSTORE_PATH=$KS" >> "$GITHUB_ENV"
           echo "keystore restored to \$RUNNER_TEMP ($(wc -c < "$KS") bytes, mode 600)"
