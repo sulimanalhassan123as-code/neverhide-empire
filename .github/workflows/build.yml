@@ -6,6 +6,9 @@ name: Build APK
 # Builds meanwhile happen in the Superagent sandbox (proven since v2.5.2).
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -112,3 +115,36 @@ jobs:
           name: neverhide-empire-apk
           path: app/build/outputs/apk/release/app-release.apk
           retention-days: 90
+
+  # Publishing needs write, so it lives in its own job. The build job above
+  # stays read-only: it decodes a signing secret onto disk and must never
+  # hold a token that can write.
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch built APK
+        uses: actions/download-artifact@v4
+        with:
+          name: neverhide-empire-apk
+          path: dist
+
+      - name: Attach APK to the release for this tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          APK="dist/app-release.apk"
+          if [ ! -s "$APK" ]; then
+            echo "::error::no APK artifact from the build job. Refusing to publish an empty release."
+            exit 1
+          fi
+          ASSET="neverhide-empire-${TAG}.apk"
+          cp "$APK" "$ASSET"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --notes "Built by CI for ${TAG}"
+          gh release upload "$TAG" "$ASSET" --clobber
+          echo "attached $ASSET to $TAG"
