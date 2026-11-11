@@ -65,7 +65,11 @@ class EyeCareService : Service() {
         // 1. Blue-light overlay
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
         overlayView = FrameLayout(this).apply {
-            setBackgroundColor(Color.argb((intensity * 2.2f).toInt().coerceIn(0, 190), 255, 144, 32))
+            // Samsung One UI rejects touches under a near-opaque overlay. The old
+            // cap of 190 was 74.5% opacity and is the suspected cause of Eye Care
+            // swallowing every tap. Peak is now 150/255 = 59%. One variable changed:
+            // the window flags below are deliberately untouched.
+            setBackgroundColor(Color.argb((intensity * 1.7f).toInt().coerceIn(0, 150), 255, 144, 32))
         }
         @SuppressLint("ClickableViewAccessibility")
         val params = WindowManager.LayoutParams(
