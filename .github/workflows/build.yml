@@ -9,6 +9,12 @@ on:
   push:
     tags:
       - 'v*'
+  # Any agent can now build without a credential: push your branch through
+  # repoDoor, open the PR, and CI builds an installable APK artifact for it.
+  # Nothing publishes from a pull request; release stays tag-only below.
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
