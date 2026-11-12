@@ -1,7 +1,7 @@
 {
-  "versionCode": 63,
-  "versionName": "2.13.4",
+  "versionCode": 64,
+  "versionName": "2.13.5",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.4/neverhide-empire-v2.13.4.apk",
-  "changelog": "v2.13.4 - CI hardening\n\n- Signing key now exists only in the runner temp dir for the length of the build, mode 600, shredded after.\n- Workflow token cut to read-only; it builds artifacts and pushes nothing.\n- Same signing key, so this installs as a normal update."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.5/neverhide-empire-v2.13.5.apk",
+  "changelog": "v2.13.5 - Eye Care fix\n\n- Overlay opacity peak cut from 190 (74.5%) to 150 (59%) and the intensity multiplier from 2.2 to 1.7.\n- Window flags unchanged, so taps still pass through the filter to the app underneath.\n- Same signing key as 2.13.4, installs as a normal update.\n- If taps still fail, the next suspect is the full-screen overlay, not the transparency."
 }
