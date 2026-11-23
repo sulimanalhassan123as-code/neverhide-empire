@@ -92,7 +92,7 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("steps", "Step Counter", "👣", Color(0xFFB388FF)),
         ToolDef("eyecare", "Eye Care", "👀", Color(0xFF64DD17)),
         ToolDef("faceguard", "Face Guard", "👤", Color(0xFFB388FF)),
-        ToolDef("brokenscreen", "Broken Screen", "🔨", Color(0xFFFF5252)),
+        ToolDef("darkmode", "Dark Mode", "🌙", Color(0xFF263238)),
         ToolDef("siren", "Find My Phone", "📢", Color(0xFFFF1744)),
         ToolDef("voicefx", "Voice FX", "🎙️", Color(0xFF7C4DFF)),
         ToolDef("soundmeter", "Sound Meter", "📈", Color(0xFFFFD600)),
@@ -186,7 +186,7 @@ class ToolsActivity : ComponentActivity() {
                 "steps" -> StepsScreen()
                 "eyecare" -> EyeCareScreen()
                 "faceguard" -> FaceGuardScreen()
-                "brokenscreen" -> BrokenScreenScreen()
+                "darkmode" -> DarkModeScreen()
                 "siren" -> SirenScreen()
                 "voicefx" -> VoiceFxScreen()
                 "soundmeter" -> SoundMeterScreen()
@@ -681,6 +681,69 @@ class ToolsActivity : ComponentActivity() {
     }
 
     
+    // ===================== DARK MODE =====================
+
+    @Composable
+    private fun DarkModeScreen() {
+        val context = LocalContext.current
+        val prefs = remember { context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE) }
+        var on by remember {
+            mutableStateOf(com.neverhide.empire.tools.darkmode.DarkModeService.isRunning(context))
+        }
+        var stage by remember {
+            mutableStateOf(com.neverhide.empire.tools.darkmode.DarkModeService.stage(context))
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            InfoCard("Dims the whole phone, every app included. Four strengths. Needs 'Display over other apps'. Never blocks taps.")
+            Row(
+                Modifier.fillMaxWidth().background(Color(0xFF111827), RoundedCornerShape(12.dp)).padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("System dark mode", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        com.neverhide.empire.tools.darkmode.DarkModeService.stageName(stage),
+                        color = Color.Gray, fontSize = 11.sp
+                    )
+                }
+                Switch(
+                    checked = on,
+                    onCheckedChange = {
+                        on = it
+                        prefs.edit().putBoolean("dark_mode_enabled", it).apply()
+                        if (it) com.neverhide.empire.tools.darkmode.DarkModeService.start(context)
+                        else com.neverhide.empire.tools.darkmode.DarkModeService.stop(context)
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFF90A4AE))
+                )
+            }
+            Text("Strength", color = Color.Gray, fontSize = 13.sp)
+            com.neverhide.empire.tools.darkmode.DarkModeService.STAGE_NAMES.forEachIndexed { i, name ->
+                val selected = i == stage
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(
+                            if (selected) Color(0xFF263238) else Color(0xFF111827),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .clickable {
+                            stage = i
+                            prefs.edit().putInt("dark_mode_stage", i).apply()
+                            if (on) com.neverhide.empire.tools.darkmode.DarkModeService.start(context)
+                        }
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(if (selected) "●" else "○", color = Color(0xFF90A4AE))
+                    Text("  $name", color = Color.White, fontSize = 14.sp)
+                }
+            }
+            if (on) Text("✅ Active — the whole screen is dimmed", color = Color(0xFF90A4AE), fontSize = 13.sp)
+        }
+    }
+
     // ===================== PRIVACY SCREEN =====================
 
     // ===================== FACE GUARD =====================

@@ -275,6 +275,12 @@
                 android:value="Persistent watchdog keeping Empire tools alive" />
         </service>
 
+        <!-- ===== System-wide dark mode overlay (four stages) ===== -->
+        <service
+            android:name=".tools.darkmode.DarkModeService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission" />
         <!-- ===== Eye Care overlay service ===== -->
         <service
             android:name=".tools.eyecare.EyeCareService"

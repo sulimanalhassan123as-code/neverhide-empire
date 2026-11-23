@@ -76,9 +76,10 @@ class EyeCareService : Service() {
         // 1. Blue-light overlay
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
         overlayView = FrameLayout(this).apply {
-            // Alpha is capped at 0.68 (173/255): above roughly 0.8 Android treats a
-            // passthrough window as obscuring and can drop touches that cross it.
-            setBackgroundColor(Color.argb((intensity * 2.2f).toInt().coerceIn(0, 173), 255, 144, 32))
+            // V2.13.7: hard cap at 50% (128/255). The owner reported that a HIGH
+            // intensity still froze the screen, so the ceiling is now well below
+            // any obscuring-window threshold, and stacked dims cannot add up.
+            setBackgroundColor(Color.argb((intensity * 1.6f).toInt().coerceIn(0, 128), 255, 144, 32))
         }
         @SuppressLint("ClickableViewAccessibility")
         val params = WindowManager.LayoutParams(

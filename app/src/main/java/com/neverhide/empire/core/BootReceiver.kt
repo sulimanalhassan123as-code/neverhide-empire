@@ -32,7 +32,12 @@ class BootReceiver : BroadcastReceiver() {
         if (prefs.getBoolean("split_bubble_enabled", false)) {
             com.neverhide.empire.tools.split.SplitBubbleService.start(context)
         }
-        if (prefs.getBoolean("broken_screen_enabled", false)) {
+        if (prefs.getBoolean("dark_mode_enabled", false)) {
+            com.neverhide.empire.tools.darkmode.DarkModeService.start(context)
+        }
+        // Broken Screen removed in 2.13.7: its overlay was touchable and could
+        // sit on top of the screen, which is the class of feature that froze taps.
+        if (false) {
             com.neverhide.empire.tools.broken.BrokenScreenService.start(context)
         }
         if (prefs.getBoolean("low_battery_alarm", false)) {

@@ -1,7 +1,7 @@
 {
-  "versionCode": 65,
-  "versionName": "2.13.6",
+  "versionCode": 66,
+  "versionName": "2.13.7",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.6/neverhide-empire-v2.13.6.apk",
-  "changelog": "v2.13.6 - Touch freeze fixed\n\n- Eye Care tint is explicitly not-touchable again and no longer advertises itself to the input system, which is what let Samsung One UI treat it as a tapjacking overlay and swallow every tap above the navigation bar.\n- Filter strength is capped at 68%, so Android never classifies the tint as an obscuring window that blocks touches.\n- The Eye Care notification now has a Turn off filter button, so you can never be trapped behind the tint.\n- Split bubble: phone-wide split needs Shizuku; without it the app now says so plainly instead of half-working only inside Empire."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.7/neverhide-empire-v2.13.7.apk",
+  "changelog": "v2.13.7 - Eye Care never blocks, plus system-wide dark mode\n\n- Removed Broken Screen entirely. Its full-screen overlay was touchable and could sit above everything, which is the feature class that froze taps.\n- Eye Care strength hard-capped at 50% so the tint can never be treated as an obscuring window that blocks touches.\n- Peek Guard no longer adds a dim-behind layer, so two dims can never stack into a touch-blocking one.\n- New Dark Mode with four stages: Light dark, Dark, Heavy dark, Deep dark. Dims the whole phone in every app, never touchable, and it stops Eye Care first so only one dim window exists at a time."
 }
