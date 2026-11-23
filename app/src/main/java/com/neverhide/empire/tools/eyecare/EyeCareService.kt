@@ -30,6 +30,7 @@ class EyeCareService : Service() {
     companion object {
         const val CHANNEL_ID = "eye_care"
         const val NOTIF_ID = 9003
+        const val ACTION_STOP = "com.neverhide.empire.STOP_EYE_CARE"
         private const val BREAK_INTERVAL_MS = 20 * 60 * 1000L // 20 minutes
 
         fun start(context: Context) {
@@ -52,6 +53,16 @@ class EyeCareService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            getSharedPreferences("empire_prefs", MODE_PRIVATE).edit()
+                .putBoolean("eye_care_enabled", false).apply()
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        return START_STICKY
+    }
+
     override fun onCreate() {
         super.onCreate()
         val prefs = getSharedPreferences("empire_prefs", MODE_PRIVATE)
@@ -65,25 +76,26 @@ class EyeCareService : Service() {
         // 1. Blue-light overlay
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
         overlayView = FrameLayout(this).apply {
-            // Samsung One UI rejects touches under a near-opaque overlay. The old
-            // cap of 190 was 74.5% opacity and is the suspected cause of Eye Care
-            // swallowing every tap. Peak is now 150/255 = 59%. One variable changed:
-            // the window flags below are deliberately untouched.
-            setBackgroundColor(Color.argb((intensity * 1.7f).toInt().coerceIn(0, 150), 255, 144, 32))
+            // Alpha is capped at 0.68 (173/255): above roughly 0.8 Android treats a
+            // passthrough window as obscuring and can drop touches that cross it.
+            setBackgroundColor(Color.argb((intensity * 2.2f).toInt().coerceIn(0, 173), 255, 144, 32))
         }
         @SuppressLint("ClickableViewAccessibility")
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            // V2.13.6 (2026-11-12): the tint MUST be FLAG_NOT_TOUCHABLE or the
+            // full-screen window swallows every tap and only the system navigation
+            // bar (which sits above app overlays) still responds — exactly the
+            // "only the bottom works" freeze the owner reported.
+            // FLAG_ALT_FOCUSABLE_IM is gone: it made the IME layer above the tint
+            // by treating the tint as an input target, which Samsung One UI
+            // classifies as a tapjacking overlay. A pure not-touchable,
+            // not-focusable window is invisible to both the IME and tapjacking
+            // heuristics, so the keyboard still works without it.
             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    // CRITICAL on Samsung One UI: without ALT_FOCUSABLE_IM the
-                    // keyboard treats this full-screen filter as a tapjacking
-                    // overlay and blocks typing. With it, the IME layers ABOVE
-                    // the filter and typing works normally.
-                    WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -138,6 +150,10 @@ class EyeCareService : Service() {
             .setContentText("Blue-light filter on • 20-20-20 reminders")
             .setSmallIcon(android.R.drawable.ic_menu_view)
             .setOngoing(true)
+            .addAction(0, "Turn off filter", android.app.PendingIntent.getService(
+                this, 1,
+                android.content.Intent(this, EyeCareService::class.java).setAction(ACTION_STOP),
+                android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT))
             .build()
     }
 

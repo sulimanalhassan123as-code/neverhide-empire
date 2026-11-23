@@ -1,7 +1,7 @@
 {
-  "versionCode": 64,
-  "versionName": "2.13.5",
+  "versionCode": 65,
+  "versionName": "2.13.6",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.5/neverhide-empire-v2.13.5.apk",
-  "changelog": "v2.13.5 - Eye Care fix\n\n- Overlay opacity peak cut from 190 (74.5%) to 150 (59%) and the intensity multiplier from 2.2 to 1.7.\n- Window flags unchanged, so taps still pass through the filter to the app underneath.\n- Same signing key as 2.13.4, installs as a normal update.\n- If taps still fail, the next suspect is the full-screen overlay, not the transparency."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.6/neverhide-empire-v2.13.6.apk",
+  "changelog": "v2.13.6 - Touch freeze fixed\n\n- Eye Care tint is explicitly not-touchable again and no longer advertises itself to the input system, which is what let Samsung One UI treat it as a tapjacking overlay and swallow every tap above the navigation bar.\n- Filter strength is capped at 68%, so Android never classifies the tint as an obscuring window that blocks touches.\n- The Eye Care notification now has a Turn off filter button, so you can never be trapped behind the tint.\n- Split bubble: phone-wide split needs Shizuku; without it the app now says so plainly instead of half-working only inside Empire."
 }

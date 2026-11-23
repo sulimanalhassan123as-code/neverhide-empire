@@ -94,6 +94,9 @@ class SplitBubbleService : Service() {
             size,
             size,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            // V2.13.6 (2026-11-12): FLAG_SHOW_WHEN_LOCKED removed. It does not keep
+            // an overlay alive over the launcher, it only shows it on the lock screen.
+            // Home-screen survival comes from the foreground service + START_STICKY.
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
