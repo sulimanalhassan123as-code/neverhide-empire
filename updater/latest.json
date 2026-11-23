@@ -1,7 +1,7 @@
 {
-  "versionCode": 66,
-  "versionName": "2.13.7",
+  "versionCode": 67,
+  "versionName": "2.13.8",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.7/neverhide-empire-v2.13.7.apk",
-  "changelog": "v2.13.7 - Eye Care never blocks, plus system-wide dark mode\n\n- Removed Broken Screen entirely. Its full-screen overlay was touchable and could sit above everything, which is the feature class that froze taps.\n- Eye Care strength hard-capped at 50% so the tint can never be treated as an obscuring window that blocks touches.\n- Peek Guard no longer adds a dim-behind layer, so two dims can never stack into a touch-blocking one.\n- New Dark Mode with four stages: Light dark, Dark, Heavy dark, Deep dark. Dims the whole phone in every app, never touchable, and it stops Eye Care first so only one dim window exists at a time."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.8/neverhide-empire-v2.13.8.apk",
+  "changelog": "v2.13.8 - NOOR gate\n\n- New NOOR gate: after every unlock, Astaghfirullah three times before the phone is usable. Whole screen, takes every tap, three dots fill as you tap.\n- Safety valves so you can never be trapped: auto-closes after 90 seconds, hold anywhere 4 seconds to release, Turn off gate button in the notification.\n- Tools -> NOOR Gate shows today's count and a Preview gate button.\n- Deep green and gold gradient with breathing light rings, drawn by hand so it cannot crash the way a Compose overlay can."
 }

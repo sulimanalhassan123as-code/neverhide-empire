@@ -43,6 +43,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -93,6 +101,7 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("eyecare", "Eye Care", "👀", Color(0xFF64DD17)),
         ToolDef("faceguard", "Face Guard", "👤", Color(0xFFB388FF)),
         ToolDef("darkmode", "Dark Mode", "🌙", Color(0xFF263238)),
+        ToolDef("noor", "NOOR Gate", "🕌", Color(0xFF1B4332)),
         ToolDef("siren", "Find My Phone", "📢", Color(0xFFFF1744)),
         ToolDef("voicefx", "Voice FX", "🎙️", Color(0xFF7C4DFF)),
         ToolDef("soundmeter", "Sound Meter", "📈", Color(0xFFFFD600)),
@@ -187,6 +196,7 @@ class ToolsActivity : ComponentActivity() {
                 "eyecare" -> EyeCareScreen()
                 "faceguard" -> FaceGuardScreen()
                 "darkmode" -> DarkModeScreen()
+                "noor" -> NoorGateScreen()
                 "siren" -> SirenScreen()
                 "voicefx" -> VoiceFxScreen()
                 "soundmeter" -> SoundMeterScreen()
@@ -681,6 +691,141 @@ class ToolsActivity : ComponentActivity() {
     }
 
     
+    // ===================== NOOR GATE =====================
+
+    @Composable
+    private fun NoorGateScreen() {
+        val context = LocalContext.current
+        val prefs = remember { context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE) }
+        var armed by remember { mutableStateOf(com.neverhide.empire.noor.DhikrGateService.isRunning(context)) }
+        var count by remember { mutableStateOf(com.neverhide.empire.noor.DhikrGateService.todayCount(context)) }
+
+        // Breathing gold light, the same idea as the gate screen itself.
+        val breath = rememberInfiniteTransition(label = "noor")
+        val glow by breath.animateFloat(
+            initialValue = 0.85f,
+            targetValue = 1.12f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2600),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "glow"
+        )
+
+        Column(
+            Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Hero card
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.radialGradient(
+                            listOf(Color(0xFF12352C), Color(0xFF0B1F1A), Color(0xFF050B0A))
+                        )
+                    )
+                    .padding(22.dp)
+            ) {
+                Column(
+                    Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        Modifier
+                            .size(96.dp)
+                            .scale(glow)
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(Color(0x66C9A227), Color(0x00000000))
+                                ),
+                                RoundedCornerShape(48.dp)
+                            )
+                    )
+                    Text(
+                        "أستغفر الله",
+                        color = Color(0xFFF3E9D2),
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "ASTAGHFIRULLAH",
+                        color = Color(0xFF9FB8AD),
+                        fontSize = 12.sp,
+                        letterSpacing = 3.sp
+                    )
+                    Text(
+                        "Three taps after every unlock",
+                        color = Color(0xFF5E7A70),
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            // Arming switch
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF111827), RoundedCornerShape(14.dp))
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("NOOR gate", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        if (armed) "Armed • appears after every unlock"
+                        else "Off • phone opens straight to your apps",
+                        color = Color.Gray, fontSize = 11.sp
+                    )
+                }
+                Switch(
+                    checked = armed,
+                    onCheckedChange = { on ->
+                        armed = on
+                        prefs.edit().putBoolean("noor_gate_enabled", on).apply()
+                        if (on) com.neverhide.empire.noor.DhikrGateService.start(context)
+                        else com.neverhide.empire.noor.DhikrGateService.stop(context)
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Color(0xFFC9A227))
+                )
+            }
+
+            // Today's count
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF0B1F1A), RoundedCornerShape(14.dp))
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Completed today", color = Color(0xFF9FB8AD), fontSize = 12.sp)
+                    Text("$count unlocks", color = Color(0xFFF3E9D2), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = {
+                        com.neverhide.empire.noor.DhikrGateService.start(context)
+                        context.startService(
+                            android.content.Intent(
+                                context,
+                                com.neverhide.empire.noor.DhikrGateService::class.java
+                            ).setAction(com.neverhide.empire.noor.DhikrGateService.ACTION_TEST)
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC9A227))
+                ) { Text("Preview gate", color = Color(0xFF050B0A)) }
+            }
+
+            InfoCard(
+                "The gate covers the whole screen and takes every tap until the three dhikr taps land. " +
+                    "Safety valves: it closes itself after 90 seconds, holding anywhere for 4 seconds releases it, " +
+                    "and the notification has a Turn off gate button. Calls still ring."
+            )
+        }
+    }
+
     // ===================== DARK MODE =====================
 
     @Composable

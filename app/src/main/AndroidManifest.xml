@@ -275,6 +275,12 @@
                 android:value="Persistent watchdog keeping Empire tools alive" />
         </service>
 
+        <!-- ===== NOOR dhikr gate after unlock ===== -->
+        <service
+            android:name=".noor.DhikrGateService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission" />
         <!-- ===== System-wide dark mode overlay (four stages) ===== -->
         <service
             android:name=".tools.darkmode.DarkModeService"

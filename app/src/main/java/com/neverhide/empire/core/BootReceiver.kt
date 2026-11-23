@@ -32,6 +32,9 @@ class BootReceiver : BroadcastReceiver() {
         if (prefs.getBoolean("split_bubble_enabled", false)) {
             com.neverhide.empire.tools.split.SplitBubbleService.start(context)
         }
+        if (prefs.getBoolean("noor_gate_enabled", false)) {
+            com.neverhide.empire.noor.DhikrGateService.start(context)
+        }
         if (prefs.getBoolean("dark_mode_enabled", false)) {
             com.neverhide.empire.tools.darkmode.DarkModeService.start(context)
         }
