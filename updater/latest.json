@@ -1,7 +1,7 @@
 {
-  "versionCode": 67,
-  "versionName": "2.13.8",
+  "versionCode": 68,
+  "versionName": "2.14.0",
   "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.13.8/neverhide-empire-v2.13.8.apk",
-  "changelog": "v2.13.8 - NOOR gate\n\n- New NOOR gate: after every unlock, Astaghfirullah three times before the phone is usable. Whole screen, takes every tap, three dots fill as you tap.\n- Safety valves so you can never be trapped: auto-closes after 90 seconds, hold anywhere 4 seconds to release, Turn off gate button in the notification.\n- Tools -> NOOR Gate shows today's count and a Preview gate button.\n- Deep green and gold gradient with breathing light rings, drawn by hand so it cannot crash the way a Compose overlay can."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.14.0/neverhide-empire-v2.14.0.apk",
+  "changelog": "v2.14.0 - Shape Illusion Wallpaper\n\n- New optical illusion live wallpaper: tricks the eye into seeing the physical phone as a custom shape (Heart, Pentagon/Shield, Oval) while holding it.\n- Uses the accelerometer: as the phone tilts, a 3D shadow moves inside the cutout to create depth, and the background shifts to create parallax against the bezel.\n- Tools -> Shape Illusion to pick the shape and set the wallpaper.\n- Glassmorphism control center UI coming next."
 }

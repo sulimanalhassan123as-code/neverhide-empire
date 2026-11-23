@@ -102,6 +102,7 @@ class ToolsActivity : ComponentActivity() {
         ToolDef("faceguard", "Face Guard", "👤", Color(0xFFB388FF)),
         ToolDef("darkmode", "Dark Mode", "🌙", Color(0xFF263238)),
         ToolDef("noor", "NOOR Gate", "🕌", Color(0xFF1B4332)),
+        ToolDef("illusion", "Shape Illusion", "✨", Color(0xFF8D6E63)),
         ToolDef("siren", "Find My Phone", "📢", Color(0xFFFF1744)),
         ToolDef("voicefx", "Voice FX", "🎙️", Color(0xFF7C4DFF)),
         ToolDef("soundmeter", "Sound Meter", "📈", Color(0xFFFFD600)),
@@ -197,6 +198,7 @@ class ToolsActivity : ComponentActivity() {
                 "faceguard" -> FaceGuardScreen()
                 "darkmode" -> DarkModeScreen()
                 "noor" -> NoorGateScreen()
+                "illusion" -> IllusionScreen()
                 "siren" -> SirenScreen()
                 "voicefx" -> VoiceFxScreen()
                 "soundmeter" -> SoundMeterScreen()
@@ -691,6 +693,54 @@ class ToolsActivity : ComponentActivity() {
     }
 
     
+    // ===================== ILLUSION WALLPAPER =====================
+
+    @Composable
+    private fun IllusionScreen() {
+        val context = LocalContext.current
+        val prefs = remember { context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE) }
+        var currentShape by remember { mutableStateOf(prefs.getInt("illusion_shape", 0)) }
+        val shapes = listOf("Heart", "Pentagon", "Oval")
+
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            InfoCard("Tricks the eye by drawing a moving 3D shadow behind a cutout. The home screen background becomes the 'table', and your icons float inside the shape.")
+            
+            Text("Select Shape", color = Color.White, fontWeight = FontWeight.SemiBold)
+            shapes.forEachIndexed { i, name ->
+                val selected = i == currentShape
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(if (selected) Color(0xFF3E2723) else Color(0xFF111827), RoundedCornerShape(12.dp))
+                        .clickable {
+                            currentShape = i
+                            prefs.edit().putInt("illusion_shape", i).apply()
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(if (selected) "●" else "○", color = Color(0xFFD7CCC8))
+                    Text("  $name", color = Color.White, fontSize = 15.sp)
+                }
+            }
+            
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    val intent = android.content.Intent(android.app.WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
+                    intent.putExtra(
+                        android.app.WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
+                        android.content.ComponentName(context, com.neverhide.empire.wallpaper.MaskedWallpaperEngine::class.java)
+                    )
+                    runCatching { context.startActivity(intent) }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8D6E63))
+            ) {
+                Text("Set Illusion Wallpaper", color = Color.White)
+            }
+        }
+    }
     // ===================== NOOR GATE =====================
 
     @Composable
