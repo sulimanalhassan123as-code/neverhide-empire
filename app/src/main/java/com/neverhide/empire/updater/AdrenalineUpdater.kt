@@ -84,7 +84,7 @@ class AdrenalineUpdater(private val context: Context) {
         if (remote > current) {
             // Silent whenever Shizuku can install for us, or when the caller
             // asked for automatic updating. Never prompt in that case.
-            if (autoMode || SilentInstaller.available(context)) {
+            if (autoMode && SilentInstaller.available(context)) {
                 download(manifest.optString("apkUrl", ""), silent = true)
             } else {
                 promptInstall(manifest)

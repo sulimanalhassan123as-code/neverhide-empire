@@ -92,8 +92,14 @@ class MainActivity : ComponentActivity() {
         // Owner's rule (2026-11-02): the app updates itself, always.
         runCatching {
             val prefs = getSharedPreferences("empire_prefs", MODE_PRIVATE)
-            if (prefs.getBoolean("auto_update_enabled", true)) {
-                AdrenalineUpdater(this).checkForUpdate(auto = true)
+            val lastCheck = prefs.getLong("last_update_check", 0L)
+            val due = System.currentTimeMillis() - lastCheck > 24L * 60L * 60L * 1000L
+            if (prefs.getBoolean("auto_update_enabled", true) && due) {
+                // v2.14.1: never silent-install on launch. A failed install used to
+                // retry every open, killing the app each time (the "opens then closes"
+                // loop). Now: one check per 24h, and it only offers the update.
+                prefs.edit().putLong("last_update_check", System.currentTimeMillis()).apply()
+                AdrenalineUpdater(this).checkForUpdate(auto = false)
             }
         }
 

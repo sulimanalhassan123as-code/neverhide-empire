@@ -250,6 +250,19 @@
             android:name=".screenshot.FloatingBubbleService"
             android:exported="false" />
 
+        <!-- ===== Shape Illusion Wallpaper (v2.14.1: was missing, feature was dead) ===== -->
+        <service
+            android:name=".wallpaper.MaskedWallpaperEngine"
+            android:exported="true"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/masked_wallpaper" />
+        </service>
+
         <!-- ===== Live Wallpaper ===== -->
         <service
             android:name=".wallpaper.LiveWallpaperEngine"

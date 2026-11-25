@@ -1,7 +1,7 @@
 {
-  "versionCode": 68,
-  "versionName": "2.14.0",
-  "tier": "minor",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.14.0/neverhide-empire-v2.14.0.apk",
-  "changelog": "v2.14.0 - Shape Illusion Wallpaper\n\n- New optical illusion live wallpaper: tricks the eye into seeing the physical phone as a custom shape (Heart, Pentagon/Shield, Oval) while holding it.\n- Uses the accelerometer: as the phone tilts, a 3D shadow moves inside the cutout to create depth, and the background shifts to create parallax against the bezel.\n- Tools -> Shape Illusion to pick the shape and set the wallpaper.\n- Glassmorphism control center UI coming next."
+  "versionCode": 69,
+  "versionName": "2.14.1",
+  "tier": "patch",
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.14.1/neverhide-empire-v2.14.1.apk",
+  "changelog": "v2.14.1 - Update loop fixed\n\n- Fixed the app closing by itself: it no longer downloads and installs an update on every launch. It now checks once per day and only offers the update, so a failed install can never kill the app again.\n- Shape Illusion is now a real wallpaper: the service was missing from the manifest in 2.14.0, so the feature did nothing. It is registered now.\n- Tools -> Shape Illusion still picks Heart, Pentagon or Oval."
 }
