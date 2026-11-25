@@ -1,7 +1,7 @@
 {
-  "versionCode": 69,
-  "versionName": "2.14.1",
+  "versionCode": 70,
+  "versionName": "2.14.2",
   "tier": "patch",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.14.1/neverhide-empire-v2.14.1.apk",
-  "changelog": "v2.14.1 - Update loop fixed\n\n- Fixed the app closing by itself: it no longer downloads and installs an update on every launch. It now checks once per day and only offers the update, so a failed install can never kill the app again.\n- Shape Illusion is now a real wallpaper: the service was missing from the manifest in 2.14.0, so the feature did nothing. It is registered now.\n- Tools -> Shape Illusion still picks Heart, Pentagon or Oval."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.14.2/neverhide-empire-v2.14.2.apk",
+  "changelog": "v2.14.2 - The Sphere\n\n- Added the perfect Circle shape to the Illusion wallpaper to match the gold-rimmed reference image.\n- Upgraded the table background: it is now a textured marble surface instead of a flat color.\n- Added table parallax: the table texture now shifts slightly in the opposite direction of the shadow when you tilt the phone, amplifying the 3D depth effect."
 }

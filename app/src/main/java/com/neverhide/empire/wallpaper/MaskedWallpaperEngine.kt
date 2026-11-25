@@ -106,10 +106,7 @@ class MaskedWallpaperEngine : WallpaperService() {
 
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-        override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-            super.onSurfaceChanged(holder, format, width, height)
-            buildShape(width.toFloat(), height.toFloat())
-        }
+
 
         private fun buildShape(w: Float, h: Float) {
             shapePath.reset()
@@ -131,7 +128,11 @@ class MaskedWallpaperEngine : WallpaperService() {
                         cx, cy + size * 0.8f
                     )
                 }
-                1 -> { // Pentagon (Shield)
+                1 -> { // Circle (per owner request, 2026-11-25)
+                    val r = w * 0.45f
+                    shapePath.addCircle(cx, cy, r, Path.Direction.CW)
+                }
+                2 -> { // Pentagon (Shield)
                     val size = w * 0.45f
                     shapePath.moveTo(cx, cy - size * 1.2f)
                     shapePath.lineTo(cx + size, cy - size * 0.2f)
@@ -164,6 +165,34 @@ class MaskedWallpaperEngine : WallpaperService() {
             }
         }
 
+        // The background "table" texture
+        private var bgBitmap: android.graphics.Bitmap? = null
+        private var bgSrcRect = android.graphics.Rect()
+        private var bgDstRect = android.graphics.RectF()
+
+        override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+            super.onSurfaceChanged(holder, format, width, height)
+            buildShape(width.toFloat(), height.toFloat())
+            
+            // Generate a simple marble/granite texture for the table
+            if (bgBitmap == null || bgBitmap!!.width != width) {
+                bgBitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+                val c = Canvas(bgBitmap!!)
+                c.drawColor(Color.parseColor("#E8E9EB"))
+                val p = Paint(Paint.ANTI_ALIAS_FLAG)
+                for (i in 0..300) {
+                    p.color = Color.argb((10..30).random(), 0, 0, 0)
+                    p.strokeWidth = (2..8).random().toFloat()
+                    val x = (0..width).random().toFloat()
+                    val y = (0..height).random().toFloat()
+                    val len = (50..200).random().toFloat()
+                    val ang = (0..314).random() / 100f
+                    c.drawLine(x, y, x + cos(ang)*len, y + sin(ang)*len, p)
+                }
+                bgSrcRect.set(0, 0, width, height)
+            }
+        }
+
         private fun drawFrame() {
             val holder = surfaceHolder
             var canvas: Canvas? = null
@@ -173,8 +202,18 @@ class MaskedWallpaperEngine : WallpaperService() {
                     val w = canvas.width.toFloat()
                     val h = canvas.height.toFloat()
                     
-                    // 1. Draw the "table" background (shifts slightly opposite to tilt)
-                    canvas.drawColor(bgPaint.color)
+                    // 1. Draw the "table" background with parallax
+                    val parallaxX = -tiltX * w * 0.03f
+                    val parallaxY = -tiltY * h * 0.03f
+                    bgDstRect.set(parallaxX, parallaxY, w + parallaxX, h + parallaxY)
+                    
+                    if (bgBitmap != null) {
+                        // Fill edges exposed by parallax
+                        canvas.drawColor(Color.parseColor("#D0D1D3"))
+                        canvas.drawBitmap(bgBitmap!!, bgSrcRect, bgDstRect, null)
+                    } else {
+                        canvas.drawColor(bgPaint.color)
+                    }
                     
                     // 2. Calculate the 3D shadow offset based on phone tilt
                     val shadowOffsetX = tiltX * w * 0.08f
