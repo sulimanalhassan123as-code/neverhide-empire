@@ -180,6 +180,22 @@ class MaskedWallpaperEngine : WallpaperService() {
                     shapePath.lineTo(cx - rw*0.8f, cy - rh)
                     shapePath.close()
                 }
+                6 -> { // Letter C shape
+                    val rw = w * 0.42f
+                    val rh = h * 0.38f
+                    shapePath.moveTo(cx + rw, cy - rh)
+                    // Top arch
+                    shapePath.cubicTo(cx - rw, cy - rh, cx - rw*1.5f, cy, cx - rw*0.5f, cy)
+                    // Inner bite (the mouth of the C)
+                    shapePath.cubicTo(cx, cy, cx + rw*0.5f, cy - rh*0.5f, cx + rw*0.8f, cy - rh*0.2f)
+                    // Bottom arch out
+                    shapePath.lineTo(cx + rw*0.8f, cy + rh*0.2f)
+                    shapePath.cubicTo(cx + rw*0.5f, cy + rh*0.5f, cx, cy, cx - rw*0.5f, cy)
+                    shapePath.cubicTo(cx - rw*1.5f, cy, cx - rw, cy + rh, cx + rw, cy + rh)
+                    // Outer back curve
+                    shapePath.cubicTo(cx - rw*1.8f, cy + rh, cx - rw*1.8f, cy - rh, cx + rw, cy - rh)
+                    shapePath.close()
+                }
                 else -> { // Pill/Oval
                     val rw = w * 0.4f
                     val rh = h * 0.35f

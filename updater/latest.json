@@ -1,7 +1,7 @@
 {
-  "versionCode": 71,
-  "versionName": "2.14.3",
+  "versionCode": 72,
+  "versionName": "2.14.4",
   "tier": "patch",
-  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.14.3/neverhide-empire-v2.14.3.apk",
-  "changelog": "v2.14.3 - The Aquarium\n\n- Added Fish shape, S-Curve, and B-Curve (parrot belly) to the Illusion wallpaper engine.\n- The illusion shapes now perfectly match the AI reference images sent by the owner.\n- The table texture parallax was tuned for a deeper 3D drop behind the bezel."
+  "apkUrl": "https://github.com/sulimanalhassan123as-code/neverhide-empire/releases/download/v2.14.4/neverhide-empire-v2.14.4.apk",
+  "changelog": "v2.14.4 - The Alphabet\n\n- Added Letter C shape to the Illusion wallpaper engine.\n- Fixed the B-Curve to exactly match the AI reference image's 'B' shape with its two interior cutouts.\n- The shape picker now includes: Heart, Circle, Pentagon, Fish, S-Curve, B-Curve, Letter C, and Oval."
 }
