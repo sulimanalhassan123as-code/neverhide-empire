@@ -700,7 +700,7 @@ class ToolsActivity : ComponentActivity() {
         val context = LocalContext.current
         val prefs = remember { context.getSharedPreferences("empire_prefs", Context.MODE_PRIVATE) }
         var currentShape by remember { mutableStateOf(prefs.getInt("illusion_shape", 0)) }
-        val shapes = listOf("Heart", "Circle", "Pentagon", "Oval")
+        val shapes = listOf("Heart", "Circle", "Pentagon", "Fish", "S-Curve", "B-Curve", "Oval")
 
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             InfoCard("Tricks the eye by drawing a moving 3D shadow behind a cutout. The home screen background becomes the 'table', and your icons float inside the shape.")

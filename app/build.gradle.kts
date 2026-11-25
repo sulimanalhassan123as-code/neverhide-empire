@@ -21,8 +21,8 @@ android {
         applicationId = "com.neverhide.empire"
         minSdk = 26
         targetSdk = 34
-        versionCode = 70
-        versionName = "2.14.2"
+        versionCode = 71
+        versionName = "2.14.3"
         vectorDrawables { useSupportLibrary = true }
         buildConfigField("String", "BRIDGE_SECRET", "\"" + localSecret("bridge.secret") + "\"")
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }

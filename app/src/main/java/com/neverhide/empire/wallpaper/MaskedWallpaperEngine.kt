@@ -128,7 +128,7 @@ class MaskedWallpaperEngine : WallpaperService() {
                         cx, cy + size * 0.8f
                     )
                 }
-                1 -> { // Circle (per owner request, 2026-11-25)
+                1 -> { // Circle (gold-rimmed phone)
                     val r = w * 0.45f
                     shapePath.addCircle(cx, cy, r, Path.Direction.CW)
                 }
@@ -139,6 +139,45 @@ class MaskedWallpaperEngine : WallpaperService() {
                     shapePath.lineTo(cx + size * 0.7f, cy + size * 1.1f)
                     shapePath.lineTo(cx - size * 0.7f, cy + size * 1.1f)
                     shapePath.lineTo(cx - size, cy - size * 0.2f)
+                    shapePath.close()
+                }
+                3 -> { // Fish shape
+                    val rw = w * 0.4f
+                    val rh = h * 0.35f
+                    shapePath.moveTo(cx, cy - rh)
+                    // Right curve
+                    shapePath.cubicTo(
+                        cx + rw * 1.2f, cy - rh * 0.5f,
+                        cx + rw * 0.8f, cy + rh * 0.8f,
+                        cx, cy + rh
+                    )
+                    // Left curve
+                    shapePath.cubicTo(
+                        cx - rw * 0.8f, cy + rh * 0.8f,
+                        cx - rw * 1.2f, cy - rh * 0.5f,
+                        cx, cy - rh
+                    )
+                    shapePath.close()
+                }
+                4 -> { // "S" Curve shape
+                    val rw = w * 0.42f
+                    val rh = h * 0.38f
+                    shapePath.moveTo(cx - rw*0.5f, cy - rh)
+                    shapePath.cubicTo(cx + rw*1.5f, cy - rh*0.8f, cx - rw*1.5f, cy + rh*0.8f, cx + rw*0.5f, cy + rh)
+                    shapePath.lineTo(cx - rw*0.5f, cy + rh)
+                    shapePath.cubicTo(cx - rw*1.5f, cy + rh*0.8f, cx + rw*1.5f, cy - rh*0.8f, cx + rw*0.5f, cy - rh)
+                    shapePath.close()
+                }
+                5 -> { // "B" Curve shape (Parrot belly)
+                    val rw = w * 0.42f
+                    val rh = h * 0.38f
+                    shapePath.moveTo(cx, cy - rh)
+                    // Right bumps
+                    shapePath.cubicTo(cx + rw, cy - rh, cx + rw*1.2f, cy - rh*0.2f, cx + rw*0.2f, cy)
+                    shapePath.cubicTo(cx + rw*1.4f, cy + rh*0.2f, cx + rw*1.2f, cy + rh, cx, cy + rh)
+                    // Flat left
+                    shapePath.lineTo(cx - rw*0.8f, cy + rh)
+                    shapePath.lineTo(cx - rw*0.8f, cy - rh)
                     shapePath.close()
                 }
                 else -> { // Pill/Oval
